@@ -107,8 +107,6 @@ public class LoginForm extends JDialog {
         constraints.gridy = 3;
         constraints.gridwidth = 3;
         constraints.weightx = 1;
-        this.usernameLabel.setMinimumSize(new Dimension(75, 100));
-        this.usernameLabel.setMaximumSize(new Dimension(75, 100));
         pane.add(this.loginMessageLabel, constraints);
 
         setPreferredSize(new Dimension(250, 200));
