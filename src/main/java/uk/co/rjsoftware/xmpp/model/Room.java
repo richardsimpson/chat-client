@@ -92,14 +92,15 @@ public class Room implements Comparable<Room>, ChatTarget {
                 this.messageReceivingThread = new Thread(new MessageReceiver2(this.chat, this.customMessageListModel));
                 this.messageReceivingThread.start();
 
-            } catch (XMPPException exception) {
+            }
+            catch (XMPPException exception) {
                 this.chat = null;
                 throw new RuntimeException(exception);
             }
         }
     }
 
-    private static class MessageReceiver2 extends SwingWorker<List<CustomMessage>,CustomMessage> {
+    private static class MessageReceiver2 extends SwingWorker<List<CustomMessage>, CustomMessage> {
 
         private final MultiUserChat chat;
         private final CustomMessageListModel customMessageListModel;
@@ -137,6 +138,7 @@ public class Room implements Comparable<Room>, ChatTarget {
                                 final CustomMessage customMessage = new CustomMessage(extractTimestamp(message), message.getFrom(), message.getBody());
                                 publish(customMessage);
                             }
+                        default: // do nothing
                     }
                 }
                 catch (RuntimeException exception) {
@@ -169,7 +171,8 @@ public class Room implements Comparable<Room>, ChatTarget {
         if (this.chat != null) {
             try {
                 this.chat.sendMessage(messageText);
-            } catch (XMPPException exception) {
+            }
+            catch (XMPPException exception) {
                 throw new RuntimeException(exception);
             }
         }

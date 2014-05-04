@@ -49,7 +49,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
-import java.util.*;
+import java.util.ArrayList;
 
 public class MainForm extends JFrame {
 
@@ -199,14 +199,12 @@ public class MainForm extends JFrame {
 
     private static class AutoScrollPane extends JScrollPane implements ChangeListener {
 
-        private int lastScrollBarValueWhenAtBottom = 0;
+        private int lastScrollBarValueWhenAtBottom;
 
-        public AutoScrollPane(JComponent component)
-        {
+        public AutoScrollPane(final JComponent component) {
             super(component);
             component.addComponentListener(new ComponentAdapter() {
-                public void componentResized(ComponentEvent e)
-                {
+                public void componentResized(ComponentEvent e) {
                     final BoundedRangeModel model = getVerticalScrollBar().getModel();
                     if (model.getValue() == lastScrollBarValueWhenAtBottom) {
                         // scroll bar hasn't been moved since it was last at the botton, so move

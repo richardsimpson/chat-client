@@ -37,7 +37,7 @@ public class RoomListModel extends AbstractListModel<Room> {
 
     private final List<Room> rooms = new ArrayList<Room>();
 
-    public RoomListModel(List<Room> rooms) {
+    public RoomListModel(final List<Room> rooms) {
         this.rooms.addAll(rooms);
     }
 

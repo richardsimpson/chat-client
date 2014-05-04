@@ -149,6 +149,7 @@ public class User implements Comparable<User>, ChatTarget {
                         final CustomMessage customMessage = new CustomMessage(extractTimestamp(message), this.senderName, message.getBody());
                         this.customMessageListModel.add(customMessage);
                     }
+                default: // do nothing
             }
         }
 
@@ -164,7 +165,8 @@ public class User implements Comparable<User>, ChatTarget {
             try {
                 this.chat.sendMessage(messageText);
                 this.customMessageListModel.add(new CustomMessage(System.currentTimeMillis(), this.name, messageText));
-            } catch (XMPPException exception) {
+            }
+            catch (XMPPException exception) {
                 throw new RuntimeException(exception);
             }
         }

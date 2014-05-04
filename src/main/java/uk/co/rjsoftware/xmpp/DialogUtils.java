@@ -31,7 +31,11 @@ package uk.co.rjsoftware.xmpp;
 
 import java.awt.*;
 
-public class DialogUtils {
+public final class DialogUtils {
+
+    private DialogUtils() {
+
+    }
 
     public static void centerDialog(final Window dialog) {
         final GraphicsConfiguration config = GraphicsEnvironment

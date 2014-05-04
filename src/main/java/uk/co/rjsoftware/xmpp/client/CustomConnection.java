@@ -61,14 +61,15 @@ public class CustomConnection {
     private final RoomListModel roomListModel;
     private User currentUser;
 
-    public CustomConnection (String username, String password) throws YaccException {
+    public CustomConnection(final String username, final String password) throws YaccException {
         // TODO: Put 'chat.hipchat.com' into config
         this.connection = new XMPPConnection("chat.hipchat.com");
         try {
             this.connection.connect();
             // TODO: Put 'xmpp' into config
             this.connection.login(username, password, "xmpp");
-        } catch (XMPPException exception) {
+        }
+        catch (XMPPException exception) {
             if (exception.getMessage().contains("invalid-authzid")) {
                 throw new YaccException("The password or email address is invalid.");
             }
@@ -128,7 +129,8 @@ public class CustomConnection {
         Collection<HostedRoom> rooms;
         try {
             rooms = MultiUserChat.getHostedRooms(connection, "conf.hipchat.com");
-        } catch (XMPPException exception) {
+        }
+        catch (XMPPException exception) {
             throw new RuntimeException(exception);
         }
         for (HostedRoom room : rooms) {
@@ -160,7 +162,7 @@ public class CustomConnection {
     public void disconnect() {
         System.out.println("Disconnecting...");
         if (null != roomListModel) {
-            for (int index=0 ; index < this.roomListModel.getSize() ; index++) {
+            for (int index = 0 ; index < this.roomListModel.getSize() ; index++) {
                 this.roomListModel.getElementAt(index).cleanUp();
             }
         }
@@ -194,7 +196,8 @@ public class CustomConnection {
             // Send an empty room configuration form which indicates that we want
             // an instant room
             multiUserChat.sendConfigurationForm(new Form(Form.TYPE_SUBMIT));
-        } catch (XMPPException exception) {
+        }
+        catch (XMPPException exception) {
             throw new RuntimeException(exception);
         }
 

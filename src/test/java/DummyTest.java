@@ -28,7 +28,6 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import com.sun.corba.se.impl.orb.ParserTable;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
