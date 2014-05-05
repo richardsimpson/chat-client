@@ -1,0 +1,19 @@
+chat-client
+-----------
+
+Copyright 2014 rjsoftware
+
+rjsoftware licenses this file to you under the BSD New.  See LICENCE.txt for a copy 
+of the License.
+
+Please refer to the licence documents in the /license/ directory for the license terms of the
+components that this product depends on.
+
+----------------------------
+
+This product uses Smack, an XMPP library created by Jive Software, which is
+licenced under the Apache Licence, version 2.0:
+
+	Licence: http://www.apache.org/licenses/LICENSE-2.0
+	Homepage: http://www.igniterealtime.org/
+
