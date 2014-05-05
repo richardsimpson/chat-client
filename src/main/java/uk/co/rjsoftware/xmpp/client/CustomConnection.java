@@ -60,6 +60,7 @@ public class CustomConnection {
     private final UserListModel userListModel;
     private final RoomListModel roomListModel;
     private User currentUser;
+    private final String hipChatClientPrefix;
 
     public CustomConnection(final String username, final String password) throws YaccException {
         // TODO: Put 'chat.hipchat.com' into config
@@ -78,6 +79,10 @@ public class CustomConnection {
                 throw new YaccException(exception.getMessage());
             }
         }
+
+        final String[] usernameParts = username.split("_");
+        this.hipChatClientPrefix = usernameParts[0];
+
         this.roster = connection.getRoster();
 
         // get current user id without the resource (e.g. /xmpp)
@@ -141,16 +146,6 @@ public class CustomConnection {
             //       This will have a map that contains values for the following keys:
             //           topic (room subject), id, owner (user jid), privacy (public/private), last_active (long),
             //           num_participants (number of people in the room, and online) and guest_url
-            //
-            //       See commented out code below
-            //
-//            if (room.getName().equals("En Vivo")) {
-//                try {
-//                    MultiUserChat.getRoomInfo(connection, room.getJid());
-//                } catch (XMPPException e) {
-//                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-//                }
-//            }
             roomList.add(new Room(room.getJid(), room.getName()));
             System.out.println("name:" + room.getName() + ", JID: " + room.getJid());
         }
@@ -187,8 +182,7 @@ public class CustomConnection {
     public MultiUserChat createInstantRoom(final String name) {
         String roomId = name.replaceAll("[&<>@]", "");
         roomId = roomId.replaceAll(" ", "_");
-        // TODO: Put '38098' into config
-        roomId = "38098_" + roomId.toLowerCase(Locale.getDefault()) + "@conf.hipchat.com";
+        roomId = this.hipChatClientPrefix + "_" + roomId.toLowerCase(Locale.getDefault()) + "@conf.hipchat.com";
 
         final MultiUserChat multiUserChat = joinRoom(roomId);
         try {
