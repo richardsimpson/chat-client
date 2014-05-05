@@ -29,8 +29,6 @@
  */
 package uk.co.rjsoftware.xmpp;
 
-import uk.co.rjsoftware.xmpp.model.UserStatus;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -46,7 +44,6 @@ public class LoginForm extends JDialog {
     private final JTextField usernameField;
     private final JTextField passwordField;
     private final JButton loginButton;
-    private final UserStatus status = UserStatus.UNAVAILABLE;
 
     private final List<LoginListener> listeners = new ArrayList<LoginListener>();
 
