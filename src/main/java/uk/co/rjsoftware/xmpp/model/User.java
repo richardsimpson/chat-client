@@ -50,6 +50,7 @@ public class User implements Comparable<User>, ChatTarget {
 
     private Chat chat;
     private CustomMessageListModel customMessageListModel = new CustomMessageListModel();
+    private CustomConnection customConnection;
 
     public User(final String userId, final String name) {
         this.userId = userId;
@@ -106,6 +107,7 @@ public class User implements Comparable<User>, ChatTarget {
     @Override
     public void join(final CustomConnection customConnection) {
         if (this.chat == null) {
+            this.customConnection = customConnection;
             this.chat = customConnection.createChat(this.userId);
             this.chat.addMessageListener(new UserMessageListener(this.name, this.customMessageListModel));
         }
@@ -164,7 +166,8 @@ public class User implements Comparable<User>, ChatTarget {
         if (this.chat != null) {
             try {
                 this.chat.sendMessage(messageText);
-                this.customMessageListModel.add(new CustomMessage(System.currentTimeMillis(), this.name, messageText));
+                this.customMessageListModel.add(new CustomMessage(System.currentTimeMillis(),
+                        this.customConnection.getCurrentUser().getName(), messageText));
             }
             catch (XMPPException exception) {
                 throw new RuntimeException(exception);
