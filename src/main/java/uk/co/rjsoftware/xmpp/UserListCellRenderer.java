@@ -89,11 +89,11 @@ public class UserListCellRenderer implements ListCellRenderer<User> {
 
         if (isSelected) {
             this.mainPanel.setBackground(list.getSelectionBackground());
-            this.mainPanel.setForeground(list.getSelectionForeground());
+            this.usernameLabel.setForeground(list.getSelectionForeground());
         }
         else {
             this.mainPanel.setBackground(list.getBackground());
-            this.mainPanel.setForeground(list.getForeground());
+            this.usernameLabel.setForeground(list.getForeground());
         }
 
         return this.mainPanel;
