@@ -29,11 +29,6 @@
  */
 package uk.co.rjsoftware.xmpp.client;
 
-/*
-    Note: The icons used are open source, from http://openiconlibrary.sourceforge.net/,
-    made available under the 'Creative Commons - Attribution-Share Alike 3.0 License'
-    (http://creativecommons.org/licenses/by-sa/3.0/)
- */
 import uk.co.rjsoftware.xmpp.LoginForm;
 import uk.co.rjsoftware.xmpp.LoginListener;
 import uk.co.rjsoftware.xmpp.MainForm;

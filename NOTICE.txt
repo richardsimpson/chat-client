@@ -3,7 +3,7 @@ chat-client
 
 Copyright 2014 rjsoftware
 
-rjsoftware licenses this file to you under the BSD New.  See LICENCE.txt for a copy 
+rjsoftware licenses this software to you under the BSD New licence.  See LICENCE.txt for a copy 
 of the License.
 
 Please refer to the licence documents in the /license/ directory for the license terms of the
