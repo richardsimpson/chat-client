@@ -55,6 +55,7 @@ import java.util.ArrayList;
 
 public class MainForm extends JFrame {
 
+    private final JTabbedPane chatSourceTabs;
     private final JList<Room> roomList;
     private final JScrollPane roomListScrollPane;
     private final JList<User> userList;
@@ -84,16 +85,22 @@ public class MainForm extends JFrame {
 
         final Container pane = getContentPane();
 
+        this.chatSourceTabs = new JTabbedPane();
+
         //Add the list of rooms.
         this.roomList = new JList<Room>(connection.getRoomListModel());
         this.roomListScrollPane = new JScrollPane(roomList);
-        pane.add(this.roomListScrollPane, BorderLayout.LINE_START);
+        //pane.add(this.roomListScrollPane, BorderLayout.LINE_START);
+        this.chatSourceTabs.addTab("Rooms", this.roomListScrollPane);
 
         //Add the list of users.
         this.userList = new JList<User>(connection.getUserListModel());
         this.userList.setCellRenderer(new UserListCellRenderer());
         this.userListScrollPane = new JScrollPane(userList);
-        pane.add(this.userListScrollPane, BorderLayout.LINE_END);
+        //pane.add(this.userListScrollPane, BorderLayout.LINE_END);
+        this.chatSourceTabs.addTab("Users", this.userListScrollPane);
+
+        pane.add(this.chatSourceTabs, BorderLayout.LINE_START);
 
         // create a panel to contain the current chat information
         this.chatPanel = new JPanel();
