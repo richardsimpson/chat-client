@@ -49,6 +49,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 
 public class MainForm extends JFrame {
@@ -57,10 +59,13 @@ public class MainForm extends JFrame {
     private final JScrollPane roomListScrollPane;
     private final JList<User> userList;
     private final JScrollPane userListScrollPane;
+    private final JPanel chatPanel;
     private final JList<CustomMessage> messageList;
     private final JScrollPane messageListScrollPane;
     private final JTextArea message;
-    //private final JButton newRoomButton;
+//    private final JButton newRoomButton;
+    private final JLabel chatTitle;
+    private final TitleListener titleListener;
 
     private final java.util.List<LogoutListener> listeners = new ArrayList<LogoutListener>();
 
@@ -90,6 +95,15 @@ public class MainForm extends JFrame {
         this.userListScrollPane = new JScrollPane(userList);
         pane.add(this.userListScrollPane, BorderLayout.LINE_END);
 
+        // create a panel to contain the current chat information
+        this.chatPanel = new JPanel();
+        this.chatPanel.setLayout(new BorderLayout());
+        pane.add(this.chatPanel, BorderLayout.CENTER);
+
+        // add a label for the room / chat title
+        this.chatTitle = new JLabel();
+        this.chatPanel.add(this.chatTitle, BorderLayout.PAGE_START);
+
         //Add the message history window
         this.messageList = new JList<CustomMessage>() {
             @Override
@@ -109,23 +123,30 @@ public class MainForm extends JFrame {
             }
         });
         this.messageListScrollPane = new AutoScrollPane(messageList);
-        pane.add(this.messageListScrollPane, BorderLayout.CENTER);
+        this.chatPanel.add(this.messageListScrollPane, BorderLayout.CENTER);
 
         // Add the message window
         this.message = new JTextArea();
         this.message.setLineWrap(true);
-        pane.add(this.message, BorderLayout.PAGE_END);
+        this.chatPanel.add(this.message, BorderLayout.PAGE_END);
 
 //        // Add the create room button
 //        this.newRoomButton = new JButton("Create room");
 //        pane.add(this.newRoomButton, BorderLayout.PAGE_START);
+
+        this.titleListener = new TitleListener(this.chatTitle);
 
         this.roomList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent event) {
                 if (event.getClickCount() == 2) {
                     // update the chat target
+                    if (MainForm.this.currentChatTarget != null) {
+                        MainForm.this.currentChatTarget.removeTitleListener(MainForm.this.titleListener);
+                    }
                     MainForm.this.currentChatTarget = MainForm.this.roomList.getSelectedValue();
+                    MainForm.this.chatTitle.setText(MainForm.this.currentChatTarget.getTitle());
+                    MainForm.this.currentChatTarget.addTitleListener(MainForm.this.titleListener);
                     MainForm.this.currentChatTarget.join(connection);
                     MainForm.this.messageList.setModel(MainForm.this.currentChatTarget.getCustomMessageListModel());
                 }
@@ -137,7 +158,12 @@ public class MainForm extends JFrame {
             public void mouseClicked(MouseEvent event) {
                 if (event.getClickCount() == 2) {
                     // update the chat target
+                    if (MainForm.this.currentChatTarget != null) {
+                        MainForm.this.currentChatTarget.removeTitleListener(MainForm.this.titleListener);
+                    }
                     MainForm.this.currentChatTarget = MainForm.this.userList.getSelectedValue();
+                    MainForm.this.chatTitle.setText(MainForm.this.currentChatTarget.getTitle());
+                    MainForm.this.currentChatTarget.addTitleListener(MainForm.this.titleListener);
                     MainForm.this.currentChatTarget.join(connection);
                     MainForm.this.messageList.setModel(MainForm.this.currentChatTarget.getCustomMessageListModel());
                 }
@@ -227,4 +253,19 @@ public class MainForm extends JFrame {
             }
         }
     }
+
+    private static class TitleListener implements PropertyChangeListener {
+
+        private final JLabel titleLabel;
+
+        public TitleListener(final JLabel titleLabel) {
+            this.titleLabel = titleLabel;
+        }
+
+        @Override
+        public void propertyChange(PropertyChangeEvent event) {
+            this.titleLabel.setText((String)event.getNewValue());
+        }
+    }
+
 }

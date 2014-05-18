@@ -39,7 +39,8 @@ import org.jivesoftware.smackx.muc.MultiUserChat;
 import org.jivesoftware.smackx.packet.DelayInfo;
 
 import javax.swing.*;
-import javax.swing.event.ListDataListener;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -48,9 +49,12 @@ public class Room implements Comparable<Room>, ChatTarget {
 
     private final String roomId;
     private final String name;
+    private String subject = "";
     private MultiUserChat chat;
     private CustomMessageListModel customMessageListModel = new CustomMessageListModel();
     private Thread messageReceivingThread;
+
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     public Room(final String roomId, final String name) {
         this.roomId = roomId;
@@ -64,6 +68,21 @@ public class Room implements Comparable<Room>, ChatTarget {
     @Override
     public String getName() {
         return this.name;
+    }
+
+    public String getTitle() {
+        if ((null == this.subject) || (this.subject.equals(""))) {
+            return this.name;
+        }
+        else {
+            return this.name + " (" + this.subject+  ")";
+        }
+    }
+
+    private void setSubject(final String subject) {
+        String oldValue = this.getTitle();
+        this.subject = subject;
+        this.pcs.firePropertyChange("title", oldValue, this.getTitle());
     }
 
     @Override
@@ -89,7 +108,7 @@ public class Room implements Comparable<Room>, ChatTarget {
                 chat.join(customConnection.getCurrentUser().getName(), password, history, SmackConfiguration.getPacketReplyTimeout());
 
                 // create a separate thread that will fetch the chat history and all future messages for this room
-                this.messageReceivingThread = new Thread(new MessageReceiver2(this.chat, this.customMessageListModel));
+                this.messageReceivingThread = new Thread(new MessageReceiver(this.chat, this.customMessageListModel, this));
                 this.messageReceivingThread.start();
 
             }
@@ -100,14 +119,17 @@ public class Room implements Comparable<Room>, ChatTarget {
         }
     }
 
-    private static class MessageReceiver2 extends SwingWorker<List<CustomMessage>, CustomMessage> {
+    private static class MessageReceiver extends SwingWorker<List<MessagePayload>, MessagePayload> {
 
         private final MultiUserChat chat;
         private final CustomMessageListModel customMessageListModel;
+        private final Room room;
 
-        public MessageReceiver2(final MultiUserChat chat, final CustomMessageListModel customMessageListModel) {
+        public MessageReceiver(final MultiUserChat chat, final CustomMessageListModel customMessageListModel,
+                               final Room room) {
             this.chat = chat;
             this.customMessageListModel = customMessageListModel;
+            this.room = room;
         }
 
         private long extractTimestamp(final Message message) {
@@ -122,21 +144,25 @@ public class Room implements Comparable<Room>, ChatTarget {
         }
 
         @Override
-        protected List<CustomMessage> doInBackground() throws Exception {
+        protected List<MessagePayload> doInBackground() throws Exception {
             boolean interrupted = false;
             while (!interrupted) {
                 try {
                     final Message message = this.chat.nextMessage();
 
                     // TODO: Implement behaviour for Message.Type.headline
-                    // TODO: Handle messages with no body, but a subject - should appear at the top of the chat.
                     switch (message.getType()) {
                         case normal:
                         case chat:
                         case groupchat:
                             if (message.getBody() != null) {
                                 final CustomMessage customMessage = new CustomMessage(extractTimestamp(message), message.getFrom(), message.getBody());
-                                publish(customMessage);
+                                final MessagePayload messagePayload = new MessagePayload(customMessage);
+                                publish(messagePayload);
+                            }
+                            else if (message.getSubject() != null) {
+                                final MessagePayload messagePayload = new MessagePayload(message.getSubject());
+                                publish(messagePayload);
                             }
                         default: // do nothing
                     }
@@ -153,10 +179,36 @@ public class Room implements Comparable<Room>, ChatTarget {
         }
 
         @Override
-        protected void process(List<CustomMessage> chunks) {
-            for (CustomMessage message : chunks) {
-                this.customMessageListModel.add(message);
+        protected void process(List<MessagePayload> chunks) {
+            for (MessagePayload messagePayload : chunks) {
+                if (messagePayload.getCustomMessage() != null) {
+                    this.customMessageListModel.add(messagePayload.getCustomMessage());
+                }
+                else if (messagePayload.getSubject() != null) {
+                    this.room.setSubject(messagePayload.getSubject());
+                }
             }
+        }
+    }
+
+    private static class MessagePayload {
+        private CustomMessage customMessage;
+        private String subject;
+
+        public MessagePayload(final String subject) {
+            this.subject = subject;
+        }
+
+        public MessagePayload(final CustomMessage customMessage) {
+            this.customMessage = customMessage;
+        }
+
+        public CustomMessage getCustomMessage() {
+            return customMessage;
+        }
+
+        public String getSubject() {
+            return subject;
         }
     }
 
@@ -184,13 +236,13 @@ public class Room implements Comparable<Room>, ChatTarget {
     }
 
     @Override
-    public void addListDataListener(ListDataListener listener) {
-        this.customMessageListModel.addListDataListener(listener);
+    public void addTitleListener(PropertyChangeListener listener) {
+        this.pcs.addPropertyChangeListener(listener);
     }
 
     @Override
-    public void removeListDataListener(ListDataListener listener) {
-        this.customMessageListModel.removeListDataListener(listener);
+    public void removeTitleListener(PropertyChangeListener listener) {
+        this.pcs.removePropertyChangeListener(listener);
     }
 
 }

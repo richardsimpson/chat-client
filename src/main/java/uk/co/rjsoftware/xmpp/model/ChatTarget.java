@@ -31,7 +31,7 @@ package uk.co.rjsoftware.xmpp.model;
 
 import uk.co.rjsoftware.xmpp.client.CustomConnection;
 
-import javax.swing.event.ListDataListener;
+import java.beans.PropertyChangeListener;
 
 public interface ChatTarget {
 
@@ -39,11 +39,13 @@ public interface ChatTarget {
 
     String getName();
 
+    String getTitle();
+
     CustomMessageListModel getCustomMessageListModel();
 
     void sendMessage(final String messageText);
 
-    void addListDataListener(final ListDataListener listener);
+    void addTitleListener(final PropertyChangeListener listener);
 
-    void removeListDataListener(ListDataListener listener);
+    void removeTitleListener(PropertyChangeListener listener);
 }

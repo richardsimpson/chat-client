@@ -35,7 +35,8 @@ import org.jivesoftware.smack.MessageListener;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Message;
 
-import javax.swing.event.ListDataListener;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -52,6 +53,8 @@ public class User implements Comparable<User>, ChatTarget {
     private CustomMessageListModel customMessageListModel = new CustomMessageListModel();
     private CustomConnection customConnection;
 
+    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+
     public User(final String userId, final String name) {
         this.userId = userId;
         this.name = name;
@@ -64,6 +67,10 @@ public class User implements Comparable<User>, ChatTarget {
 
     @Override
     public String getName() {
+        return this.name;
+    }
+
+    public String getTitle() {
         return this.name;
     }
 
@@ -181,12 +188,12 @@ public class User implements Comparable<User>, ChatTarget {
     }
 
     @Override
-    public void addListDataListener(ListDataListener listener) {
-        this.customMessageListModel.addListDataListener(listener);
+    public void addTitleListener(PropertyChangeListener listener) {
+        this.pcs.addPropertyChangeListener(listener);
     }
 
     @Override
-    public void removeListDataListener(ListDataListener listener) {
-        this.customMessageListModel.removeListDataListener(listener);
+    public void removeTitleListener(PropertyChangeListener listener) {
+        this.pcs.removePropertyChangeListener(listener);
     }
 }
