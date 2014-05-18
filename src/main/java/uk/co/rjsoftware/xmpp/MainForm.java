@@ -29,8 +29,12 @@
  */
 package uk.co.rjsoftware.xmpp;
 
+import com.jgoodies.binding.adapter.BasicComponentFactory;
+import com.jgoodies.binding.adapter.Bindings;
+import com.jgoodies.binding.beans.BeanAdapter;
+import com.jgoodies.binding.list.SelectionInList;
+import com.jgoodies.binding.value.ValueModel;
 import uk.co.rjsoftware.xmpp.client.CustomConnection;
-import uk.co.rjsoftware.xmpp.model.ChatTarget;
 import uk.co.rjsoftware.xmpp.model.CustomMessage;
 import uk.co.rjsoftware.xmpp.model.LogoutListener;
 import uk.co.rjsoftware.xmpp.model.Room;
@@ -49,8 +53,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 
 public class MainForm extends JFrame {
@@ -66,11 +68,8 @@ public class MainForm extends JFrame {
     private final JTextArea message;
 //    private final JButton newRoomButton;
     private final JLabel chatTitle;
-    private final TitleListener titleListener;
 
     private final java.util.List<LogoutListener> listeners = new ArrayList<LogoutListener>();
-
-    private ChatTarget currentChatTarget;
 
     public MainForm(final String title, final CustomConnection connection) {
         super(title);
@@ -87,14 +86,17 @@ public class MainForm extends JFrame {
 
         this.chatSourceTabs = new JTabbedPane();
 
+        final BeanAdapter adapter = new BeanAdapter(connection, true);
+
         //Add the list of rooms.
-        this.roomList = new JList<Room>(connection.getRoomListModel());
+        final ValueModel roomListModel = adapter.getValueModel(CustomConnection.ROOM_LIST_MODEL_PROPERTY_NAME);
+        this.roomList = BasicComponentFactory.createList(new SelectionInList(roomListModel));
         this.roomListScrollPane = new JScrollPane(roomList);
         this.chatSourceTabs.addTab("Rooms", this.roomListScrollPane);
 
         //Add the list of users.
-        this.userList = new JList<User>(connection.getUserListModel());
-        this.userList.setCellRenderer(new UserListCellRenderer());
+        final ValueModel userListModel = adapter.getValueModel(CustomConnection.USER_LIST_MODEL_PROPERTY_NAME);
+        this.userList = BasicComponentFactory.createList(new SelectionInList<Object>(userListModel), new UserListCellRenderer());
         this.userListScrollPane = new JScrollPane(userList);
         this.chatSourceTabs.addTab("Users", this.userListScrollPane);
 
@@ -106,16 +108,20 @@ public class MainForm extends JFrame {
         pane.add(this.chatPanel, BorderLayout.CENTER);
 
         // add a label for the room / chat title
-        this.chatTitle = new JLabel();
+        final ValueModel currentChatTargetTitleModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_TITLE_PROPERTY_NAME);
+        this.chatTitle = BasicComponentFactory.createLabel(currentChatTargetTitleModel);
         this.chatPanel.add(this.chatTitle, BorderLayout.PAGE_START);
 
         //Add the message history window
+        final ValueModel messagesListModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_MESSAGES_LIST_PROPERTY_NAME);
         this.messageList = new JList<CustomMessage>() {
             @Override
             public boolean getScrollableTracksViewportWidth() {
                 return true;
             }
         };
+        Bindings.bind(this.messageList, new SelectionInList(messagesListModel));
+
         this.messageList.setCellRenderer(new MessageListCellRenderer());
         this.messageList.addComponentListener(new ComponentAdapter() {
             @Override
@@ -139,21 +145,13 @@ public class MainForm extends JFrame {
 //        this.newRoomButton = new JButton("Create room");
 //        pane.add(this.newRoomButton, BorderLayout.PAGE_START);
 
-        this.titleListener = new TitleListener(this.chatTitle);
-
         this.roomList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent event) {
                 if (event.getClickCount() == 2) {
                     // update the chat target
-                    if (MainForm.this.currentChatTarget != null) {
-                        MainForm.this.currentChatTarget.removeTitleListener(MainForm.this.titleListener);
-                    }
-                    MainForm.this.currentChatTarget = MainForm.this.roomList.getSelectedValue();
-                    MainForm.this.chatTitle.setText(MainForm.this.currentChatTarget.getTitle());
-                    MainForm.this.currentChatTarget.addTitleListener(MainForm.this.titleListener);
-                    MainForm.this.currentChatTarget.join(connection);
-                    MainForm.this.messageList.setModel(MainForm.this.currentChatTarget.getCustomMessageListModel());
+                    connection.setCurrentChatTarget(MainForm.this.roomList.getSelectedValue());
+                    connection.getCurrentChatTarget().join(connection);
                 }
             }
         });
@@ -163,14 +161,8 @@ public class MainForm extends JFrame {
             public void mouseClicked(MouseEvent event) {
                 if (event.getClickCount() == 2) {
                     // update the chat target
-                    if (MainForm.this.currentChatTarget != null) {
-                        MainForm.this.currentChatTarget.removeTitleListener(MainForm.this.titleListener);
-                    }
-                    MainForm.this.currentChatTarget = MainForm.this.userList.getSelectedValue();
-                    MainForm.this.chatTitle.setText(MainForm.this.currentChatTarget.getTitle());
-                    MainForm.this.currentChatTarget.addTitleListener(MainForm.this.titleListener);
-                    MainForm.this.currentChatTarget.join(connection);
-                    MainForm.this.messageList.setModel(MainForm.this.currentChatTarget.getCustomMessageListModel());
+                    connection.setCurrentChatTarget(MainForm.this.userList.getSelectedValue());
+                    connection.getCurrentChatTarget().join(connection);
                 }
             }
         });
@@ -179,7 +171,7 @@ public class MainForm extends JFrame {
             @Override
             public void keyPressed(KeyEvent event) {
                 if ((event.getKeyCode() == 13) || (event.getKeyCode() == 10)) {
-                    MainForm.this.currentChatTarget.sendMessage(MainForm.this.message.getText());
+                    connection.getCurrentChatTarget().sendMessage(MainForm.this.message.getText());
                     MainForm.this.message.setText("");
                     // stop the carriage return from appearing in the text area.
                     event.consume();
@@ -256,20 +248,6 @@ public class MainForm extends JFrame {
             if (isAtBottom) {
                 lastScrollBarValueWhenAtBottom = model.getValue();
             }
-        }
-    }
-
-    private static class TitleListener implements PropertyChangeListener {
-
-        private final JLabel titleLabel;
-
-        public TitleListener(final JLabel titleLabel) {
-            this.titleLabel = titleLabel;
-        }
-
-        @Override
-        public void propertyChange(PropertyChangeEvent event) {
-            this.titleLabel.setText((String)event.getNewValue());
         }
     }
 

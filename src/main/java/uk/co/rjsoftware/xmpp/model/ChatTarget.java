@@ -35,6 +35,8 @@ import java.beans.PropertyChangeListener;
 
 public interface ChatTarget {
 
+    String TITLE_PROPERTY_NAME = "title";
+
     void join(final CustomConnection customConnection);
 
     String getName();
@@ -45,7 +47,8 @@ public interface ChatTarget {
 
     void sendMessage(final String messageText);
 
-    void addTitleListener(final PropertyChangeListener listener);
+    void addPropertyChangeListener(String propertyName, PropertyChangeListener listener);
 
-    void removeTitleListener(PropertyChangeListener listener);
+    void removePropertyChangeListener(String propertyName, PropertyChangeListener listener);
+
 }

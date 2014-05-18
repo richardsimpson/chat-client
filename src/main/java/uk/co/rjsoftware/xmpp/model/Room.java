@@ -29,6 +29,7 @@
  */
 package uk.co.rjsoftware.xmpp.model;
 
+import com.jgoodies.binding.beans.Model;
 import uk.co.rjsoftware.xmpp.client.CustomConnection;
 import org.jivesoftware.smack.SmackConfiguration;
 import org.jivesoftware.smack.XMPPException;
@@ -39,13 +40,11 @@ import org.jivesoftware.smackx.muc.MultiUserChat;
 import org.jivesoftware.smackx.packet.DelayInfo;
 
 import javax.swing.*;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class Room implements Comparable<Room>, ChatTarget {
+public class Room extends Model implements Comparable<Room>, ChatTarget {
 
     private final String roomId;
     private final String name;
@@ -53,8 +52,6 @@ public class Room implements Comparable<Room>, ChatTarget {
     private MultiUserChat chat;
     private CustomMessageListModel customMessageListModel = new CustomMessageListModel();
     private Thread messageReceivingThread;
-
-    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     public Room(final String roomId, final String name) {
         this.roomId = roomId;
@@ -80,9 +77,12 @@ public class Room implements Comparable<Room>, ChatTarget {
     }
 
     private void setSubject(final String subject) {
-        String oldValue = this.getTitle();
+        final String oldValue = this.getTitle();
         this.subject = subject;
-        this.pcs.firePropertyChange("title", oldValue, this.getTitle());
+        final String newValue = this.getTitle();
+        if (!oldValue.equals(newValue)) {
+            firePropertyChange(ChatTarget.TITLE_PROPERTY_NAME, oldValue, newValue);
+        }
     }
 
     @Override
@@ -233,16 +233,6 @@ public class Room implements Comparable<Room>, ChatTarget {
     @Override
     public CustomMessageListModel getCustomMessageListModel() {
         return this.customMessageListModel;
-    }
-
-    @Override
-    public void addTitleListener(PropertyChangeListener listener) {
-        this.pcs.addPropertyChangeListener(listener);
-    }
-
-    @Override
-    public void removeTitleListener(PropertyChangeListener listener) {
-        this.pcs.removePropertyChangeListener(listener);
     }
 
 }

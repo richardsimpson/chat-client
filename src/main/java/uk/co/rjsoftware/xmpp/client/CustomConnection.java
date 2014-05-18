@@ -29,6 +29,9 @@
  */
 package uk.co.rjsoftware.xmpp.client;
 
+import com.jgoodies.binding.beans.Model;
+import uk.co.rjsoftware.xmpp.model.ChatTarget;
+import uk.co.rjsoftware.xmpp.model.CustomMessageListModel;
 import uk.co.rjsoftware.xmpp.model.CustomPresence;
 import uk.co.rjsoftware.xmpp.model.Room;
 import uk.co.rjsoftware.xmpp.model.RoomListModel;
@@ -46,6 +49,8 @@ import org.jivesoftware.smackx.Form;
 import org.jivesoftware.smackx.muc.HostedRoom;
 import org.jivesoftware.smackx.muc.MultiUserChat;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -53,7 +58,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
-public class CustomConnection {
+public class CustomConnection extends Model {
+
+    public static final String ROOM_LIST_MODEL_PROPERTY_NAME = "roomListModel";
+    public static final String USER_LIST_MODEL_PROPERTY_NAME = "userListModel";
+    public static final String CURRENT_CHAT_TARGET_PROPERTY_NAME = "currentChatTarget";
+    public static final String CURRENT_CHAT_TARGET_TITLE_PROPERTY_NAME = "currentChatTargetTitle";
+    public static final String CURRENT_CHAT_TARGET_MESSAGES_LIST_PROPERTY_NAME = "currentChatTargetMessagesList";
 
     private final Connection connection;
     private final Roster roster;
@@ -61,6 +72,9 @@ public class CustomConnection {
     private final RoomListModel roomListModel;
     private User currentUser;
     private final String hipChatClientPrefix;
+
+    private ChatTarget currentChatTarget;
+    private final TitlePropertyChangeListener titleListener = new TitlePropertyChangeListener();
 
     public CustomConnection(final String username, final String password) throws YaccException {
         // TODO: Put 'chat.hipchat.com' into config
@@ -157,8 +171,8 @@ public class CustomConnection {
     public void disconnect() {
         System.out.println("Disconnecting...");
         if (null != roomListModel) {
-            for (int index = 0 ; index < this.roomListModel.getSize() ; index++) {
-                this.roomListModel.getElementAt(index).cleanUp();
+            for (Room room : this.roomListModel) {
+                room.cleanUp();
             }
         }
 
@@ -205,4 +219,56 @@ public class CustomConnection {
     public User getCurrentUser() {
         return this.currentUser;
     }
+
+    public ChatTarget getCurrentChatTarget() {
+        return currentChatTarget;
+    }
+
+    public void setCurrentChatTarget(ChatTarget currentChatTarget) {
+        if (this.currentChatTarget != currentChatTarget) {
+
+            if (null != this.currentChatTarget) {
+                this.currentChatTarget.removePropertyChangeListener(ChatTarget.TITLE_PROPERTY_NAME, this.titleListener);
+            }
+
+            final ChatTarget oldChatTarget = this.currentChatTarget;
+            final String oldChatTitle = getCurrentChatTargetTitle();
+            final CustomMessageListModel oldMessageList = getCurrentChatTargetMessagesList();
+
+            this.currentChatTarget = currentChatTarget;
+
+            if (null != this.currentChatTarget) {
+                this.currentChatTarget.addPropertyChangeListener(ChatTarget.TITLE_PROPERTY_NAME, this.titleListener);
+            }
+
+            // TODO: Remove the need to fire all of these here - this doesn't seem right
+            firePropertyChange(CURRENT_CHAT_TARGET_PROPERTY_NAME, oldChatTarget, currentChatTarget);
+            firePropertyChange(CURRENT_CHAT_TARGET_TITLE_PROPERTY_NAME, oldChatTitle, currentChatTarget.getTitle());
+            firePropertyChange(CURRENT_CHAT_TARGET_MESSAGES_LIST_PROPERTY_NAME, oldMessageList, currentChatTarget.getCustomMessageListModel());
+        }
+    }
+
+    private class TitlePropertyChangeListener implements PropertyChangeListener {
+        @Override
+        public void propertyChange(PropertyChangeEvent event) {
+            firePropertyChange(CURRENT_CHAT_TARGET_TITLE_PROPERTY_NAME, event.getOldValue(), event.getNewValue());
+        }
+    }
+
+    public String getCurrentChatTargetTitle() {
+        if (null == currentChatTarget) {
+            return null;
+        }
+
+        return currentChatTarget.getTitle();
+    }
+
+    public CustomMessageListModel getCurrentChatTargetMessagesList() {
+        if (null == currentChatTarget) {
+            return null;
+        }
+
+        return currentChatTarget.getCustomMessageListModel();
+    }
+
 }

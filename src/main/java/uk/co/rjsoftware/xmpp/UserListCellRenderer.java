@@ -30,7 +30,6 @@
 package uk.co.rjsoftware.xmpp;
 
 import uk.co.rjsoftware.xmpp.model.User;
-import uk.co.rjsoftware.xmpp.model.UserStatus;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -75,17 +74,7 @@ public class UserListCellRenderer implements ListCellRenderer<User> {
     public Component getListCellRendererComponent(JList<? extends User> list, User user, int index, boolean isSelected, boolean cellHasFocus) {
         this.usernameLabel.setText(user.getName());
 
-        UserStatus highestStatus = null;
-
-        for (UserStatus status : user.getStatuses().values()) {
-            if (null==highestStatus) {
-                highestStatus = status;
-            }
-            else if (status.getPriority() < highestStatus.getPriority()) {
-                highestStatus = status;
-            }
-        }
-        this.statusLabel.setIcon(highestStatus.getImageIcon());
+        this.statusLabel.setIcon(user.getHighestStatus().getImageIcon());
 
         if (isSelected) {
             this.mainPanel.setBackground(list.getSelectionBackground());

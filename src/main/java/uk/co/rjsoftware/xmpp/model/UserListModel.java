@@ -29,34 +29,19 @@
  */
 package uk.co.rjsoftware.xmpp.model;
 
-import javax.swing.AbstractListModel;
-import java.util.ArrayList;
+import com.jgoodies.common.collect.ArrayListModel;
+
 import java.util.List;
 
-public class UserListModel extends AbstractListModel<User> {
-
-    private final List<User> users = new ArrayList<User>();
+public class UserListModel extends ArrayListModel<User> {
 
     public UserListModel(final List<User> users) {
-        this.users.addAll(users);
-    }
-
-    public void add(final User user) {
-        this.users.add(user);
-        fireIntervalAdded(this, this.users.size()-1, this.users.size()-1);
-    }
-
-    public void remove(final User user) {
-        final int index = this.users.indexOf(user);
-        if (index != -1) {
-            this.users.remove(index);
-            fireIntervalRemoved(this, index, index);
-        }
+        super(users);
     }
 
     private int indexOf(final String userId) {
-        for (int index = 0 ; index < this.users.size() ; index++) {
-            if (this.users.get(index).getUserId().equals(userId)) {
+        for (int index = 0 ; index < size() ; index++) {
+            if (get(index).getUserId().equals(userId)) {
                 return index;
             }
         }
@@ -68,19 +53,9 @@ public class UserListModel extends AbstractListModel<User> {
         final int index = indexOf(userId);
 
         if (index != -1) {
-            this.users.get(index).setStatus(resource, userStatus);
-            fireContentsChanged(this, index, index);
+            get(index).setStatus(resource, userStatus);
+            fireContentsChanged(index);
         }
-    }
-
-    @Override
-    public int getSize() {
-        return this.users.size();
-    }
-
-    @Override
-    public User getElementAt(int index) {
-        return this.users.get(index);
     }
 
 }

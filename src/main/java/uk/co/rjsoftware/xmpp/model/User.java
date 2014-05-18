@@ -29,21 +29,22 @@
  */
 package uk.co.rjsoftware.xmpp.model;
 
+import com.jgoodies.binding.beans.Model;
 import uk.co.rjsoftware.xmpp.client.CustomConnection;
 import org.jivesoftware.smack.Chat;
 import org.jivesoftware.smack.MessageListener;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Message;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 
-public class User implements Comparable<User>, ChatTarget {
+public class User extends Model implements Comparable<User>, ChatTarget {
+
+    public static final String HIGHEST_STATUS_PROPERTY_NAME = "highestStatus";
 
     private final String userId;
     private final String name;
@@ -53,12 +54,9 @@ public class User implements Comparable<User>, ChatTarget {
     private CustomMessageListModel customMessageListModel = new CustomMessageListModel();
     private CustomConnection customConnection;
 
-    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
-
     public User(final String userId, final String name) {
         this.userId = userId;
         this.name = name;
-        this.statuses.put("", UserStatus.UNAVAILABLE);
     }
 
     public String getUserId() {
@@ -75,7 +73,34 @@ public class User implements Comparable<User>, ChatTarget {
     }
 
     public void setStatus(final String resource, final UserStatus status) {
-        this.statuses.put(resource, status);
+        final UserStatus oldValue = this.statuses.get(resource);
+        if (oldValue != status) {
+            final UserStatus oldHighestStatus = getHighestStatus();
+            this.statuses.put(resource, status);
+            final UserStatus newHighestStatus = getHighestStatus();
+            if (oldHighestStatus != newHighestStatus) {
+                firePropertyChange(HIGHEST_STATUS_PROPERTY_NAME, oldValue, status);
+            }
+        }
+    }
+
+    public UserStatus getHighestStatus() {
+        UserStatus highestStatus = null;
+
+        for (UserStatus status : this.statuses.values()) {
+            if (null==highestStatus) {
+                highestStatus = status;
+            }
+            else if (status.getPriority() < highestStatus.getPriority()) {
+                highestStatus = status;
+            }
+        }
+
+        if (null == highestStatus) {
+            return UserStatus.UNAVAILABLE;
+        }
+
+        return highestStatus;
     }
 
     public Map<String, UserStatus> getStatuses() {
@@ -187,13 +212,4 @@ public class User implements Comparable<User>, ChatTarget {
         return this.customMessageListModel;
     }
 
-    @Override
-    public void addTitleListener(PropertyChangeListener listener) {
-        this.pcs.addPropertyChangeListener(listener);
-    }
-
-    @Override
-    public void removeTitleListener(PropertyChangeListener listener) {
-        this.pcs.removePropertyChangeListener(listener);
-    }
 }

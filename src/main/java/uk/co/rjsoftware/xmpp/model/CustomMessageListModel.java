@@ -29,43 +29,10 @@
  */
 package uk.co.rjsoftware.xmpp.model;
 
+import com.jgoodies.common.collect.ArrayListModel;
+
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 
-public class CustomMessageListModel extends AbstractListModel {
-
-    private final List<CustomMessage> customMessages = new ArrayList<CustomMessage>();
-
-    public void add(final CustomMessage message) {
-        synchronized (this.customMessages) {
-            this.customMessages.add(message);
-            fireIntervalAdded(this, this.customMessages.size()-1, this.customMessages.size()-1);
-        }
-    }
-
-    public void remove(final CustomMessage message) {
-        synchronized (this.customMessages) {
-            final int index = this.customMessages.indexOf(message);
-            if (index != -1) {
-                this.customMessages.remove(index);
-                fireIntervalRemoved(this, index, index);
-            }
-        }
-    }
-
-    @Override
-    public int getSize() {
-        synchronized (this.customMessages) {
-            return this.customMessages.size();
-        }
-    }
-
-    @Override
-    public Object getElementAt(int index) {
-        synchronized (this.customMessages) {
-            return this.customMessages.get(index);
-        }
-    }
+public class CustomMessageListModel extends ArrayListModel<CustomMessage> {
 
 }

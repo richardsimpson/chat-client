@@ -29,39 +29,17 @@
  */
 package uk.co.rjsoftware.xmpp.model;
 
-import javax.swing.AbstractListModel;
+import com.jgoodies.common.collect.ArrayListModel;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class RoomListModel extends AbstractListModel<Room> {
+public class RoomListModel extends ArrayListModel<Room> {
 
     private final List<Room> rooms = new ArrayList<Room>();
 
     public RoomListModel(final List<Room> rooms) {
-        this.rooms.addAll(rooms);
-    }
-
-    public void add(final Room room) {
-        this.rooms.add(room);
-        fireIntervalAdded(this, this.rooms.size()-1, this.rooms.size()-1);
-    }
-
-    public void remove(final Room room) {
-        final int index = this.rooms.indexOf(room);
-        if (index != -1) {
-            this.rooms.remove(index);
-            fireIntervalRemoved(this, index, index);
-        }
-    }
-
-    @Override
-    public int getSize() {
-        return this.rooms.size();
-    }
-
-    @Override
-    public Room getElementAt(int index) {
-        return this.rooms.get(index);
+        super(rooms);
     }
 
 }
