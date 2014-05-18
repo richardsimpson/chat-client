@@ -90,14 +90,12 @@ public class MainForm extends JFrame {
         //Add the list of rooms.
         this.roomList = new JList<Room>(connection.getRoomListModel());
         this.roomListScrollPane = new JScrollPane(roomList);
-        //pane.add(this.roomListScrollPane, BorderLayout.LINE_START);
         this.chatSourceTabs.addTab("Rooms", this.roomListScrollPane);
 
         //Add the list of users.
         this.userList = new JList<User>(connection.getUserListModel());
         this.userList.setCellRenderer(new UserListCellRenderer());
         this.userListScrollPane = new JScrollPane(userList);
-        //pane.add(this.userListScrollPane, BorderLayout.LINE_END);
         this.chatSourceTabs.addTab("Users", this.userListScrollPane);
 
         pane.add(this.chatSourceTabs, BorderLayout.LINE_START);
