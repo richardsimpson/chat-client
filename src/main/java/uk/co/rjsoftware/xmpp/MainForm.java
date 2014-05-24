@@ -35,6 +35,7 @@ import com.jgoodies.binding.beans.BeanAdapter;
 import com.jgoodies.binding.list.SelectionInList;
 import com.jgoodies.binding.value.ValueModel;
 import uk.co.rjsoftware.xmpp.client.CustomConnection;
+import uk.co.rjsoftware.xmpp.model.ChatTarget;
 import uk.co.rjsoftware.xmpp.model.CustomMessage;
 import uk.co.rjsoftware.xmpp.model.LogoutListener;
 import uk.co.rjsoftware.xmpp.model.Room;
@@ -63,6 +64,8 @@ public class MainForm extends JFrame {
     private final JScrollPane roomListScrollPane;
     private final JList<User> userList;
     private final JScrollPane userListScrollPane;
+    private final JList<User> chatList;
+    private final JScrollPane chatListScrollPane;
 
     private final JPanel chatPanel;
 
@@ -106,6 +109,12 @@ public class MainForm extends JFrame {
         this.userList = BasicComponentFactory.createList(new SelectionInList<Object>(userListModel), new UserListCellRenderer(0));
         this.userListScrollPane = new JScrollPane(userList);
         this.chatSourceTabs.addTab("Users", this.userListScrollPane);
+
+        //Add the list of recent chats.
+        final ValueModel chatListModel = adapter.getValueModel(CustomConnection.CHAT_LIST_MODEL_PROPERTY_NAME);
+        this.chatList = BasicComponentFactory.createList(new SelectionInList(chatListModel));
+        this.chatListScrollPane = new JScrollPane(chatList);
+        this.chatSourceTabs.addTab("Recent", this.chatListScrollPane);
 
         pane.add(this.chatSourceTabs, BorderLayout.LINE_START);
 
@@ -174,8 +183,12 @@ public class MainForm extends JFrame {
             public void mouseClicked(MouseEvent event) {
                 if (event.getClickCount() == 2) {
                     // update the chat target
-                    connection.setCurrentChatTarget(MainForm.this.roomList.getSelectedValue());
+                    final ChatTarget chatTarget = MainForm.this.roomList.getSelectedValue();
+                    connection.setCurrentChatTarget(chatTarget);
                     connection.getCurrentChatTarget().join(connection);
+                    MainForm.this.chatList.setSelectedValue(chatTarget, true);
+                    // switch to the 'recent' tab
+                    MainForm.this.chatSourceTabs.setSelectedIndex(2);
                 }
             }
         });
@@ -185,9 +198,22 @@ public class MainForm extends JFrame {
             public void mouseClicked(MouseEvent event) {
                 if (event.getClickCount() == 2) {
                     // update the chat target
-                    connection.setCurrentChatTarget(MainForm.this.userList.getSelectedValue());
+                    final ChatTarget chatTarget = MainForm.this.userList.getSelectedValue();
+                    connection.setCurrentChatTarget(chatTarget);
                     connection.getCurrentChatTarget().join(connection);
+                    MainForm.this.chatList.setSelectedValue(chatTarget, true);
+                    // switch to the 'recent' tab
+                    MainForm.this.chatSourceTabs.setSelectedIndex(2);
                 }
+            }
+        });
+
+        this.chatList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent event) {
+                // update the chat target
+                connection.setCurrentChatTarget(MainForm.this.chatList.getSelectedValue());
+                connection.getCurrentChatTarget().join(connection);
             }
         });
 

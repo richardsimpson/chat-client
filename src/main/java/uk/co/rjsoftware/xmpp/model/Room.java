@@ -114,7 +114,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
         this.customConnection = customConnection;
 
         if (this.chat == null) {
-            this.chat = customConnection.joinRoom(this.roomId);
+            this.chat = customConnection.joinRoom(this);
             try {
                 final String password = "";
                 DiscussionHistory history = new DiscussionHistory();
@@ -289,6 +289,8 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
             // TODO: Test ParticipantStatusListener.left
             System.out.println("participant left: " + participant);
             final Occupant occupant = this.room.chat.getOccupant(participant);
+            // this fails (NPE), because the occupant is null, since the participant has already left.
+            // participant = roomName@conf.hipchat.com/nickname
             final User user = this.room.customConnection.getUserListModel().get(StringUtils.parseBareAddress(occupant.getJid()));
             this.room.occupantsModel.add(user);
             this.room.participantMap.remove(participant);

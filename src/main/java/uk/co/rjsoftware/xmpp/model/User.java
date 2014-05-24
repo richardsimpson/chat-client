@@ -38,7 +38,6 @@ import org.jivesoftware.smack.packet.Message;
 
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 
@@ -110,28 +109,33 @@ public class User extends Model implements Comparable<User>, ChatTarget {
         return this.statuses;
     }
 
+//    @Override
+//    public String toString() {
+//        String result = this.name + " (";
+//        final Iterator<Map.Entry<String, UserStatus>> iterator = this.statuses.entrySet().iterator();
+//
+//        while (iterator.hasNext()) {
+//            final Map.Entry<String, UserStatus> entry = iterator.next();
+//            final String resource;
+//            if (entry.getKey().equals("")) {
+//                resource = "default";
+//            }
+//            else {
+//                resource = entry.getKey();
+//            }
+//            result = result + resource + ":" + entry.getValue().getDescription();
+//            if (iterator.hasNext()) {
+//                result = result + ", ";
+//            }
+//        }
+//
+//        result = result + ")";
+//        return result;
+//    }
+
     @Override
     public String toString() {
-        String result = this.name + " (";
-        final Iterator<Map.Entry<String, UserStatus>> iterator = this.statuses.entrySet().iterator();
-
-        while (iterator.hasNext()) {
-            final Map.Entry<String, UserStatus> entry = iterator.next();
-            final String resource;
-            if (entry.getKey().equals("")) {
-                resource = "default";
-            }
-            else {
-                resource = entry.getKey();
-            }
-            result = result + resource + ":" + entry.getValue().getDescription();
-            if (iterator.hasNext()) {
-                result = result + ", ";
-            }
-        }
-
-        result = result + ")";
-        return result;
+        return this.name;
     }
 
     @Override
@@ -143,7 +147,7 @@ public class User extends Model implements Comparable<User>, ChatTarget {
     public void join(final CustomConnection customConnection) {
         if (this.chat == null) {
             this.customConnection = customConnection;
-            this.chat = customConnection.createChat(this.userId);
+            this.chat = customConnection.createChat(this);
             this.chat.addMessageListener(new UserMessageListener(this.name, this.customMessageListModel));
         }
     }

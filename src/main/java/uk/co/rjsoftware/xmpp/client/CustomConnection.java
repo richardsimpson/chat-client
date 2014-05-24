@@ -31,6 +31,7 @@ package uk.co.rjsoftware.xmpp.client;
 
 import com.jgoodies.binding.beans.Model;
 import uk.co.rjsoftware.xmpp.model.ChatTarget;
+import uk.co.rjsoftware.xmpp.model.ChatListModel;
 import uk.co.rjsoftware.xmpp.model.CustomMessageListModel;
 import uk.co.rjsoftware.xmpp.model.CustomPresence;
 import uk.co.rjsoftware.xmpp.model.Room;
@@ -45,7 +46,6 @@ import org.jivesoftware.smack.RosterEntry;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Presence;
-import org.jivesoftware.smackx.Form;
 import org.jivesoftware.smackx.muc.HostedRoom;
 import org.jivesoftware.smackx.muc.MultiUserChat;
 
@@ -56,12 +56,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 
 public class CustomConnection extends Model {
 
-    public static final String ROOM_LIST_MODEL_PROPERTY_NAME = "roomListModel";
     public static final String USER_LIST_MODEL_PROPERTY_NAME = "userListModel";
+    public static final String ROOM_LIST_MODEL_PROPERTY_NAME = "roomListModel";
+    public static final String CHAT_LIST_MODEL_PROPERTY_NAME = "chatListModel";
     public static final String CURRENT_CHAT_TARGET_PROPERTY_NAME = "currentChatTarget";
     public static final String CURRENT_CHAT_TARGET_TITLE_PROPERTY_NAME = "currentChatTargetTitle";
     public static final String CURRENT_CHAT_TARGET_MESSAGES_LIST_PROPERTY_NAME = "currentChatTargetMessagesList";
@@ -71,6 +71,7 @@ public class CustomConnection extends Model {
     private final Roster roster;
     private final UserListModel userListModel;
     private final RoomListModel roomListModel;
+    private final ChatListModel chatListModel = new ChatListModel();
     private User currentUser;
     private final String hipChatClientPrefix;
 
@@ -189,32 +190,38 @@ public class CustomConnection extends Model {
         return this.roomListModel;
     }
 
+    public ChatListModel getChatListModel() {
+        return this.chatListModel;
+    }
+
     // TODO: Stop leaking Smack classes to the rest of the application
-    public MultiUserChat joinRoom(final String roomId) {
-        return new MultiUserChat(this.connection, roomId);
+    public MultiUserChat joinRoom(final Room room) {
+        this.chatListModel.add(room);
+        return new MultiUserChat(this.connection, room.getRoomId());
     }
 
-    public MultiUserChat createInstantRoom(final String name) {
-        String roomId = name.replaceAll("[&<>@]", "");
-        roomId = roomId.replaceAll(" ", "_");
-        roomId = this.hipChatClientPrefix + "_" + roomId.toLowerCase(Locale.getDefault()) + "@conf.hipchat.com";
+//    public MultiUserChat createInstantRoom(final String name) {
+//        String roomId = name.replaceAll("[&<>@]", "");
+//        roomId = roomId.replaceAll(" ", "_");
+//        roomId = this.hipChatClientPrefix + "_" + roomId.toLowerCase(Locale.getDefault()) + "@conf.hipchat.com";
+//
+//        final MultiUserChat multiUserChat = joinRoom(roomId);
+//        try {
+//            multiUserChat.create(this.currentUser.getName());
+//            // Send an empty room configuration form which indicates that we want
+//            // an instant room
+//            multiUserChat.sendConfigurationForm(new Form(Form.TYPE_SUBMIT));
+//        }
+//        catch (XMPPException exception) {
+//            throw new RuntimeException(exception);
+//        }
+//
+//        return multiUserChat;
+//    }
 
-        final MultiUserChat multiUserChat = joinRoom(roomId);
-        try {
-            multiUserChat.create(this.currentUser.getName());
-            // Send an empty room configuration form which indicates that we want
-            // an instant room
-            multiUserChat.sendConfigurationForm(new Form(Form.TYPE_SUBMIT));
-        }
-        catch (XMPPException exception) {
-            throw new RuntimeException(exception);
-        }
-
-        return multiUserChat;
-    }
-
-    public Chat createChat(final String userId) {
-        return this.connection.getChatManager().createChat(userId, null);
+    public Chat createChat(final User user) {
+        this.chatListModel.add(user);
+        return this.connection.getChatManager().createChat(user.getUserId(), null);
     }
 
     public User getCurrentUser() {

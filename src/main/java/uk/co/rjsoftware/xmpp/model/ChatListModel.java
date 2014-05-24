@@ -31,12 +31,6 @@ package uk.co.rjsoftware.xmpp.model;
 
 import com.jgoodies.common.collect.ArrayListModel;
 
-import java.util.List;
-
-public class RoomListModel extends ArrayListModel<Room> {
-
-    public RoomListModel(final List<Room> rooms) {
-        super(rooms);
-    }
+public class ChatListModel extends ArrayListModel<ChatTarget> {
 
 }
