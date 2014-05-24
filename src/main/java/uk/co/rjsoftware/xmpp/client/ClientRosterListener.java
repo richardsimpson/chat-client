@@ -48,19 +48,19 @@ public class ClientRosterListener implements RosterListener {
     @Override
     public void entriesAdded(Collection<String> addresses) {
         // TODO: Handle entriesAdded
-        System.out.println("Roster Entry Added: " + addresses);
+        System.out.println("ClientRosterListener: Roster Entry Added: " + addresses);
     }
 
     @Override
     public void entriesUpdated(Collection<String> addresses) {
         // TODO: Handle entriesUpdated
-        System.out.println("Roster Entry Updated: " + addresses);
+        System.out.println("ClientRosterListener: Roster Entry Updated: " + addresses);
     }
 
     @Override
     public void entriesDeleted(Collection<String> addresses) {
         // TODO: Handle entriesDeleted
-        System.out.println("Roster Entry Deleted: " + addresses);
+        System.out.println("ClientRosterListener: Roster Entry Deleted: " + addresses);
     }
 
     @Override
@@ -70,6 +70,6 @@ public class ClientRosterListener implements RosterListener {
         final String resource = customPresence.getResource();
 
         this.userListModel.updateUserStatus(userId, resource, UserStatus.fromPresence(customPresence));
-        System.out.println("Roster Entry Presence Changed: " + presence.getFrom() + ": " + presence.toString());
+        System.out.println("ClientRosterListener: Roster Entry Presence Changed: " + presence.getFrom() + ": " + presence.toString());
     }
 }

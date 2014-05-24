@@ -48,6 +48,8 @@ public class User extends Model implements Comparable<User>, ChatTarget {
 
     private final String userId;
     private final String name;
+    private final UserListModel occupantsModel = new UserListModel();
+
     private Map<String, UserStatus> statuses = new HashMap<String, UserStatus>();
 
     private Chat chat;
@@ -57,6 +59,7 @@ public class User extends Model implements Comparable<User>, ChatTarget {
     public User(final String userId, final String name) {
         this.userId = userId;
         this.name = name;
+        this.occupantsModel.add(this);
     }
 
     public String getUserId() {
@@ -210,6 +213,11 @@ public class User extends Model implements Comparable<User>, ChatTarget {
     @Override
     public CustomMessageListModel getCustomMessageListModel() {
         return this.customMessageListModel;
+    }
+
+    @Override
+    public UserListModel getOccupantsModel() {
+        return this.occupantsModel;
     }
 
 }

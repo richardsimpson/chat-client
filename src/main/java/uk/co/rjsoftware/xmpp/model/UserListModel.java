@@ -35,6 +35,10 @@ import java.util.List;
 
 public class UserListModel extends ArrayListModel<User> {
 
+    public UserListModel() {
+        super();
+    }
+
     public UserListModel(final List<User> users) {
         super(users);
     }
@@ -47,6 +51,14 @@ public class UserListModel extends ArrayListModel<User> {
         }
 
         return -1;
+    }
+
+    public User get(final String userId) {
+        final int index = indexOf(userId);
+        if (index == -1) {
+            return null;
+        }
+        return get(index);
     }
 
     public void updateUserStatus(final String userId, final String resource, final UserStatus userStatus) {

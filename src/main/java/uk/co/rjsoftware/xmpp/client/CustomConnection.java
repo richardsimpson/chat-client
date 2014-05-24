@@ -65,7 +65,8 @@ public class CustomConnection extends Model {
     public static final String CURRENT_CHAT_TARGET_PROPERTY_NAME = "currentChatTarget";
     public static final String CURRENT_CHAT_TARGET_TITLE_PROPERTY_NAME = "currentChatTargetTitle";
     public static final String CURRENT_CHAT_TARGET_MESSAGES_LIST_PROPERTY_NAME = "currentChatTargetMessagesList";
-
+    public static final String CURRENT_CHAT_TARGET_OCCUPANTS_PROPERTY_NAME = "currentChatTargetOccupants";
+    
     private final Connection connection;
     private final Roster roster;
     private final UserListModel userListModel;
@@ -234,6 +235,7 @@ public class CustomConnection extends Model {
             final ChatTarget oldChatTarget = this.currentChatTarget;
             final String oldChatTitle = getCurrentChatTargetTitle();
             final CustomMessageListModel oldMessageList = getCurrentChatTargetMessagesList();
+            final UserListModel oldOccupants = getCurrentChatTargetOccupants();
 
             this.currentChatTarget = currentChatTarget;
 
@@ -245,6 +247,7 @@ public class CustomConnection extends Model {
             firePropertyChange(CURRENT_CHAT_TARGET_PROPERTY_NAME, oldChatTarget, currentChatTarget);
             firePropertyChange(CURRENT_CHAT_TARGET_TITLE_PROPERTY_NAME, oldChatTitle, currentChatTarget.getTitle());
             firePropertyChange(CURRENT_CHAT_TARGET_MESSAGES_LIST_PROPERTY_NAME, oldMessageList, currentChatTarget.getCustomMessageListModel());
+            firePropertyChange(CURRENT_CHAT_TARGET_OCCUPANTS_PROPERTY_NAME, oldOccupants, currentChatTarget.getOccupantsModel());
         }
     }
 
@@ -271,4 +274,11 @@ public class CustomConnection extends Model {
         return currentChatTarget.getCustomMessageListModel();
     }
 
+    public UserListModel getCurrentChatTargetOccupants() {
+        if (null == currentChatTarget) {
+            return null;
+        }
+
+        return currentChatTarget.getOccupantsModel();
+    }
 }

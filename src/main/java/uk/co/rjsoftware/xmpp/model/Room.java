@@ -30,6 +30,10 @@
 package uk.co.rjsoftware.xmpp.model;
 
 import com.jgoodies.binding.beans.Model;
+import org.jivesoftware.smack.util.StringUtils;
+import org.jivesoftware.smackx.muc.DefaultParticipantStatusListener;
+import org.jivesoftware.smackx.muc.Occupant;
+import org.jivesoftware.smackx.muc.SubjectUpdatedListener;
 import uk.co.rjsoftware.xmpp.client.CustomConnection;
 import org.jivesoftware.smack.SmackConfiguration;
 import org.jivesoftware.smack.XMPPException;
@@ -41,13 +45,22 @@ import org.jivesoftware.smackx.packet.DelayInfo;
 
 import javax.swing.*;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class Room extends Model implements Comparable<Room>, ChatTarget {
 
+    private CustomConnection customConnection;
+
     private final String roomId;
     private final String name;
+    private final UserListModel occupantsModel = new UserListModel();
+    // the participantMap maps occupantJid's (room@chat.hipchat.com/nick) to user jids (nick@chat.hipchat.com)
+    // so that the occupants can be removed from the occupantModel when they leave.
+    private final Map<String, String> participantMap = new HashMap<String, String>();
     private String subject = "";
     private MultiUserChat chat;
     private CustomMessageListModel customMessageListModel = new CustomMessageListModel();
@@ -98,6 +111,8 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
     @Override
     // TODO: Display list of people in the room, together with connection status
     public void join(final CustomConnection customConnection) {
+        this.customConnection = customConnection;
+
         if (this.chat == null) {
             this.chat = customConnection.joinRoom(this.roomId);
             try {
@@ -110,6 +125,26 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
                 // create a separate thread that will fetch the chat history and all future messages for this room
                 this.messageReceivingThread = new Thread(new MessageReceiver(this.chat, this.customMessageListModel, this));
                 this.messageReceivingThread.start();
+
+                // Note: List of occupants is fine for public rooms, but for private rooms, would like to
+                // display all of the users who are allowed access, but who are not currently online.
+                final Iterator<String> occupants = this.chat.getOccupants();
+                while (occupants.hasNext()) {
+                    final String occupantJID = occupants.next();
+                    System.out.println("Occupant: " + occupantJID);
+                    final Occupant occupant = this.chat.getOccupant(occupantJID);
+                    System.out.println("User JID: " + occupant.getJid());
+
+                    final User user = customConnection.getUserListModel().get(StringUtils.parseBareAddress(occupant.getJid()));
+                    if (null != user) {
+                        this.occupantsModel.add(user);
+                        this.participantMap.put(occupantJID, StringUtils.parseBareAddress(occupant.getJid()));
+                    }
+                }
+
+                // add all the chat listeners
+                this.chat.addSubjectUpdatedListener(new SubjectUpdatedListenerImpl(this));
+                this.chat.addParticipantStatusListener(new ParticipantStatusListenerImpl(this));
 
             }
             catch (XMPPException exception) {
@@ -212,6 +247,54 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
         }
     }
 
+    private static class SubjectUpdatedListenerImpl implements SubjectUpdatedListener {
+
+        private final Room room;
+
+        public SubjectUpdatedListenerImpl(final Room room) {
+            this.room = room;
+        }
+
+        @Override
+        public void subjectUpdated(String subject, String from) {
+            room.setSubject(subject);
+            System.out.println("Room.SubjectUpdatedListener: subject: " + subject + ", from: " + from);
+        }
+    }
+
+    private static class ParticipantStatusListenerImpl extends DefaultParticipantStatusListener {
+
+        private final Room room;
+
+        public ParticipantStatusListenerImpl(final Room room) {
+            this.room = room;
+        }
+
+        @Override
+        public void joined(String participant) {
+            // TODO: Test ParticipantStatusListener.joined
+            final Occupant occupant = this.room.chat.getOccupant(participant);
+
+            System.out.println("participant jid: " + occupant.getJid());
+
+            final User user = this.room.customConnection.getUserListModel().get(StringUtils.parseBareAddress(occupant.getJid()));
+            if (null != user) {
+                this.room.occupantsModel.add(user);
+                this.room.participantMap.put(participant, StringUtils.parseBareAddress(occupant.getJid()));
+            }
+        }
+
+        @Override
+        public void left(String participant) {
+            // TODO: Test ParticipantStatusListener.left
+            System.out.println("participant left: " + participant);
+            final Occupant occupant = this.room.chat.getOccupant(participant);
+            final User user = this.room.customConnection.getUserListModel().get(StringUtils.parseBareAddress(occupant.getJid()));
+            this.room.occupantsModel.add(user);
+            this.room.participantMap.remove(participant);
+        }
+    }
+
     public void cleanUp() {
         if (this.messageReceivingThread != null) {
             this.messageReceivingThread.interrupt();
@@ -233,6 +316,11 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
     @Override
     public CustomMessageListModel getCustomMessageListModel() {
         return this.customMessageListModel;
+    }
+
+    @Override
+    public UserListModel getOccupantsModel() {
+        return this.occupantsModel;
     }
 
 }

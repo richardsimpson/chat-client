@@ -58,16 +58,22 @@ import java.util.ArrayList;
 public class MainForm extends JFrame {
 
     private final JTabbedPane chatSourceTabs;
+
     private final JList<Room> roomList;
     private final JScrollPane roomListScrollPane;
     private final JList<User> userList;
     private final JScrollPane userListScrollPane;
+
     private final JPanel chatPanel;
+
+    private final JPanel chatHeaderPanel;
+    private final JLabel chatTitleLabel;
+    private final JList chatOccupantsList;
+
     private final JList<CustomMessage> messageList;
     private final JScrollPane messageListScrollPane;
     private final JTextArea message;
 //    private final JButton newRoomButton;
-    private final JLabel chatTitle;
 
     private final java.util.List<LogoutListener> listeners = new ArrayList<LogoutListener>();
 
@@ -107,10 +113,22 @@ public class MainForm extends JFrame {
         this.chatPanel.setLayout(new BorderLayout());
         pane.add(this.chatPanel, BorderLayout.CENTER);
 
-        // add a label for the room / chat title
+        // create a panel for the chat header
+        this.chatHeaderPanel = new JPanel();
+        this.chatHeaderPanel.setLayout(new BorderLayout());
+        this.chatPanel.add(this.chatHeaderPanel, BorderLayout.PAGE_START);
+
+        // add a label for the room / chat title into the chat header.
         final ValueModel currentChatTargetTitleModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_TITLE_PROPERTY_NAME);
-        this.chatTitle = BasicComponentFactory.createLabel(currentChatTargetTitleModel);
-        this.chatPanel.add(this.chatTitle, BorderLayout.PAGE_START);
+        this.chatTitleLabel = BasicComponentFactory.createLabel(currentChatTargetTitleModel);
+        this.chatHeaderPanel.add(this.chatTitleLabel, BorderLayout.PAGE_START);
+
+        // add a list for the list of room occupants
+        // TODO: Make the occupant list look nicer
+        // TODO: Display a different view if in a private chat (as there will only be one user to display)
+        final ValueModel currentChatTargetOccupantsModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_OCCUPANTS_PROPERTY_NAME);
+        this.chatOccupantsList = BasicComponentFactory.createList(new SelectionInList(currentChatTargetOccupantsModel));
+        this.chatHeaderPanel.add(this.chatOccupantsList, BorderLayout.CENTER);
 
         //Add the message history window
         final ValueModel messagesListModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_MESSAGES_LIST_PROPERTY_NAME);
