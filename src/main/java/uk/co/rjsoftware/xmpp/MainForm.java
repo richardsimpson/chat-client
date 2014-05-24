@@ -125,7 +125,7 @@ public class MainForm extends JFrame {
         this.chatHeaderPanel.add(this.chatTitleLabel, BorderLayout.PAGE_START);
 
         // add a list for the list of room occupants
-        // TODO: Make the occupant list look nicer
+        // TODO: Stop the horizontal scroll bar from hiding the bottom column entries
         // TODO: Display a different view if in a private chat (as there will only be one user to display)
         final ValueModel currentChatTargetOccupantsModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_OCCUPANTS_PROPERTY_NAME);
         this.chatOccupantsList = BasicComponentFactory.createList(new SelectionInList(currentChatTargetOccupantsModel), new UserListCellRenderer(20));
