@@ -69,6 +69,7 @@ public class MainForm extends JFrame {
     private final JPanel chatHeaderPanel;
     private final JLabel chatTitleLabel;
     private final JList chatOccupantsList;
+    private final JScrollPane chatOccupantsScrollPane;
 
     private final JList<CustomMessage> messageList;
     private final JScrollPane messageListScrollPane;
@@ -102,7 +103,7 @@ public class MainForm extends JFrame {
 
         //Add the list of users.
         final ValueModel userListModel = adapter.getValueModel(CustomConnection.USER_LIST_MODEL_PROPERTY_NAME);
-        this.userList = BasicComponentFactory.createList(new SelectionInList<Object>(userListModel), new UserListCellRenderer());
+        this.userList = BasicComponentFactory.createList(new SelectionInList<Object>(userListModel), new UserListCellRenderer(0));
         this.userListScrollPane = new JScrollPane(userList);
         this.chatSourceTabs.addTab("Users", this.userListScrollPane);
 
@@ -127,8 +128,13 @@ public class MainForm extends JFrame {
         // TODO: Make the occupant list look nicer
         // TODO: Display a different view if in a private chat (as there will only be one user to display)
         final ValueModel currentChatTargetOccupantsModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_OCCUPANTS_PROPERTY_NAME);
-        this.chatOccupantsList = BasicComponentFactory.createList(new SelectionInList(currentChatTargetOccupantsModel));
-        this.chatHeaderPanel.add(this.chatOccupantsList, BorderLayout.CENTER);
+        this.chatOccupantsList = BasicComponentFactory.createList(new SelectionInList(currentChatTargetOccupantsModel), new UserListCellRenderer(20));
+        this.chatOccupantsList.setLayoutOrientation(JList.VERTICAL_WRAP);
+        this.chatOccupantsList.setVisibleRowCount(4);
+        this.chatOccupantsScrollPane = new JScrollPane(this.chatOccupantsList);
+        this.chatOccupantsScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        this.chatHeaderPanel.add(this.chatOccupantsScrollPane, BorderLayout.CENTER);
+
 
         //Add the message history window
         final ValueModel messagesListModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_MESSAGES_LIST_PROPERTY_NAME);

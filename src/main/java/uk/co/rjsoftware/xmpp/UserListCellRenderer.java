@@ -45,7 +45,9 @@ public class UserListCellRenderer implements ListCellRenderer<User> {
     private JPanel usernamePanel;
     private JLabel usernameLabel;
 
-    public UserListCellRenderer() {
+    // rightBorder is a hack to provide a gap between columns when this renderer is used to display the list
+    // of users within a room.
+    public UserListCellRenderer(final int rightBorder) {
         this.mainPanel = new JPanel();
         this.mainPanel.setLayout(new BorderLayout());
 
@@ -62,8 +64,7 @@ public class UserListCellRenderer implements ListCellRenderer<User> {
         // username
         this.usernamePanel = new JPanel(new BorderLayout());
         this.usernamePanel.setOpaque(false);
-        // setting the border top to be 2 less, so it appears at the same height as the other columns :(
-        //this.usernamePanel.setBorder(new EmptyBorder(USERNAME_BORDER_TOP - 2, 0, 0, 15));
+        this.usernamePanel.setBorder(new EmptyBorder(0, 0, 0, rightBorder));
         this.usernameLabel = new JLabel();
         this.usernamePanel.add(this.usernameLabel, BorderLayout.CENTER);
         this.mainPanel.add(this.usernamePanel, BorderLayout.CENTER);
