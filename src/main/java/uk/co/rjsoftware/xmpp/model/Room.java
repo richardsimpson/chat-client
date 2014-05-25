@@ -58,9 +58,9 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
     private final String roomId;
     private final String name;
     private final UserListModel occupantsModel = new UserListModel();
-    // the participantMap maps occupantJid's (room@chat.hipchat.com/nick) to user jids (nick@chat.hipchat.com)
-    // so that the occupants can be removed from the occupantModel when they leave.
-    private final Map<String, String> participantMap = new HashMap<String, String>();
+    // the participantMap maps occupantJid's (room@chat.hipchat.com/nick) to users
+    // so that the occupants can be removed from the occupantsModel when they leave.
+    private final Map<String, User> participantMap = new HashMap<String, User>();
     private String subject = "";
     private MultiUserChat chat;
     private CustomMessageListModel customMessageListModel = new CustomMessageListModel();
@@ -138,7 +138,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
                     final User user = customConnection.getUserListModel().get(StringUtils.parseBareAddress(occupant.getJid()));
                     if (null != user) {
                         this.occupantsModel.add(user);
-                        this.participantMap.put(occupantJID, StringUtils.parseBareAddress(occupant.getJid()));
+                        this.participantMap.put(occupantJID, user);
                     }
                 }
 
@@ -272,7 +272,6 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
 
         @Override
         public void joined(String participant) {
-            // TODO: Test ParticipantStatusListener.joined
             final Occupant occupant = this.room.chat.getOccupant(participant);
 
             System.out.println("participant jid: " + occupant.getJid());
@@ -280,20 +279,19 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
             final User user = this.room.customConnection.getUserListModel().get(StringUtils.parseBareAddress(occupant.getJid()));
             if (null != user) {
                 this.room.occupantsModel.add(user);
-                this.room.participantMap.put(participant, StringUtils.parseBareAddress(occupant.getJid()));
+                this.room.participantMap.put(participant, user);
             }
         }
 
         @Override
         public void left(String participant) {
-            // TODO: Test ParticipantStatusListener.left
             System.out.println("participant left: " + participant);
-            final Occupant occupant = this.room.chat.getOccupant(participant);
-            // this fails (NPE), because the occupant is null, since the participant has already left.
-            // participant = roomName@conf.hipchat.com/nickname
-            final User user = this.room.customConnection.getUserListModel().get(StringUtils.parseBareAddress(occupant.getJid()));
-            this.room.occupantsModel.add(user);
-            this.room.participantMap.remove(participant);
+
+            final User user = this.room.participantMap.get(participant);
+            if (null != user) {
+                this.room.occupantsModel.remove(user);
+                this.room.participantMap.remove(participant);
+            }
         }
     }
 
