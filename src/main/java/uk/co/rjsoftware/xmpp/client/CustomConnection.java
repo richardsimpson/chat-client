@@ -193,6 +193,7 @@ public class CustomConnection extends Model {
                         // don't 'join an existing chat' for rooms, so that we get the chat history.
                         // once we start caching the chat history locally, perhaps we can optimise this
                         // by implementing joinExistingChat on the Room class (and ChatTarget interface)
+                        // TODO: Fix: Incomming chats for rooms don't seem to include current user in the occupants list
                         room.join(CustomConnection.this);
                     }
                 }
