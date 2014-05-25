@@ -109,7 +109,6 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
     }
 
     @Override
-    // TODO: Display list of people in the room, together with connection status
     public void join(final CustomConnection customConnection) {
         this.customConnection = customConnection;
 
