@@ -73,6 +73,9 @@ public final class Main {
 //
 //    }
 //
+
+    // TODO: Bug Fix: If logout, then close the login form, the app doesn't terminate.  It does if close login form without logging in.
+
     private void createAndShowLoginForm() {
         this.loginForm = new LoginForm("Login");
         this.loginForm.addLoginListener(new LoginListener() {
