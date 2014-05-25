@@ -152,6 +152,14 @@ public class User extends Model implements Comparable<User>, ChatTarget {
         }
     }
 
+    public void joinExistingChat(final CustomConnection customConnection, final Chat chat) {
+        if (this.chat == null) {
+            this.customConnection = customConnection;
+            this.chat = chat;
+            this.chat.addMessageListener(new UserMessageListener(this.name, this.customMessageListModel));
+        }
+    }
+
     private static class UserMessageListener implements MessageListener {
 
         private final String senderName;

@@ -39,4 +39,22 @@ public class RoomListModel extends ArrayListModel<Room> {
         super(rooms);
     }
 
+    private int indexOf(final String roomId) {
+        for (int index = 0 ; index < size() ; index++) {
+            if (get(index).getRoomId().equals(roomId)) {
+                return index;
+            }
+        }
+
+        return -1;
+    }
+
+    public Room get(final String roomId) {
+        final int index = indexOf(roomId);
+        if (index == -1) {
+            return null;
+        }
+        return get(index);
+    }
+
 }

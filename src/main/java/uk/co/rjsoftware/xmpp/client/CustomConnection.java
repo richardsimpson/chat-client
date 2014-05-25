@@ -30,6 +30,7 @@
 package uk.co.rjsoftware.xmpp.client;
 
 import com.jgoodies.binding.beans.Model;
+import org.jivesoftware.smack.util.StringUtils;
 import uk.co.rjsoftware.xmpp.model.ChatTarget;
 import uk.co.rjsoftware.xmpp.model.ChatListModel;
 import uk.co.rjsoftware.xmpp.model.CustomMessageListModel;
@@ -40,6 +41,7 @@ import uk.co.rjsoftware.xmpp.model.User;
 import uk.co.rjsoftware.xmpp.model.UserListModel;
 import uk.co.rjsoftware.xmpp.model.UserStatus;
 import org.jivesoftware.smack.Chat;
+import org.jivesoftware.smack.ChatManagerListener;
 import org.jivesoftware.smack.Connection;
 import org.jivesoftware.smack.Roster;
 import org.jivesoftware.smack.RosterEntry;
@@ -168,6 +170,34 @@ public class CustomConnection extends Model {
         // TODO: Create a SortedListModel to decorate the RoomListModel with sorting instead (see http://www.oracle.com/technetwork/articles/javase/sorted-jlist-136883.html)
         Collections.sort(roomList);
         this.roomListModel = new RoomListModel(roomList);
+
+        //setup the chat listener, to listen for new incomming chats
+        this.connection.getChatManager().addChatListener(new ChatManagerListener() {
+            @Override
+            public void chatCreated(Chat chat, boolean createdLocally) {
+                if (!createdLocally) {
+                    System.out.println("New Chat: Participant: " + chat.getParticipant());
+                    final String participantId = StringUtils.parseBareAddress(chat.getParticipant());
+                    final User user = CustomConnection.this.userListModel.get(participantId);
+
+                    if (user != null) {
+                        CustomConnection.this.chatListModel.add(user);
+                        user.joinExistingChat(CustomConnection.this, chat);
+                        return;
+                    }
+
+                    // check for a room
+                    final Room room = CustomConnection.this.roomListModel.get(participantId);
+
+                    if (room != null) {
+                        // don't 'join an existing chat' for rooms, so that we get the chat history.
+                        // once we start caching the chat history locally, perhaps we can optimise this
+                        // by implementing joinExistingChat on the Room class (and ChatTarget interface)
+                        room.join(CustomConnection.this);
+                    }
+                }
+            }
+        });
     }
 
     public void disconnect() {
