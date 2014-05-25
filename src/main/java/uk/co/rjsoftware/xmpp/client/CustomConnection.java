@@ -296,6 +296,12 @@ public class CustomConnection extends Model {
         }
     }
 
+    public void setPresence(final UserStatus userStatus) {
+        final Presence presence = new Presence(Presence.Type.available);
+        presence.setMode(userStatus.getMode());
+        connection.sendPacket(presence);
+    }
+
     public String getCurrentChatTargetTitle() {
         if (null == currentChatTarget) {
             return null;

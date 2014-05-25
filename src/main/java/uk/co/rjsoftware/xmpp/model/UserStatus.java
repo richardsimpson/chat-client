@@ -37,19 +37,21 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public enum UserStatus {
-    FREE_TO_CHAT(1, "Free to chat", "user-available.png"),
-    AVAILABLE(2, "Available", "user-available.png"),
-    AWAY(3, "Away", "user-extended-away.png"),
-    EXTENDED_AWAY(4, "Away", "user-extended-away.png"),
-    DO_NOT_DISTURB(5, "Do not disturb", "user-busy.png"),
-    UNAVAILABLE(6, "Unavailable", "user-offline.png");
+    FREE_TO_CHAT(1, Presence.Mode.chat, "Free to chat", "user-available.png"),
+    AVAILABLE(2, Presence.Mode.available, "Available", "user-available.png"),
+    AWAY(3, Presence.Mode.away, "Away", "user-extended-away.png"),
+    EXTENDED_AWAY(4, Presence.Mode.xa, "Away", "user-extended-away.png"),
+    DO_NOT_DISTURB(5, Presence.Mode.dnd, "Do not disturb", "user-busy.png"),
+    UNAVAILABLE(6, null, "Unavailable", "user-offline.png");
 
     private final int priority;
+    private final Presence.Mode mode;
     private final String description;
     private final ImageIcon imageIcon;
 
-    UserStatus(final int priority, final String description, final String filename) {
+    UserStatus(final int priority, final Presence.Mode mode, final String description, final String filename) {
         this.priority = priority;
+        this.mode = mode;
         this.description = description;
 
         final InputStream inputStream = this.getClass().getResourceAsStream(filename);
@@ -84,6 +86,9 @@ public enum UserStatus {
         return this.imageIcon;
     }
 
+    public Presence.Mode getMode() {
+        return this.mode;
+    }
     public static UserStatus fromPresence(CustomPresence presence) {
         if (presence.getType() == null) {
             return UserStatus.UNAVAILABLE;

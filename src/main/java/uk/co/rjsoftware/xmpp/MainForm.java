@@ -40,6 +40,7 @@ import uk.co.rjsoftware.xmpp.model.CustomMessage;
 import uk.co.rjsoftware.xmpp.model.LogoutListener;
 import uk.co.rjsoftware.xmpp.model.Room;
 import uk.co.rjsoftware.xmpp.model.User;
+import uk.co.rjsoftware.xmpp.model.UserStatus;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -241,10 +242,38 @@ public class MainForm extends JFrame {
         // create the menu
         final JMenuBar menuBar = new JMenuBar();
         final JMenu menu = new JMenu("YACC");
-        final JMenuItem menuItem = new JMenuItem("Sign Out");
-        menu.add(menuItem);
+
+        final JMenu submenu = new JMenu("Set Status");
+        menu.add(submenu);
+        final JMenuItem availableMenuItem = new JMenuItem("Available");
+        final JMenuItem awayMenuItem = new JMenuItem("Away");
+        final JMenuItem doNotDisturbMenuItem = new JMenuItem("Do Not Disturb");
+        submenu.add(availableMenuItem);
+        submenu.add(awayMenuItem);
+        submenu.add(doNotDisturbMenuItem);
+        availableMenuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                connection.setPresence(UserStatus.AVAILABLE);
+            }
+        });
+        awayMenuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                connection.setPresence(UserStatus.AWAY);
+            }
+        });
+        doNotDisturbMenuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                connection.setPresence(UserStatus.DO_NOT_DISTURB);
+            }
+        });
+
+        final JMenuItem signOutMenuItem = new JMenuItem("Sign Out");
+        menu.add(signOutMenuItem);
         menuBar.add(menu);
-        menuItem.addActionListener(new ActionListener() {
+        signOutMenuItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 connection.disconnect();
