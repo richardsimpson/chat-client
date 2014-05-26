@@ -31,6 +31,7 @@ package uk.co.rjsoftware.xmpp.dialogs.createroom;
 
 import uk.co.rjsoftware.xmpp.client.YaccProperties;
 import uk.co.rjsoftware.xmpp.dialogs.DialogUtils;
+import uk.co.rjsoftware.xmpp.model.Room;
 import uk.co.rjsoftware.xmpp.model.RoomPrivacy;
 import uk.co.rjsoftware.xmpp.model.hipchat.room.HipChatRoom;
 
@@ -38,6 +39,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 
 public class CreateRoomForm extends JDialog {
 
@@ -51,6 +53,8 @@ public class CreateRoomForm extends JDialog {
     private final JButton cancelButton;
 
     private final YaccProperties yaccProperties;
+
+    private final java.util.List<NewRoomListener> listeners = new ArrayList<NewRoomListener>();
 
     public CreateRoomForm(final YaccProperties yaccProperties) {
         super(null, "Create Room", ModalityType.APPLICATION_MODAL);
@@ -146,7 +150,11 @@ public class CreateRoomForm extends JDialog {
 
         // TODO: Add the new room to the list of rooms (or preferably, listen for new rooms being created)
         HipChatRoom hipChatRoom = new HipChatRoom(this.yaccProperties);
-        hipChatRoom.createRoom(this.nameField.getText(), privacy);
+        final Room room = hipChatRoom.createRoom(this.nameField.getText(), privacy);
+
+        for (NewRoomListener listener : this.listeners) {
+            listener.onNewRoom(room);
+        }
 
         setVisible(false);
     }
@@ -154,4 +162,9 @@ public class CreateRoomForm extends JDialog {
     private void cancelRoomCreation() {
         setVisible(false);
     }
+
+    public void addNewRoomListener(final NewRoomListener listener) {
+        this.listeners.add(listener);
+    }
+
 }

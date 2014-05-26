@@ -40,6 +40,7 @@ import uk.co.rjsoftware.xmpp.MessageListCellRenderer;
 import uk.co.rjsoftware.xmpp.UserListCellRenderer;
 import uk.co.rjsoftware.xmpp.client.CustomConnection;
 import uk.co.rjsoftware.xmpp.dialogs.createroom.CreateRoomForm;
+import uk.co.rjsoftware.xmpp.dialogs.createroom.NewRoomListener;
 import uk.co.rjsoftware.xmpp.dialogs.settings.SettingsForm;
 import uk.co.rjsoftware.xmpp.model.ChatTarget;
 import uk.co.rjsoftware.xmpp.model.CustomMessage;
@@ -255,7 +256,20 @@ public class MainForm extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 final CreateRoomForm createRoomForm = new CreateRoomForm(yaccProperties);
+                createRoomForm.addNewRoomListener(new NewRoomListener() {
+                    @Override
+                    public void onNewRoom(Room newRoom) {
+                        connection.addRoom(newRoom);
+                        // update the chat target
+                        connection.setCurrentChatTarget(newRoom);
+                        connection.getCurrentChatTarget().join(connection);
+                        MainForm.this.chatList.setSelectedValue(newRoom, true);
+                        // switch to the 'recent' tab
+                        MainForm.this.chatSourceTabs.setSelectedIndex(2);
+                    }
+                });
                 createRoomForm.setVisible(true);
+
             }
         });
         final JMenu submenu = new JMenu("Set Status");

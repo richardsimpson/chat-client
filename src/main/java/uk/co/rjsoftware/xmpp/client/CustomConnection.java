@@ -234,6 +234,10 @@ public class CustomConnection extends Model {
         return this.chatListModel;
     }
 
+    public void addRoom(final Room newRoom) {
+        this.roomListModel.add(newRoom);
+    }
+
     // TODO: Stop leaking Smack classes to the rest of the application
     public MultiUserChat joinRoom(final Room room) {
         this.chatListModel.add(room);

@@ -30,6 +30,7 @@
 package uk.co.rjsoftware.xmpp.model.hipchat.room;
 
 import uk.co.rjsoftware.xmpp.client.YaccProperties;
+import uk.co.rjsoftware.xmpp.model.Room;
 import uk.co.rjsoftware.xmpp.model.RoomPrivacy;
 
 import javax.ws.rs.client.Client;
@@ -59,7 +60,7 @@ public class HipChatRoom {
      * @return
      *     The new rooms JID
      */
-    public String createRoom(final String roomName, final RoomPrivacy privacy) {
+    public Room createRoom(final String roomName, final RoomPrivacy privacy) {
         Client client = ClientBuilder.newClient();
 
         final String apiEndpoint = this.yaccProperties.getProperty(YaccProperties.PROPERTY_NAME_HIPCHAT_API_ENDPOINT);
@@ -88,6 +89,6 @@ public class HipChatRoom {
         Response response2 = getRoomTarget.request().get();
         final RoomPojo roomPojo = response2.readEntity(RoomPojo.class);
 
-        return roomPojo.getJid();
+        return new Room(roomPojo.getJid(), roomPojo.getName());
     }
 }
