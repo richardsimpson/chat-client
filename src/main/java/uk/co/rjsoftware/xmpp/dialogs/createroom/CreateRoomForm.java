@@ -148,7 +148,6 @@ public class CreateRoomForm extends JDialog {
             throw new RuntimeException("No privacy option selected");
         }
 
-        // TODO: Add the new room to the list of rooms (or preferably, listen for new rooms being created)
         HipChatRoom hipChatRoom = new HipChatRoom(this.yaccProperties);
         final Room room = hipChatRoom.createRoom(this.nameField.getText(), privacy);
 
