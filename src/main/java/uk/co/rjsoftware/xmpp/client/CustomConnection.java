@@ -199,6 +199,15 @@ public class CustomConnection extends Model {
                 }
             }
         });
+
+        // TODO: Add an invitation listener to the connection, so can automatically join rooms we are invited to.
+
+//        this.connection.addPacketListener(new PacketListener() {
+//            @Override
+//            public void processPacket(Packet packet) {
+//                System.out.println("Incomming Packet: " + packet.toString());
+//            }
+//        }, null);
     }
 
     public void disconnect() {
