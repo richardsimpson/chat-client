@@ -31,6 +31,8 @@ package uk.co.rjsoftware.xmpp.client;
 
 import com.jgoodies.binding.beans.Model;
 import org.jivesoftware.smack.util.StringUtils;
+import org.jivesoftware.smackx.ServiceDiscoveryManager;
+import org.jivesoftware.smackx.packet.DiscoverInfo;
 import uk.co.rjsoftware.xmpp.model.ChatTarget;
 import uk.co.rjsoftware.xmpp.model.ChatListModel;
 import uk.co.rjsoftware.xmpp.model.CustomMessageListModel;
@@ -147,8 +149,9 @@ public class CustomConnection extends Model {
         // ensure user model gets updated when changes occur
         this.roster.addRosterListener(new ClientRosterListener(this.userListModel));
 
+        // TODO: Create a SortedListModel to decorate the RoomListModel with sorting instead (see http://www.oracle.com/technetwork/articles/javase/sorted-jlist-136883.html)
         // setup the room list
-        final List<Room> roomList = new ArrayList<Room>();
+        this.roomListModel = new RoomListModel();
         Collection<HostedRoom> rooms;
         try {
             rooms = MultiUserChat.getHostedRooms(connection, "conf.hipchat.com");
@@ -157,19 +160,10 @@ public class CustomConnection extends Model {
             throw new RuntimeException(exception);
         }
         for (HostedRoom room : rooms) {
-            // TODO: Determine which rooms are public / private.  The roomlist contains public rooms, and private ones
-            // that the user is allowed access to, but it doesn't indicate which is which.
-            //       This can be done by copying the code from MultiUserChat.getRoomInfo, and looking for
-            //       a packet extension of type DefaultPacketExtension, and a namespace of 'http://hipchat.com/protocol/muc#room'
-            //       This will have a map that contains values for the following keys:
-            //           topic (room subject), id, owner (user jid), privacy (public/private), last_active (long),
-            //           num_participants (number of people in the room, and online) and guest_url
-            roomList.add(new Room(room.getJid(), room.getName()));
+            final Room newRoom = new Room(room.getJid(), room.getName());
+            addRoom(newRoom);
             System.out.println("name:" + room.getName() + ", JID: " + room.getJid());
         }
-        // TODO: Create a SortedListModel to decorate the RoomListModel with sorting instead (see http://www.oracle.com/technetwork/articles/javase/sorted-jlist-136883.html)
-        Collections.sort(roomList);
-        this.roomListModel = new RoomListModel(roomList);
 
         //setup the chat listener, to listen for new incomming chats
         this.connection.getChatManager().addChatListener(new ChatManagerListener() {
@@ -235,7 +229,21 @@ public class CustomConnection extends Model {
     }
 
     public void addRoom(final Room newRoom) {
+        final YaccRoomInfo roomInfo = getRoomInfo(newRoom);
+        newRoom.setPrivacy(roomInfo.getPrivacy());
+        newRoom.setOwnerId(roomInfo.getOwnerId());
         this.roomListModel.add(newRoom);
+    }
+
+    private YaccRoomInfo getRoomInfo(final Room room) {
+        DiscoverInfo info;
+        try {
+            info = ServiceDiscoveryManager.getInstanceFor(this.connection).discoverInfo(room.getRoomId());
+        }
+        catch (XMPPException exception) {
+            throw new RuntimeException(exception);
+        }
+        return new YaccRoomInfo(info);
     }
 
     // TODO: Stop leaking Smack classes to the rest of the application

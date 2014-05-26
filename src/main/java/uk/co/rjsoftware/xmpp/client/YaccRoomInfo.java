@@ -27,32 +27,44 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package uk.co.rjsoftware.xmpp.model;
+package uk.co.rjsoftware.xmpp.client;
 
-import com.jgoodies.common.collect.ArrayListModel;
+import org.jivesoftware.smack.packet.DefaultPacketExtension;
+import org.jivesoftware.smack.packet.PacketExtension;
+import org.jivesoftware.smackx.packet.DiscoverInfo;
+import uk.co.rjsoftware.xmpp.model.RoomPrivacy;
 
-public class RoomListModel extends ArrayListModel<Room> {
+public class YaccRoomInfo {
 
-    public RoomListModel() {
+    private final String roomId;
+
+    private RoomPrivacy privacy;
+    private String ownerId;
+
+    public YaccRoomInfo(final DiscoverInfo info) {
         super();
-    }
+        this.roomId = info.getFrom();
 
-    private int indexOf(final String roomId) {
-        for (int index = 0 ; index < size() ; index++) {
-            if (get(index).getRoomId().equals(roomId)) {
-                return index;
-            }
+        // Get the information based on the discovered extended information
+        PacketExtension packetExtension = info.getExtension("x", "http://hipchat.com/protocol/muc#room");
+        if ((packetExtension != null) && (packetExtension instanceof DefaultPacketExtension)) {
+            final DefaultPacketExtension defaultPacketExtension = (DefaultPacketExtension)packetExtension;
+            this.ownerId = defaultPacketExtension.getValue("owner");
+            this.privacy = RoomPrivacy.fromDescription(defaultPacketExtension.getValue("privacy"));
         }
 
-        return -1;
     }
 
-    public Room get(final String roomId) {
-        final int index = indexOf(roomId);
-        if (index == -1) {
-            return null;
-        }
-        return get(index);
+    public String getRoomId() {
+        return this.roomId;
+    }
+
+    public RoomPrivacy getPrivacy() {
+        return this.privacy;
+    }
+
+    public String getOwnerId() {
+        return this.ownerId;
     }
 
 }

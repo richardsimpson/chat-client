@@ -14,4 +14,13 @@ public enum RoomPrivacy {
     public String getDescription() {
         return this.description;
     }
+    public static RoomPrivacy fromDescription(final String description) {
+        for (RoomPrivacy privacy : RoomPrivacy.values()) {
+            if (privacy.description.equals(description)) {
+                return privacy;
+            }
+        }
+
+        return null;
+    }
 }

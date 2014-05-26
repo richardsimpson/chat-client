@@ -57,6 +57,9 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
 
     private final String roomId;
     private final String name;
+    private RoomPrivacy privacy;
+    private String ownerId;
+
     private final UserListModel occupantsModel = new UserListModel();
     // the participantMap maps occupantJid's (room@chat.hipchat.com/nick) to users
     // so that the occupants can be removed from the occupantsModel when they leave.
@@ -320,6 +323,22 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
     @Override
     public UserListModel getOccupantsModel() {
         return this.occupantsModel;
+    }
+
+    public RoomPrivacy getPrivacy() {
+        return this.privacy;
+    }
+
+    public void setPrivacy(RoomPrivacy privacy) {
+        this.privacy = privacy;
+    }
+
+    public String getOwnerId() {
+        return this.ownerId;
+    }
+
+    public void setOwnerId(String ownerId) {
+        this.ownerId = ownerId;
     }
 
 }
