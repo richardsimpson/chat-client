@@ -27,32 +27,11 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package uk.co.rjsoftware.xmpp;
+package uk.co.rjsoftware.xmpp.dialogs.login;
 
-import java.awt.*;
+import java.util.EventListener;
 
-public final class DialogUtils {
+public interface LoginListener extends EventListener {
 
-    private DialogUtils() {
-
-    }
-
-    public static void centerDialog(final Window dialog) {
-        final GraphicsConfiguration config = GraphicsEnvironment
-                .getLocalGraphicsEnvironment()
-                .getDefaultScreenDevice()
-                .getDefaultConfiguration();
-
-        final Rectangle screenBounds = config.getBounds();
-        final Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(config);
-
-        screenBounds.x = screenBounds.x + insets.left;
-        screenBounds.y = screenBounds.y + insets.top;
-        screenBounds.width = screenBounds.width - (insets.left + insets.right);
-        screenBounds.height = screenBounds.height - (insets.top + insets.bottom);
-
-        // remember that casting doubles to int's always rounds down.
-        dialog.setLocation(((screenBounds.width / 2) + screenBounds.x - (dialog.getWidth() / 2)),
-                ((screenBounds.height / 2) + screenBounds.y - (dialog.getHeight() / 2)));
-    }
+    void loginAttempt(final String username, final String password);
 }

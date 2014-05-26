@@ -27,13 +27,16 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package uk.co.rjsoftware.xmpp;
+package uk.co.rjsoftware.xmpp.dialogs.main;
 
 import com.jgoodies.binding.adapter.BasicComponentFactory;
 import com.jgoodies.binding.adapter.Bindings;
 import com.jgoodies.binding.beans.BeanAdapter;
 import com.jgoodies.binding.list.SelectionInList;
 import com.jgoodies.binding.value.ValueModel;
+import uk.co.rjsoftware.xmpp.dialogs.DialogUtils;
+import uk.co.rjsoftware.xmpp.MessageListCellRenderer;
+import uk.co.rjsoftware.xmpp.UserListCellRenderer;
 import uk.co.rjsoftware.xmpp.client.CustomConnection;
 import uk.co.rjsoftware.xmpp.model.ChatTarget;
 import uk.co.rjsoftware.xmpp.model.CustomMessage;

@@ -29,9 +29,9 @@
  */
 package uk.co.rjsoftware.xmpp.client;
 
-import uk.co.rjsoftware.xmpp.LoginForm;
-import uk.co.rjsoftware.xmpp.LoginListener;
-import uk.co.rjsoftware.xmpp.MainForm;
+import uk.co.rjsoftware.xmpp.dialogs.login.LoginForm;
+import uk.co.rjsoftware.xmpp.dialogs.login.LoginListener;
+import uk.co.rjsoftware.xmpp.dialogs.main.MainForm;
 import uk.co.rjsoftware.xmpp.model.LogoutListener;
 import org.jivesoftware.smack.XMPPException;
 
