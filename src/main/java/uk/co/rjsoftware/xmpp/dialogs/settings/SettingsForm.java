@@ -27,30 +27,31 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package uk.co.rjsoftware.xmpp.dialogs.login;
+package uk.co.rjsoftware.xmpp.dialogs.settings;
 
+import uk.co.rjsoftware.xmpp.client.YaccProperties;
 import uk.co.rjsoftware.xmpp.dialogs.DialogUtils;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.List;
 
-public class LoginForm extends JDialog {
+public class SettingsForm extends JDialog {
 
-    private final JTextArea loginMessageLabel;
-    private final JLabel usernameLabel;
-    private final JLabel passwordLabel;
-    private final JTextField usernameField;
-    private final JTextField passwordField;
-    private final JButton loginButton;
+    private final JLabel endpointLabel;
+    private final JLabel authTokenLabel;
+    private final JTextField endpointField;
+    private final JTextField authTokenField;
+    private final JButton saveButton;
+    private final JButton cancelButton;
 
-    private final List<LoginListener> listeners = new ArrayList<LoginListener>();
+    private final YaccProperties yaccProperties;
 
-    public LoginForm() {
-        super(null, "Login", ModalityType.APPLICATION_MODAL);
+    public SettingsForm(final YaccProperties yaccProperties) {
+        super(null, "Settings", ModalityType.APPLICATION_MODAL);
+
+        this.yaccProperties = yaccProperties;
 
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         final Container pane = getContentPane();
@@ -59,76 +60,76 @@ public class LoginForm extends JDialog {
         final GridBagConstraints constraints = new GridBagConstraints();
         constraints.insets = new Insets(2, 25, 2, 2);
 
-        this.usernameLabel = new JLabel("Username:");
+        this.endpointLabel = new JLabel("HipChat API Endpoint:");
         constraints.gridx = 0;
         constraints.gridy = 0;
-        pane.add(this.usernameLabel, constraints);
+        pane.add(this.endpointLabel, constraints);
 
-        this.passwordLabel = new JLabel("Password:");
+        this.authTokenLabel = new JLabel("HipChat Auth Token:");
         constraints.gridx = 0;
         constraints.gridy = 1;
-        pane.add(this.passwordLabel, constraints);
+        pane.add(this.authTokenLabel, constraints);
 
-        this.usernameField = new JTextField();
-        this.usernameField.setPreferredSize(new Dimension(120, 20));
+        this.endpointField = new JTextField();
+        this.endpointField.setPreferredSize(new Dimension(300, 20));
         constraints.insets = new Insets(2, 2, 2, 2);
         constraints.gridx = 1;
         constraints.gridy = 0;
         constraints.fill = GridBagConstraints.HORIZONTAL;
-        pane.add(this.usernameField, constraints);
+        pane.add(this.endpointField, constraints);
 
-        this.passwordField = new JPasswordField();
-        this.passwordField.setPreferredSize(new Dimension(120, 20));
+        this.authTokenField = new JTextField();
+        this.authTokenField.setPreferredSize(new Dimension(300, 20));
+        constraints.insets = new Insets(2, 2, 2, 2);
         constraints.gridx = 1;
         constraints.gridy = 1;
-        pane.add(this.passwordField, constraints);
+        pane.add(this.authTokenField, constraints);
 
-        this.loginButton = new JButton("Login");
-        constraints.gridx = 1;
+        this.endpointField.setText(this.yaccProperties.getProperty(YaccProperties.PROPERTY_NAME_HIPCHAT_API_ENDPOINT));
+        this.authTokenField.setText(this.yaccProperties.getProperty(YaccProperties.PROPERTY_NAME_HIPCHAT_API_AUTH_TOKEN));
+
+        this.saveButton = new JButton("Save");
+        constraints.gridx = 0;
         constraints.gridy = 2;
-        pane.add(this.loginButton, constraints);
+        pane.add(this.saveButton, constraints);
 
-        this.loginButton.addActionListener(new ActionListener() {
+        this.saveButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                fireLoginAttempt();
+                saveButtonPressed();
             }
         });
 
-        this.loginMessageLabel = new JTextArea();
-        this.loginMessageLabel.setEditable(false);
-        this.loginMessageLabel.setLineWrap(true);
-        this.loginMessageLabel.setWrapStyleWord(true);
-        this.loginMessageLabel.setFont(this.loginButton.getFont());
-        this.loginMessageLabel.setOpaque(false);
-        constraints.insets = new Insets(2, 10, 2, 10);
-        constraints.gridx = 0;
-        constraints.gridy = 3;
-        constraints.gridwidth = 3;
-        constraints.weightx = 1;
-        pane.add(this.loginMessageLabel, constraints);
+        this.cancelButton = new JButton("Cancel");
+        constraints.gridx = 1;
+        constraints.gridy = 2;
+        pane.add(this.cancelButton, constraints);
+
+        this.cancelButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                cancelButtonPressed();
+            }
+        });
 
         setPreferredSize(new Dimension(250, 200));
         setResizable(false);
 
-        getRootPane().setDefaultButton(this.loginButton);
+        getRootPane().setDefaultButton(this.saveButton);
 
         pack();
 
         DialogUtils.centerDialog(this);
     }
 
-    private void fireLoginAttempt() {
-        for (LoginListener listener : this.listeners) {
-            listener.loginAttempt(this.usernameField.getText(), this.passwordField.getText());
-        }
+    private void saveButtonPressed() {
+        this.yaccProperties.setProperty(YaccProperties.PROPERTY_NAME_HIPCHAT_API_ENDPOINT, this.endpointField.getText());
+        this.yaccProperties.setProperty(YaccProperties.PROPERTY_NAME_HIPCHAT_API_AUTH_TOKEN, this.authTokenField.getText());
+        this.yaccProperties.store();
+        setVisible(false);
     }
 
-    public void addLoginListener(final LoginListener listener) {
-        this.listeners.add(listener);
-    }
-
-    public void setLoginMessage(String loginMessage) {
-        this.loginMessageLabel.setText(loginMessage);
+    private void cancelButtonPressed() {
+        setVisible(false);
     }
 }

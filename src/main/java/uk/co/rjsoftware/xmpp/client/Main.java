@@ -36,10 +36,14 @@ import uk.co.rjsoftware.xmpp.model.LogoutListener;
 import org.jivesoftware.smack.XMPPException;
 
 import javax.swing.*;
+import java.io.IOException;
+
+// TODO: Add Jersey to the licence information
 
 public final class Main {
 
     private LoginForm loginForm;
+    private YaccProperties yaccProperties;
 
     public static void main(String [ ] args) throws XMPPException, InterruptedException {
         new Main();
@@ -62,6 +66,13 @@ public final class Main {
             e.printStackTrace();
         }
 
+        try {
+            this.yaccProperties = new YaccProperties();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+
         javax.swing.SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 createAndShowLoginForm();
@@ -69,15 +80,10 @@ public final class Main {
         });
     }
 
-//    private void runApp() {
-//
-//    }
-//
-
     // TODO: Bug Fix: If logout, then close the login form, the app doesn't terminate.  It does if close login form without logging in.
 
     private void createAndShowLoginForm() {
-        this.loginForm = new LoginForm("Login");
+        this.loginForm = new LoginForm();
         this.loginForm.addLoginListener(new LoginListener() {
             @Override
             public void loginAttempt(String username, String password) {
@@ -98,7 +104,7 @@ public final class Main {
         // TODO: Check if this is the correct way to 'close' a JFrame
         this.loginForm.setVisible(false);
 
-        final MainForm mainForm = new MainForm("YACC", connection);
+        final MainForm mainForm = new MainForm("YACC", connection, yaccProperties);
         mainForm.addLogoutListener(new LogoutListener() {
             @Override
             public void logout() {

@@ -34,10 +34,13 @@ import com.jgoodies.binding.adapter.Bindings;
 import com.jgoodies.binding.beans.BeanAdapter;
 import com.jgoodies.binding.list.SelectionInList;
 import com.jgoodies.binding.value.ValueModel;
+import uk.co.rjsoftware.xmpp.client.YaccProperties;
 import uk.co.rjsoftware.xmpp.dialogs.DialogUtils;
 import uk.co.rjsoftware.xmpp.MessageListCellRenderer;
 import uk.co.rjsoftware.xmpp.UserListCellRenderer;
 import uk.co.rjsoftware.xmpp.client.CustomConnection;
+import uk.co.rjsoftware.xmpp.dialogs.createroom.CreateRoomForm;
+import uk.co.rjsoftware.xmpp.dialogs.settings.SettingsForm;
 import uk.co.rjsoftware.xmpp.model.ChatTarget;
 import uk.co.rjsoftware.xmpp.model.CustomMessage;
 import uk.co.rjsoftware.xmpp.model.LogoutListener;
@@ -85,7 +88,7 @@ public class MainForm extends JFrame {
 
     private final java.util.List<LogoutListener> listeners = new ArrayList<LogoutListener>();
 
-    public MainForm(final String title, final CustomConnection connection) {
+    public MainForm(final String title, final CustomConnection connection, final YaccProperties yaccProperties) {
         super(title);
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -246,6 +249,15 @@ public class MainForm extends JFrame {
         final JMenuBar menuBar = new JMenuBar();
         final JMenu menu = new JMenu("YACC");
 
+        final JMenuItem createRoomMenuItem = new JMenuItem("Create room...");
+        menu.add(createRoomMenuItem);
+        createRoomMenuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                final CreateRoomForm createRoomForm = new CreateRoomForm(yaccProperties);
+                createRoomForm.setVisible(true);
+            }
+        });
         final JMenu submenu = new JMenu("Set Status");
         menu.add(submenu);
         final JMenuItem availableMenuItem = new JMenuItem("Available");
@@ -273,9 +285,20 @@ public class MainForm extends JFrame {
             }
         });
 
+        final JMenuItem settingsMenuItem = new JMenuItem("Settings...");
+        menu.addSeparator();
+        menu.add(settingsMenuItem);
+        settingsMenuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                final SettingsForm settingsForm = new SettingsForm(yaccProperties);
+                settingsForm.setVisible(true);
+            }
+        });
+
         final JMenuItem signOutMenuItem = new JMenuItem("Sign Out");
+        menu.addSeparator();
         menu.add(signOutMenuItem);
-        menuBar.add(menu);
         signOutMenuItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -284,6 +307,7 @@ public class MainForm extends JFrame {
             }
         });
 
+        menuBar.add(menu);
         setJMenuBar(menuBar);
 
         setPreferredSize(new Dimension(1150, 512));
