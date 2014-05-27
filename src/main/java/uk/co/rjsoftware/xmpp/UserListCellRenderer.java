@@ -29,7 +29,9 @@
  */
 package uk.co.rjsoftware.xmpp;
 
+import com.jgoodies.binding.list.SelectionInList;
 import uk.co.rjsoftware.xmpp.model.User;
+import uk.co.rjsoftware.xmpp.model.UserListModel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -44,6 +46,12 @@ public class UserListCellRenderer implements ListCellRenderer<User> {
     private JLabel statusLabel;
     private JPanel usernamePanel;
     private JLabel usernameLabel;
+
+    private UserListModel userListModel;
+    private String ownerId;
+
+    private final Font boldFont;
+    private final Font normalFont;
 
     // rightBorder is a hack to provide a gap between columns when this renderer is used to display the list
     // of users within a room.
@@ -69,10 +77,34 @@ public class UserListCellRenderer implements ListCellRenderer<User> {
         this.usernamePanel.add(this.usernameLabel, BorderLayout.CENTER);
         this.mainPanel.add(this.usernamePanel, BorderLayout.CENTER);
 
+        // fonts
+        this.normalFont = this.usernameLabel.getFont();
+        this.boldFont = new Font(this.normalFont.getName(), Font.BOLD, this.normalFont.getSize());
     }
 
     @Override
     public Component getListCellRendererComponent(JList<? extends User> list, User user, int index, boolean isSelected, boolean cellHasFocus) {
+        this.userListModel = null;
+        this.ownerId = null;
+
+        if (list.getModel() instanceof SelectionInList) {
+            final SelectionInList selectionInList = (SelectionInList)list.getModel();
+            if (selectionInList.getListHolder().getValue() instanceof UserListModel) {
+                this.userListModel = (UserListModel)selectionInList.getListHolder().getValue();
+            }
+        }
+
+        if (null != this.userListModel) {
+            this.ownerId = this.userListModel.getOwnerId();
+        }
+
+        if ((this.ownerId != null) && (this.ownerId.equals(user.getUserId()))) {
+            this.usernameLabel.setFont(boldFont);
+        }
+        else {
+            this.usernameLabel.setFont(normalFont);
+        }
+
         this.usernameLabel.setText(user.getName());
 
         this.statusLabel.setIcon(user.getHighestStatus().getImageIcon());

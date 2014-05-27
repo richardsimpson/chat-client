@@ -339,6 +339,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
 
     public void setOwnerId(String ownerId) {
         this.ownerId = ownerId;
+        this.occupantsModel.setOwnerId(ownerId);
     }
 
 }

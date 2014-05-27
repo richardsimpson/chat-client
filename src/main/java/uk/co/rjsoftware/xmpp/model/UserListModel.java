@@ -35,6 +35,8 @@ import java.util.List;
 
 public class UserListModel extends ArrayListModel<User> {
 
+    private String ownerId;
+
     public UserListModel() {
         super();
     }
@@ -70,4 +72,15 @@ public class UserListModel extends ArrayListModel<User> {
         }
     }
 
+    public String getOwnerId() {
+        return this.ownerId;
+    }
+
+    public void setOwnerId(String ownerId) {
+        this.ownerId = ownerId;
+        final int ownerIndex = indexOf(ownerId);
+        if (ownerIndex != -1) {
+            fireContentsChanged(ownerIndex);
+        }
+    }
 }

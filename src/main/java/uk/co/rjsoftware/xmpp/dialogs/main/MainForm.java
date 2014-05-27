@@ -152,7 +152,6 @@ public class MainForm extends JFrame {
         this.chatOccupantsScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         this.chatHeaderPanel.add(this.chatOccupantsScrollPane, BorderLayout.CENTER);
 
-
         //Add the message history window
         final ValueModel messagesListModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_MESSAGES_LIST_PROPERTY_NAME);
         this.messageList = new JList<CustomMessage>() {
