@@ -63,8 +63,7 @@ public final class YaccProperties {
         try {
             final OutputStream output = new FileOutputStream(this.propertiesFile);
             this.properties.store(output, null);
-        }
-        catch (IOException exception) {
+        } catch (IOException exception) {
             throw new RuntimeException(exception);
         }
 

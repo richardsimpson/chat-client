@@ -66,8 +66,7 @@ public enum UserStatus {
             }
 
             buffer.flush();
-        }
-        catch (IOException exception) {
+        } catch (IOException exception) {
             throw new RuntimeException(exception);
         }
 

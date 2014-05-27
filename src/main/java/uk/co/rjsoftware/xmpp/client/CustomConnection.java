@@ -89,8 +89,7 @@ public class CustomConnection extends Model {
             this.connection.connect();
             // TODO: Put 'xmpp' into config
             this.connection.login(username, password, "xmpp");
-        }
-        catch (XMPPException exception) {
+        } catch (XMPPException exception) {
             if (exception.getMessage().contains("invalid-authzid")) {
                 throw new YaccException("The password or email address is invalid.");
             }
@@ -155,8 +154,7 @@ public class CustomConnection extends Model {
         Collection<HostedRoom> rooms;
         try {
             rooms = MultiUserChat.getHostedRooms(connection, "conf.hipchat.com");
-        }
-        catch (XMPPException exception) {
+        } catch (XMPPException exception) {
             throw new RuntimeException(exception);
         }
         for (HostedRoom room : rooms) {
@@ -239,8 +237,7 @@ public class CustomConnection extends Model {
         DiscoverInfo info;
         try {
             info = ServiceDiscoveryManager.getInstanceFor(this.connection).discoverInfo(room.getRoomId());
-        }
-        catch (XMPPException exception) {
+        } catch (XMPPException exception) {
             throw new RuntimeException(exception);
         }
         return new YaccRoomInfo(info);

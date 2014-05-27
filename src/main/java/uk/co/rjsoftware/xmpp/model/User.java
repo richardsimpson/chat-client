@@ -215,8 +215,7 @@ public class User extends Model implements Comparable<User>, ChatTarget {
                 this.chat.sendMessage(messageText);
                 this.customMessageListModel.add(new CustomMessage(System.currentTimeMillis(),
                         this.customConnection.getCurrentUser().getName(), messageText));
-            }
-            catch (XMPPException exception) {
+            } catch (XMPPException exception) {
                 throw new RuntimeException(exception);
             }
         }

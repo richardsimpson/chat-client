@@ -52,24 +52,19 @@ public final class Main {
     private Main() {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        }
-        catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
-        }
-        catch (InstantiationException e) {
+        } catch (InstantiationException e) {
             e.printStackTrace();
-        }
-        catch (IllegalAccessException e) {
+        } catch (IllegalAccessException e) {
             e.printStackTrace();
-        }
-        catch (UnsupportedLookAndFeelException e) {
+        } catch (UnsupportedLookAndFeelException e) {
             e.printStackTrace();
         }
 
         try {
             this.yaccProperties = new YaccProperties();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -89,8 +84,7 @@ public final class Main {
             public void loginAttempt(String username, String password) {
                 try {
                     createAndShowMainForm(username, password);
-                }
-                catch (YaccException exception) {
+                } catch (YaccException exception) {
                     Main.this.loginForm.setLoginMessage(exception.getMessage());
                 }
             }

@@ -148,8 +148,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
                 this.chat.addSubjectUpdatedListener(new SubjectUpdatedListenerImpl(this));
                 this.chat.addParticipantStatusListener(new ParticipantStatusListenerImpl(this));
 
-            }
-            catch (XMPPException exception) {
+            } catch (XMPPException exception) {
                 this.chat = null;
                 throw new RuntimeException(exception);
             }
@@ -203,8 +202,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
                             }
                         default: // do nothing
                     }
-                }
-                catch (RuntimeException exception) {
+                } catch (RuntimeException exception) {
                     System.out.println(exception);
                     // forced to use a local variable to stop the thread, since the InterruptedException is swallowed
                     // inside nextMessage
@@ -308,8 +306,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
         if (this.chat != null) {
             try {
                 this.chat.sendMessage(messageText);
-            }
-            catch (XMPPException exception) {
+            } catch (XMPPException exception) {
                 throw new RuntimeException(exception);
             }
         }
