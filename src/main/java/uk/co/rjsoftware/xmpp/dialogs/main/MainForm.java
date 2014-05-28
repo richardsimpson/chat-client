@@ -38,6 +38,8 @@ import uk.co.rjsoftware.xmpp.client.YaccProperties;
 import uk.co.rjsoftware.xmpp.dialogs.DialogUtils;
 import uk.co.rjsoftware.xmpp.view.CurrentChatOccupantsCellRenderer;
 import uk.co.rjsoftware.xmpp.view.MessageListCellRenderer;
+import uk.co.rjsoftware.xmpp.view.RecentChatListCellRenderer;
+import uk.co.rjsoftware.xmpp.view.RoomListCellRenderer;
 import uk.co.rjsoftware.xmpp.view.UserListCellRenderer;
 import uk.co.rjsoftware.xmpp.client.CustomConnection;
 import uk.co.rjsoftware.xmpp.dialogs.createroom.CreateRoomForm;
@@ -109,19 +111,19 @@ public class MainForm extends JFrame {
 
         //Add the list of rooms.
         final ValueModel roomListModel = adapter.getValueModel(CustomConnection.ROOM_LIST_MODEL_PROPERTY_NAME);
-        this.roomList = BasicComponentFactory.createList(new SelectionInList(roomListModel));
+        this.roomList = BasicComponentFactory.createList(new SelectionInList(roomListModel), new RoomListCellRenderer());
         this.roomListScrollPane = new JScrollPane(roomList);
         this.chatSourceTabs.addTab("Rooms", this.roomListScrollPane);
 
         //Add the list of users.
         final ValueModel userListModel = adapter.getValueModel(CustomConnection.USER_LIST_MODEL_PROPERTY_NAME);
-        this.userList = BasicComponentFactory.createList(new SelectionInList<Object>(userListModel), new UserListCellRenderer(0));
+        this.userList = BasicComponentFactory.createList(new SelectionInList<Object>(userListModel), new UserListCellRenderer());
         this.userListScrollPane = new JScrollPane(userList);
         this.chatSourceTabs.addTab("Users", this.userListScrollPane);
 
         //Add the list of recent chats.
         final ValueModel chatListModel = adapter.getValueModel(CustomConnection.CHAT_LIST_MODEL_PROPERTY_NAME);
-        this.chatList = BasicComponentFactory.createList(new SelectionInList(chatListModel));
+        this.chatList = BasicComponentFactory.createList(new SelectionInList(chatListModel), new RecentChatListCellRenderer());
         this.chatListScrollPane = new JScrollPane(chatList);
         this.chatSourceTabs.addTab("Recent", this.chatListScrollPane);
 
@@ -146,7 +148,7 @@ public class MainForm extends JFrame {
         // TODO: Stop the horizontal scroll bar from hiding the bottom column entries
         // TODO: Display a different view if in a private chat (as there will only be one user to display)
         final ValueModel currentChatTargetOccupantsModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_OCCUPANTS_PROPERTY_NAME);
-        this.chatOccupantsList = BasicComponentFactory.createList(new SelectionInList(currentChatTargetOccupantsModel), new CurrentChatOccupantsCellRenderer(20));
+        this.chatOccupantsList = BasicComponentFactory.createList(new SelectionInList(currentChatTargetOccupantsModel), new CurrentChatOccupantsCellRenderer());
         this.chatOccupantsList.setLayoutOrientation(JList.VERTICAL_WRAP);
         this.chatOccupantsList.setVisibleRowCount(4);
         this.chatOccupantsScrollPane = new JScrollPane(this.chatOccupantsList);

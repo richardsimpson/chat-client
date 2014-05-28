@@ -29,31 +29,25 @@
  */
 package uk.co.rjsoftware.xmpp.view;
 
-import uk.co.rjsoftware.xmpp.model.User;
+import uk.co.rjsoftware.xmpp.model.Room;
 
 import javax.swing.*;
-import java.awt.*;
 
-public class UserListCellRenderer extends GenericListCellRenderer<User> {
+public class RoomListCellRenderer extends GenericListCellRenderer<Room> {
 
-    public UserListCellRenderer() {
-        this(0);
-    }
-
-    public UserListCellRenderer(final int rightBorder) {
-        super(rightBorder);
+    public RoomListCellRenderer() {
+        super(0);
     }
 
     @Override
-    protected void setupNameLabel(JLabel nameLabel, JList<? extends User> list, User user, int index, boolean isSelected, boolean cellHasFocus) {
-        super.setupNameLabel(nameLabel, list, user, index, isSelected, cellHasFocus);
-        nameLabel.setText(user.getName());
+    protected void setupNameLabel(JLabel nameLabel, JList<? extends Room> list, Room room, int index, boolean isSelected, boolean cellHasFocus) {
+        super.setupNameLabel(nameLabel, list, room, index, isSelected, cellHasFocus);
+        nameLabel.setText(room.getName());
     }
 
     @Override
-    protected void setupStatusLabel(JLabel statusLabel, JList<? extends User> list, User user, int index, boolean isSelected, boolean cellHasFocus) {
-        super.setupStatusLabel(statusLabel, list, user, index, isSelected, cellHasFocus);
-        statusLabel.setIcon(user.getHighestStatus().getImageIcon());
+    protected void setupStatusLabel(JLabel statusLabel, JList<? extends Room> list, Room room, int index, boolean isSelected, boolean cellHasFocus) {
+        super.setupStatusLabel(statusLabel, list, room, index, isSelected, cellHasFocus);
+        statusLabel.setIcon(room.getPrivacy().getImageIcon());
     }
-
 }

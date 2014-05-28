@@ -29,31 +29,28 @@
  */
 package uk.co.rjsoftware.xmpp.view;
 
+import uk.co.rjsoftware.xmpp.model.ChatTarget;
+import uk.co.rjsoftware.xmpp.model.Room;
 import uk.co.rjsoftware.xmpp.model.User;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class UserListCellRenderer extends GenericListCellRenderer<User> {
+public class RecentChatListCellRenderer implements ListCellRenderer<ChatTarget> {
 
-    public UserListCellRenderer() {
-        this(0);
-    }
-
-    public UserListCellRenderer(final int rightBorder) {
-        super(rightBorder);
-    }
+    private UserListCellRenderer userListCellRenderer = new UserListCellRenderer();
+    private RoomListCellRenderer roomListCellRenderer = new RoomListCellRenderer();
 
     @Override
-    protected void setupNameLabel(JLabel nameLabel, JList<? extends User> list, User user, int index, boolean isSelected, boolean cellHasFocus) {
-        super.setupNameLabel(nameLabel, list, user, index, isSelected, cellHasFocus);
-        nameLabel.setText(user.getName());
+    public Component getListCellRendererComponent(JList<? extends ChatTarget> list, ChatTarget chatTarget, int index, boolean isSelected, boolean cellHasFocus) {
+        if (chatTarget instanceof User) {
+            return userListCellRenderer.getListCellRendererComponent((JList<? extends User>)list, (User)chatTarget, index, isSelected, cellHasFocus);
+        }
+        else if (chatTarget instanceof Room) {
+            return roomListCellRenderer.getListCellRendererComponent((JList<? extends Room>)list, (Room)chatTarget, index, isSelected, cellHasFocus);
+        }
+        else {
+            throw new RuntimeException("unexpected ChatTarget class: " + chatTarget.getClass().getCanonicalName());
+        }
     }
-
-    @Override
-    protected void setupStatusLabel(JLabel statusLabel, JList<? extends User> list, User user, int index, boolean isSelected, boolean cellHasFocus) {
-        super.setupStatusLabel(statusLabel, list, user, index, isSelected, cellHasFocus);
-        statusLabel.setIcon(user.getHighestStatus().getImageIcon());
-    }
-
 }

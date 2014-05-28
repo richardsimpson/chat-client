@@ -46,15 +46,17 @@ public class CurrentChatOccupantsCellRenderer extends UserListCellRenderer {
 
     // rightBorder is a hack to provide a gap between columns when this renderer is used to display the list
     // of users within a room.
-    public CurrentChatOccupantsCellRenderer(final int rightBorder) {
-        super(rightBorder);
+    public CurrentChatOccupantsCellRenderer() {
+        super(20);
         // fonts
         this.normalFont = new JLabel().getFont();
         this.boldFont = new Font(this.normalFont.getName(), Font.BOLD, this.normalFont.getSize());
     }
 
     @Override
-    protected void customiseUsernameLabel(JLabel usernameLabel, JList<? extends User> list, User user, int index, boolean isSelected, boolean cellHasFocus) {
+    protected void setupNameLabel(JLabel nameLabel, JList<? extends User> list, User user, int index, boolean isSelected, boolean cellHasFocus) {
+        super.setupNameLabel(nameLabel, list, user, index, isSelected, cellHasFocus);
+
         this.userListModel = null;
         this.ownerId = null;
 
@@ -70,10 +72,10 @@ public class CurrentChatOccupantsCellRenderer extends UserListCellRenderer {
         }
 
         if ((this.ownerId != null) && (this.ownerId.equals(user.getUserId()))) {
-            usernameLabel.setFont(boldFont);
+            nameLabel.setFont(boldFont);
         }
         else {
-            usernameLabel.setFont(normalFont);
+            nameLabel.setFont(normalFont);
         }
 
     }
