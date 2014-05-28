@@ -36,8 +36,9 @@ import com.jgoodies.binding.list.SelectionInList;
 import com.jgoodies.binding.value.ValueModel;
 import uk.co.rjsoftware.xmpp.client.YaccProperties;
 import uk.co.rjsoftware.xmpp.dialogs.DialogUtils;
-import uk.co.rjsoftware.xmpp.MessageListCellRenderer;
-import uk.co.rjsoftware.xmpp.UserListCellRenderer;
+import uk.co.rjsoftware.xmpp.view.CurrentChatOccupantsCellRenderer;
+import uk.co.rjsoftware.xmpp.view.MessageListCellRenderer;
+import uk.co.rjsoftware.xmpp.view.UserListCellRenderer;
 import uk.co.rjsoftware.xmpp.client.CustomConnection;
 import uk.co.rjsoftware.xmpp.dialogs.createroom.CreateRoomForm;
 import uk.co.rjsoftware.xmpp.dialogs.createroom.NewRoomListener;
@@ -145,7 +146,7 @@ public class MainForm extends JFrame {
         // TODO: Stop the horizontal scroll bar from hiding the bottom column entries
         // TODO: Display a different view if in a private chat (as there will only be one user to display)
         final ValueModel currentChatTargetOccupantsModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_OCCUPANTS_PROPERTY_NAME);
-        this.chatOccupantsList = BasicComponentFactory.createList(new SelectionInList(currentChatTargetOccupantsModel), new UserListCellRenderer(20));
+        this.chatOccupantsList = BasicComponentFactory.createList(new SelectionInList(currentChatTargetOccupantsModel), new CurrentChatOccupantsCellRenderer(20));
         this.chatOccupantsList.setLayoutOrientation(JList.VERTICAL_WRAP);
         this.chatOccupantsList.setVisibleRowCount(4);
         this.chatOccupantsScrollPane = new JScrollPane(this.chatOccupantsList);

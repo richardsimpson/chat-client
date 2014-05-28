@@ -27,7 +27,7 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package uk.co.rjsoftware.xmpp;
+package uk.co.rjsoftware.xmpp.view;
 
 import uk.co.rjsoftware.xmpp.model.CustomMessage;
 

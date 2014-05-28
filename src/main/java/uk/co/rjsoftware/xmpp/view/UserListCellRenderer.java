@@ -27,11 +27,9 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package uk.co.rjsoftware.xmpp;
+package uk.co.rjsoftware.xmpp.view;
 
-import com.jgoodies.binding.list.SelectionInList;
 import uk.co.rjsoftware.xmpp.model.User;
-import uk.co.rjsoftware.xmpp.model.UserListModel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -39,19 +37,11 @@ import java.awt.*;
 
 public class UserListCellRenderer implements ListCellRenderer<User> {
 
-    private static final int STATUS_COLUMN_WIDTH = 75;
-
     private JPanel mainPanel;
     private JPanel statusPanel;
     private JLabel statusLabel;
     private JPanel usernamePanel;
     private JLabel usernameLabel;
-
-    private UserListModel userListModel;
-    private String ownerId;
-
-    private final Font boldFont;
-    private final Font normalFont;
 
     // rightBorder is a hack to provide a gap between columns when this renderer is used to display the list
     // of users within a room.
@@ -64,8 +54,6 @@ public class UserListCellRenderer implements ListCellRenderer<User> {
         this.statusPanel.setOpaque(false);
         this.statusPanel.setBorder(new EmptyBorder(4, 2, 2, 4));
         this.statusLabel = new JLabel();
-        //this.statusLabel.setPreferredSize(new Dimension(STATUS_COLUMN_WIDTH, 10));
-        //this.senderLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         this.statusPanel.add(this.statusLabel, BorderLayout.PAGE_START);
         this.mainPanel.add(this.statusPanel, BorderLayout.LINE_START);
 
@@ -76,48 +64,57 @@ public class UserListCellRenderer implements ListCellRenderer<User> {
         this.usernameLabel = new JLabel();
         this.usernamePanel.add(this.usernameLabel, BorderLayout.CENTER);
         this.mainPanel.add(this.usernamePanel, BorderLayout.CENTER);
-
-        // fonts
-        this.normalFont = this.usernameLabel.getFont();
-        this.boldFont = new Font(this.normalFont.getName(), Font.BOLD, this.normalFont.getSize());
     }
 
     @Override
-    public Component getListCellRendererComponent(JList<? extends User> list, User user, int index, boolean isSelected, boolean cellHasFocus) {
-        this.userListModel = null;
-        this.ownerId = null;
-
-        if (list.getModel() instanceof SelectionInList) {
-            final SelectionInList selectionInList = (SelectionInList)list.getModel();
-            if (selectionInList.getListHolder().getValue() instanceof UserListModel) {
-                this.userListModel = (UserListModel)selectionInList.getListHolder().getValue();
-            }
-        }
-
-        if (null != this.userListModel) {
-            this.ownerId = this.userListModel.getOwnerId();
-        }
-
-        if ((this.ownerId != null) && (this.ownerId.equals(user.getUserId()))) {
-            this.usernameLabel.setFont(boldFont);
-        }
-        else {
-            this.usernameLabel.setFont(normalFont);
-        }
-
-        this.usernameLabel.setText(user.getName());
-
-        this.statusLabel.setIcon(user.getHighestStatus().getImageIcon());
-
-        if (isSelected) {
-            this.mainPanel.setBackground(list.getSelectionBackground());
-            this.usernameLabel.setForeground(list.getSelectionForeground());
-        }
-        else {
-            this.mainPanel.setBackground(list.getBackground());
-            this.usernameLabel.setForeground(list.getForeground());
-        }
+    public final Component getListCellRendererComponent(JList<? extends User> list, User user, int index, boolean isSelected, boolean cellHasFocus) {
+        setupUsernameLabel(this.usernameLabel, list, user, index, isSelected, cellHasFocus);
+        setupMainPanel(this.mainPanel, list, user, index, isSelected, cellHasFocus);
+        setupStatusLabel(this.statusLabel, list, user, index, isSelected, cellHasFocus);
 
         return this.mainPanel;
     }
+
+    private void setupUsernameLabel(JLabel usernameLabel, JList<? extends User> list, User user, int index, boolean isSelected, boolean cellHasFocus) {
+        this.usernameLabel.setText(user.getName());
+
+        if (isSelected) {
+            this.usernameLabel.setForeground(list.getSelectionForeground());
+        }
+        else {
+            this.usernameLabel.setForeground(list.getForeground());
+        }
+
+        customiseUsernameLabel(usernameLabel, list, user, index, isSelected, cellHasFocus);
+    }
+
+    private void setupMainPanel(JPanel mainPanel, JList<? extends User> list, User user, int index, boolean isSelected, boolean cellHasFocus) {
+        if (isSelected) {
+            this.mainPanel.setBackground(list.getSelectionBackground());
+        }
+        else {
+            this.mainPanel.setBackground(list.getBackground());
+        }
+
+        customiseMainPanel(mainPanel, list, user, index, isSelected, cellHasFocus);
+    }
+
+    private void setupStatusLabel(JLabel statusLabel, JList<? extends User> list, User user, int index, boolean isSelected, boolean cellHasFocus) {
+        this.statusLabel.setIcon(user.getHighestStatus().getImageIcon());
+
+        customiseStatusLabel(statusLabel, list, user, index, isSelected, cellHasFocus);
+    }
+
+    protected void customiseUsernameLabel(JLabel usernameLabel, JList<? extends User> list, User user, int index, boolean isSelected, boolean cellHasFocus) {
+        // do nothing - this can be overridden by subclasses
+    }
+
+    protected void customiseMainPanel(JPanel mainPanel, JList<? extends User> list, User user, int index, boolean isSelected, boolean cellHasFocus) {
+        // do nothing - this can be overridden by subclasses
+    }
+
+    protected void customiseStatusLabel(JLabel statusLabel, JList<? extends User> list, User user, int index, boolean isSelected, boolean cellHasFocus) {
+        // do nothing - this can be overridden by subclasses
+    }
+
 }
