@@ -162,6 +162,7 @@ public class CustomConnection extends Model {
             addRoom(newRoom);
             System.out.println("name:" + room.getName() + ", JID: " + room.getJid());
         }
+        Collections.sort(this.roomListModel);
 
         //setup the chat listener, to listen for new incomming chats
         this.connection.getChatManager().addChatListener(new ChatManagerListener() {
