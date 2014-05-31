@@ -322,6 +322,15 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
         return this.occupantsModel;
     }
 
+    @Override
+    public void delete() {
+        try {
+            this.chat.destroy(null, null);
+        } catch (XMPPException exception) {
+            throw new RuntimeException(exception);
+        }
+    }
+
     public RoomPrivacy getPrivacy() {
         return this.privacy;
     }

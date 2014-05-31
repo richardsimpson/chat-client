@@ -52,4 +52,6 @@ public interface ChatTarget {
     void removePropertyChangeListener(String propertyName, PropertyChangeListener listener);
 
     UserListModel getOccupantsModel();
+
+    void delete();
 }

@@ -308,10 +308,18 @@ public class CustomConnection extends Model {
             }
 
             // TODO: Remove the need to fire all of these here - this doesn't seem right
+            String currentChatTitle = null;
+            CustomMessageListModel currentMessageListModel = null;
+            UserListModel currentOccupants = null;
+            if (null != currentChatTarget) {
+                currentChatTitle = currentChatTarget.getTitle();
+                currentMessageListModel = currentChatTarget.getCustomMessageListModel();
+                currentOccupants = currentChatTarget.getOccupantsModel();
+            }
             firePropertyChange(CURRENT_CHAT_TARGET_PROPERTY_NAME, oldChatTarget, currentChatTarget);
-            firePropertyChange(CURRENT_CHAT_TARGET_TITLE_PROPERTY_NAME, oldChatTitle, currentChatTarget.getTitle());
-            firePropertyChange(CURRENT_CHAT_TARGET_MESSAGES_LIST_PROPERTY_NAME, oldMessageList, currentChatTarget.getCustomMessageListModel());
-            firePropertyChange(CURRENT_CHAT_TARGET_OCCUPANTS_PROPERTY_NAME, oldOccupants, currentChatTarget.getOccupantsModel());
+            firePropertyChange(CURRENT_CHAT_TARGET_TITLE_PROPERTY_NAME, oldChatTitle, currentChatTitle);
+            firePropertyChange(CURRENT_CHAT_TARGET_MESSAGES_LIST_PROPERTY_NAME, oldMessageList, currentMessageListModel);
+            firePropertyChange(CURRENT_CHAT_TARGET_OCCUPANTS_PROPERTY_NAME, oldOccupants, currentOccupants);
         }
     }
 
@@ -319,6 +327,16 @@ public class CustomConnection extends Model {
         @Override
         public void propertyChange(PropertyChangeEvent event) {
             firePropertyChange(CURRENT_CHAT_TARGET_TITLE_PROPERTY_NAME, event.getOldValue(), event.getNewValue());
+        }
+    }
+
+    public void deleteCurrentChatTarget() {
+        if (null != this.currentChatTarget) {
+            this.currentChatTarget.delete();
+            this.chatListModel.remove(this.currentChatTarget);
+            // assuming that the chat is a room, since one-2-one chats can't be deleted via Smack.
+            this.roomListModel.remove(this.currentChatTarget);
+            setCurrentChatTarget(null);
         }
     }
 

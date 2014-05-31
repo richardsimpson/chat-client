@@ -185,9 +185,9 @@ public class MainForm extends JFrame {
                 final int selectedOption = JOptionPane.showOptionDialog(MainForm.this, "Are you sure you want to delete the room?",
                                             "Delete Room", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null,
                                             options, options[1]);
-//                if (0 == selectedOption) {
-//                    connection.getCurrentChatTarget().delete();
-//                }
+                if (0 == selectedOption) {
+                    connection.deleteCurrentChatTarget();
+                }
             }
         });
 

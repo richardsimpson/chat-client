@@ -231,4 +231,9 @@ public class User extends Model implements Comparable<User>, ChatTarget {
         return this.occupantsModel;
     }
 
+    @Override
+    public void delete() {
+        throw new RuntimeException("Cannot delete a single user chat");
+    }
+
 }
