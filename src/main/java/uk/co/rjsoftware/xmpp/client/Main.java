@@ -44,12 +44,13 @@ public final class Main {
 
     private LoginForm loginForm;
     private YaccProperties yaccProperties;
+    private int maxRoomCount;
 
     public static void main(String [ ] args) throws XMPPException, InterruptedException {
-        new Main();
+        new Main(args);
     }
 
-    private Main() {
+    private Main(final String [ ] args) {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (ClassNotFoundException e) {
@@ -60,6 +61,13 @@ public final class Main {
             e.printStackTrace();
         } catch (UnsupportedLookAndFeelException e) {
             e.printStackTrace();
+        }
+
+        for (String arg : args) {
+            final String[] currentArg = arg.split("=");
+            if (currentArg[0].equals("maxRoomCount")) {
+                this.maxRoomCount = Integer.parseInt(currentArg[1]);
+            }
         }
 
         try {
@@ -93,7 +101,7 @@ public final class Main {
     }
 
     private void createAndShowMainForm(String username, String password) throws YaccException {
-        final CustomConnection connection = new CustomConnection(username, password);
+        final CustomConnection connection = new CustomConnection(username, password, this.maxRoomCount);
 
         // TODO: Check if this is the correct way to 'close' a JFrame
         this.loginForm.setVisible(false);

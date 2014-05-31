@@ -76,13 +76,15 @@ public class CustomConnection extends Model {
     private final UserListModel userListModel;
     private final RoomListModel roomListModel;
     private final ChatListModel chatListModel = new ChatListModel();
+    private final int maxRoomCount;
     private User currentUser;
     private final String hipChatClientPrefix;
 
     private ChatTarget currentChatTarget;
     private final TitlePropertyChangeListener titleListener = new TitlePropertyChangeListener();
 
-    public CustomConnection(final String username, final String password) throws YaccException {
+    public CustomConnection(final String username, final String password, final int maxRoomCount) throws YaccException {
+        this.maxRoomCount = maxRoomCount;
         // TODO: Put 'chat.hipchat.com' into config
         this.connection = new XMPPConnection("chat.hipchat.com");
         try {
@@ -157,7 +159,12 @@ public class CustomConnection extends Model {
         } catch (XMPPException exception) {
             throw new RuntimeException(exception);
         }
+        int currentRoomNumber = 0;
         for (HostedRoom room : rooms) {
+            currentRoomNumber++;
+            if (currentRoomNumber > this.maxRoomCount) {
+                break;
+            }
             final Room newRoom = new Room(room.getJid(), room.getName());
             addRoom(newRoom);
             System.out.println("name:" + room.getName() + ", JID: " + room.getJid());

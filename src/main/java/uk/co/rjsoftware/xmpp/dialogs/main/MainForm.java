@@ -139,10 +139,86 @@ public class MainForm extends JFrame {
         this.chatHeaderPanel.setLayout(new BorderLayout());
         this.chatPanel.add(this.chatHeaderPanel, BorderLayout.PAGE_START);
 
+        // create a panel for the chat title
+        final JPanel chatTitlePanel = new JPanel();
+        chatTitlePanel.setLayout(new BorderLayout());
+        this.chatHeaderPanel.add(chatTitlePanel, BorderLayout.PAGE_START);
+
         // add a label for the room / chat title into the chat header.
         final ValueModel currentChatTargetTitleModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_TITLE_PROPERTY_NAME);
         this.chatTitleLabel = BasicComponentFactory.createLabel(currentChatTargetTitleModel);
-        this.chatHeaderPanel.add(this.chatTitleLabel, BorderLayout.PAGE_START);
+        chatTitlePanel.add(this.chatTitleLabel, BorderLayout.LINE_START);
+
+        // add a room settings icon and handler
+        final JPopupMenu settingsPopupMenu = new JPopupMenu();
+        final JMenuItem inviteUsersMenuItem = new JMenuItem("Invite Users...");
+        final JMenuItem changeTopicMenuItem = new JMenuItem("Change Topic");
+        final JMenuItem renameRoomMenuItem = new JMenuItem("Rename...");
+        final JMenuItem deleteRoomMenuItem = new JMenuItem("Delete...");
+
+        inviteUsersMenuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                // TODO: Display invite user dialog
+            }
+        });
+
+        changeTopicMenuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                // TODO: Allow user to change the room subject
+            }
+        });
+
+        renameRoomMenuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                // TODO: Display rename room dialog
+            }
+        });
+
+        deleteRoomMenuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+                // TODO: Display delete room dialog
+                final Object[] options = {"Delete", "Cancel"};
+                final int selectedOption = JOptionPane.showOptionDialog(MainForm.this, "Are you sure you want to delete the room?",
+                                            "Delete Room", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+                                            options, options[1]);
+//                if (0 == selectedOption) {
+//                    connection.getCurrentChatTarget().delete();
+//                }
+            }
+        });
+
+        settingsPopupMenu.add(inviteUsersMenuItem);
+        settingsPopupMenu.addSeparator();
+        settingsPopupMenu.add(changeTopicMenuItem);
+        settingsPopupMenu.add(renameRoomMenuItem);
+        settingsPopupMenu.addSeparator();
+        settingsPopupMenu.add(deleteRoomMenuItem);
+
+        // TODO: Disable button when the current chat target is not a room
+        final JButton roomSettingsButton = new JButton("settings");
+        chatTitlePanel.add(roomSettingsButton, BorderLayout.LINE_END);
+        roomSettingsButton.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent event) {
+                maybeShowPopup(event);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent event) {
+                maybeShowPopup(event);
+            }
+
+            private void maybeShowPopup(MouseEvent event) {
+                if (event.getButton() == MouseEvent.BUTTON1) {
+                    settingsPopupMenu.show(event.getComponent(),
+                            0, roomSettingsButton.getHeight());
+                }
+            }
+        });
 
         // add a list for the list of room occupants
         // TODO: Stop the horizontal scroll bar from hiding the bottom column entries
