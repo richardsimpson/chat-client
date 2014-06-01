@@ -66,6 +66,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 
 public class MainForm extends JFrame {
@@ -211,7 +213,6 @@ public class MainForm extends JFrame {
         settingsPopupMenu.addSeparator();
         settingsPopupMenu.add(deleteRoomMenuItem);
 
-        // TODO: Disable button when the current chat target is not a room
         final JButton roomSettingsButton = new JButton("settings");
         chatTitlePanel.add(roomSettingsButton, BorderLayout.LINE_END);
         roomSettingsButton.addMouseListener(new MouseAdapter() {
@@ -229,6 +230,25 @@ public class MainForm extends JFrame {
                 if (event.getButton() == MouseEvent.BUTTON1) {
                     settingsPopupMenu.show(event.getComponent(),
                             0, roomSettingsButton.getHeight());
+                }
+            }
+        });
+        // by default the settings button is not displayed, as the app starts with no chat open
+        roomSettingsButton.setVisible(false);
+        // add a listener to the current chat target that shows/hides the settings menu and enables/disables the items as appropriate
+        final ValueModel currentChatTargetModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_PROPERTY_NAME);
+        currentChatTargetModel.addValueChangeListener(new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent event) {
+                if (event.getNewValue() instanceof Room) {
+                    final Room currentRoom = (Room)event.getNewValue();
+                    final boolean isOwner = connection.getCurrentUser().getUserId().equals(currentRoom.getOwnerId());
+                    roomSettingsButton.setVisible(true);
+                    renameRoomMenuItem.setEnabled(isOwner);
+                    deleteRoomMenuItem.setEnabled(isOwner);
+                }
+                else {
+                    roomSettingsButton.setVisible(false);
                 }
             }
         });
