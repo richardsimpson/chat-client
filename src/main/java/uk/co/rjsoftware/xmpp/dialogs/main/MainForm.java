@@ -183,7 +183,6 @@ public class MainForm extends JFrame {
                     hipChatRoom.renameRoom((Room)connection.getCurrentChatTarget(), result, connection.getHipChatUser());
                     connection.getRoomListModel().updateRoomName(((Room)connection.getCurrentChatTarget()).getRoomId(), result);
                     // TODO: room name in the list of recent chat's isn't being updated - only the room list changes.
-                    // TODO: Current user availability doesn't get updated in the occupant list - only the user list changes.
                 }
             }
         });

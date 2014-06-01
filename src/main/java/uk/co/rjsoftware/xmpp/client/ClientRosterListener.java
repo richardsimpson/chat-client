@@ -30,6 +30,7 @@
 package uk.co.rjsoftware.xmpp.client;
 
 import uk.co.rjsoftware.xmpp.model.CustomPresence;
+import uk.co.rjsoftware.xmpp.model.User;
 import uk.co.rjsoftware.xmpp.model.UserListModel;
 import uk.co.rjsoftware.xmpp.model.UserStatus;
 import org.jivesoftware.smack.RosterListener;
@@ -69,7 +70,11 @@ public class ClientRosterListener implements RosterListener {
         final String userId = customPresence.getUserId();
         final String resource = customPresence.getResource();
 
-        this.userListModel.updateUserStatus(userId, resource, UserStatus.fromPresence(customPresence));
+        final User user = this.userListModel.get(userId);
+        if (user != null) {
+            user.setStatus(resource, UserStatus.fromPresence(customPresence));
+        }
+
         System.out.println("ClientRosterListener: Roster Entry Presence Changed: " + presence.getFrom() + ": " + presence.toString());
     }
 }

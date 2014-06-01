@@ -29,11 +29,15 @@
  */
 package uk.co.rjsoftware.xmpp.model;
 
-import com.jgoodies.common.collect.ArrayListModel;
-
+import javax.swing.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.List;
 
-public class UserListModel extends ArrayListModel<User> {
+public class UserListModel extends AbstractListModel<User> implements PropertyChangeListener {
+
+    private final List<User> users = new ArrayList<User>();
 
     // the userId of the room owner - only used when this UserListModel represents the occupants of a room.
     private String ownerId;
@@ -43,12 +47,31 @@ public class UserListModel extends ArrayListModel<User> {
     }
 
     public UserListModel(final List<User> users) {
-        super(users);
+        for (User user : users) {
+            user.addPropertyChangeListener(this);
+        }
+
+        this.users.addAll(users);
+    }
+
+    public void add(final User user) {
+        user.addPropertyChangeListener(this);
+        this.users.add(user);
+        fireIntervalAdded(this, this.users.size() - 1, this.users.size() - 1);
+    }
+
+    public void remove(final User user) {
+        final int index = this.users.indexOf(user);
+        if (index != -1) {
+            this.users.remove(index);
+            user.removePropertyChangeListener(this);
+            fireIntervalRemoved(this, index, index);
+        }
     }
 
     private int indexOf(final String userId) {
-        for (int index = 0 ; index < size() ; index++) {
-            if (get(index).getUserId().equals(userId)) {
+        for (int index = 0 ; index < this.users.size() ; index++) {
+            if (this.users.get(index).getUserId().equals(userId)) {
                 return index;
             }
         }
@@ -61,16 +84,7 @@ public class UserListModel extends ArrayListModel<User> {
         if (index == -1) {
             return null;
         }
-        return get(index);
-    }
-
-    public void updateUserStatus(final String userId, final String resource, final UserStatus userStatus) {
-        final int index = indexOf(userId);
-
-        if (index != -1) {
-            get(index).setStatus(resource, userStatus);
-            fireContentsChanged(index);
-        }
+        return this.users.get(index);
     }
 
     public String getOwnerId() {
@@ -81,7 +95,25 @@ public class UserListModel extends ArrayListModel<User> {
         this.ownerId = ownerId;
         final int ownerIndex = indexOf(ownerId);
         if (ownerIndex != -1) {
-            fireContentsChanged(ownerIndex);
+            fireContentsChanged(this, ownerIndex, ownerIndex);
+        }
+    }
+
+    @Override
+    public int getSize() {
+        return this.users.size();
+    }
+
+    @Override
+    public User getElementAt(int index) {
+        return this.users.get(index);
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent event) {
+        final int index = this.users.indexOf(event.getSource());
+        if (index != -1) {
+            fireContentsChanged(this, index, index);
         }
     }
 }
