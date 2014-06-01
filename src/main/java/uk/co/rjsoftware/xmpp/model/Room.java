@@ -53,6 +53,10 @@ import java.util.Map;
 
 public class Room extends Model implements Comparable<Room>, ChatTarget {
 
+    public static final String SUBJECT_PROPERTY_NAME = "subject";
+    public static final String PRIVACY_PROPERTY_NAME = "privacy";
+    public static final String OWNER_ID_PROPERTY_NAME = "ownerId";
+
     private CustomConnection customConnection;
 
     private final String roomId;
@@ -115,7 +119,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
 
             final String newTitleValue = this.getTitle();
 
-            firePropertyChange(ChatTarget.SUBJECT_PROPERTY_NAME, oldSubjectValue, subject);
+            firePropertyChange(SUBJECT_PROPERTY_NAME, oldSubjectValue, subject);
             firePropertyChange(ChatTarget.TITLE_PROPERTY_NAME, oldTitleValue, newTitleValue);
         }
     }
@@ -359,7 +363,11 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
     }
 
     public void setPrivacy(RoomPrivacy privacy) {
-        this.privacy = privacy;
+        if (this.privacy != privacy) {
+            final RoomPrivacy oldValue = this.privacy;
+            this.privacy = privacy;
+            firePropertyChange(PRIVACY_PROPERTY_NAME, oldValue, privacy);
+        }
     }
 
     public String getOwnerId() {
@@ -367,8 +375,12 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
     }
 
     public void setOwnerId(String ownerId) {
-        this.ownerId = ownerId;
-        this.occupantsModel.setOwnerId(ownerId);
+        if (this.ownerId != ownerId) {
+            final String oldValue = this.ownerId;
+            this.ownerId = ownerId;
+            this.occupantsModel.setOwnerId(ownerId);
+            firePropertyChange(OWNER_ID_PROPERTY_NAME, oldValue, ownerId);
+        }
     }
 
 }

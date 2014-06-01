@@ -171,7 +171,7 @@ public class CustomConnection extends Model {
             addRoom(newRoom);
             System.out.println("name:" + room.getName() + ", JID: " + room.getJid());
         }
-        Collections.sort(this.roomListModel);
+        this.roomListModel.sort();
 
         //setup the chat listener, to listen for new incomming chats
         this.connection.getChatManager().addChatListener(new ChatManagerListener() {
@@ -337,7 +337,7 @@ public class CustomConnection extends Model {
             this.currentChatTarget.delete();
             this.chatListModel.remove(this.currentChatTarget);
             // assuming that the chat is a room, since one-2-one chats can't be deleted via Smack.
-            this.roomListModel.remove(this.currentChatTarget);
+            this.roomListModel.remove((Room)this.currentChatTarget);
             setCurrentChatTarget(null);
         }
     }

@@ -37,7 +37,6 @@ public interface ChatTarget {
 
     String TITLE_PROPERTY_NAME = "title";
     String NAME_PROPERTY_NAME = "name";
-    String SUBJECT_PROPERTY_NAME = "subject";
 
     void join(final CustomConnection customConnection);
 

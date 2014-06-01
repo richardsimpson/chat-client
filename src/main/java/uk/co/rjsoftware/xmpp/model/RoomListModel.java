@@ -29,17 +29,50 @@
  */
 package uk.co.rjsoftware.xmpp.model;
 
-import com.jgoodies.common.collect.ArrayListModel;
+import javax.swing.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
-public class RoomListModel extends ArrayListModel<Room> {
+public class RoomListModel extends AbstractListModel<Room> implements PropertyChangeListener, Iterable<Room> {
+
+    private final List<Room> rooms = new ArrayList<Room>();
 
     public RoomListModel() {
         super();
     }
 
+    public void add(final Room room) {
+        room.addPropertyChangeListener(this);
+        this.rooms.add(room);
+        fireIntervalAdded(this, this.rooms.size()-1, this.rooms.size()-1);
+    }
+
+    public void remove(final Room room) {
+        final int index = this.rooms.indexOf(room);
+        if (index != -1) {
+            this.rooms.remove(index);
+            room.removePropertyChangeListener(this);
+            fireIntervalRemoved(this, index, index);
+        }
+    }
+
+    @Override
+    public int getSize() {
+        return this.rooms.size();
+    }
+
+    @Override
+    public Room getElementAt(int index) {
+        return this.rooms.get(index);
+    }
+
     private int indexOf(final String roomId) {
-        for (int index = 0 ; index < size() ; index++) {
-            if (get(index).getRoomId().equals(roomId)) {
+        for (int index = 0 ; index < this.rooms.size() ; index++) {
+            if (this.rooms.get(index).getRoomId().equals(roomId)) {
                 return index;
             }
         }
@@ -47,22 +80,28 @@ public class RoomListModel extends ArrayListModel<Room> {
         return -1;
     }
 
-    public void updateRoomName(final String roomId, final String newName) {
-        final int index = indexOf(roomId);
-
-        if (index != -1) {
-            get(index).setName(newName);
-            fireContentsChanged(index);
-        }
-    }
-
     public Room get(final String roomId) {
         final int index = indexOf(roomId);
         if (index == -1) {
             return null;
         }
-        return get(index);
+        return this.rooms.get(index);
     }
 
+    public void sort() {
+        Collections.sort(this.rooms);
+    }
 
+    @Override
+    public void propertyChange(PropertyChangeEvent event) {
+        final int index = this.rooms.indexOf(event.getSource());
+        if (index != -1) {
+            fireContentsChanged(this, index, index);
+        }
+    }
+
+    @Override
+    public Iterator<Room> iterator() {
+        return this.rooms.iterator();
+    }
 }

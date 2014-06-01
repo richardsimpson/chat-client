@@ -181,8 +181,11 @@ public class MainForm extends JFrame {
                 if ((null != result) && (result.length() > 0)) {
                     HipChatRoom hipChatRoom = new HipChatRoom(yaccProperties);
                     hipChatRoom.renameRoom((Room)connection.getCurrentChatTarget(), result, connection.getHipChatUser());
-                    connection.getRoomListModel().updateRoomName(((Room)connection.getCurrentChatTarget()).getRoomId(), result);
-                    // TODO: room name in the list of recent chat's isn't being updated - only the room list changes.
+
+                    final Room room = connection.getRoomListModel().get(((Room)connection.getCurrentChatTarget()).getRoomId());
+                    if (room != null) {
+                        room.setName(result);
+                    }
                 }
             }
         });
