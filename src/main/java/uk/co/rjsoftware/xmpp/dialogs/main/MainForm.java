@@ -36,6 +36,7 @@ import com.jgoodies.binding.list.SelectionInList;
 import com.jgoodies.binding.value.ValueModel;
 import uk.co.rjsoftware.xmpp.client.YaccProperties;
 import uk.co.rjsoftware.xmpp.dialogs.DialogUtils;
+import uk.co.rjsoftware.xmpp.model.hipchat.room.HipChatRoom;
 import uk.co.rjsoftware.xmpp.view.CurrentChatOccupantsCellRenderer;
 import uk.co.rjsoftware.xmpp.view.MessageListCellRenderer;
 import uk.co.rjsoftware.xmpp.view.RecentChatListCellRenderer;
@@ -173,14 +174,24 @@ public class MainForm extends JFrame {
         renameRoomMenuItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {
-                // TODO: Display rename room dialog
+                // Display rename room dialog
+                final String result = (String)JOptionPane.showInputDialog(MainForm.this, "Enter the new name for the room:",
+                        "Rename Room", JOptionPane.PLAIN_MESSAGE, null, null, connection.getCurrentChatTarget().getTitle());
+
+                if ((null != result) && (result.length() > 0)) {
+                    HipChatRoom hipChatRoom = new HipChatRoom(yaccProperties);
+                    hipChatRoom.renameRoom((Room)connection.getCurrentChatTarget(), result, connection.getHipChatUser());
+                    connection.getRoomListModel().updateRoomName(((Room)connection.getCurrentChatTarget()).getRoomId(), result);
+                    // TODO: room name in the list of recent chat's isn't being updated - only the room list changes.
+                    // TODO: Current user availability doesn't get updated in the occupant list - only the user list changes.
+                }
             }
         });
 
         deleteRoomMenuItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {
-                // TODO: Display delete room dialog
+                // Display delete room dialog
                 final Object[] options = {"Delete", "Cancel"};
                 final int selectedOption = JOptionPane.showOptionDialog(MainForm.this, "Are you sure you want to delete the room?",
                                             "Delete Room", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null,

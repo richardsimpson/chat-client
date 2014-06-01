@@ -91,4 +91,29 @@ public class HipChatRoom {
 
         return new Room(roomPojo.getJid(), roomPojo.getName());
     }
+
+    public void renameRoom(final Room room, final String newName, final String username) {
+        Client client = ClientBuilder.newClient();
+
+        final String apiEndpoint = this.yaccProperties.getProperty(YaccProperties.PROPERTY_NAME_HIPCHAT_API_ENDPOINT);
+        final String authToken = this.yaccProperties.getProperty(YaccProperties.PROPERTY_NAME_HIPCHAT_API_AUTH_TOKEN);
+
+        WebTarget updateRoomTarget = client.target(apiEndpoint).path("room").path(room.getName()).queryParam("auth_token", authToken);
+
+        //generate the request to create the room
+        final UpdateRoomRequest updateRoomRequest = new UpdateRoomRequest();
+        updateRoomRequest.setName(newName);
+        updateRoomRequest.setPrivacy(room.getPrivacy().getDescription());
+        updateRoomRequest.setArchived(false);
+        updateRoomRequest.setGuestAccessible(false);
+        updateRoomRequest.setTopic(room.getSubject());
+        updateRoomRequest.getOwner().setId(username);
+
+        Response response1 = updateRoomTarget.request().put(Entity.entity(updateRoomRequest, MediaType.APPLICATION_JSON_TYPE));
+
+        if (response1.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
+            throw new RuntimeException(response1.readEntity(String.class));
+        }
+
+    }
 }

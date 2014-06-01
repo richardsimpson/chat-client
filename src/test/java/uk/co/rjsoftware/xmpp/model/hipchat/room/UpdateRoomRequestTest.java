@@ -27,15 +27,41 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+package uk.co.rjsoftware.xmpp.model.hipchat.room;
 
 import org.junit.Test;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.transform.Result;
+import java.io.ByteArrayOutputStream;
+
 import static org.junit.Assert.assertEquals;
 
-public class DummyTest {
+public class UpdateRoomRequestTest {
 
     @Test
-    public void testNothing() {
-        assertEquals("WTF!", true, true);
+    public void testJaxbConversion() throws JAXBException {
+        final JAXBContext jc = JAXBContext.newInstance(UpdateRoomRequest.class);
+
+        final UpdateRoomRequest request = new UpdateRoomRequest();
+        request.getOwner().setId("1234");
+
+        final ByteArrayOutputStream os = new ByteArrayOutputStream();
+        final Marshaller marshaller = jc.createMarshaller();
+        marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+        marshaller.marshal(request, os);
+
+        final String expected = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n" +
+                "<updateRoomRequest>\n" +
+                "    <is_archived>false</is_archived>\n" +
+                "    <is_guest_accessible>false</is_guest_accessible>\n" +
+                "    <owner>\n" +
+                "        <id>1234</id>\n" +
+                "    </owner>\n" +
+                "</updateRoomRequest>\n";
+
+        assertEquals("incorrect conversion", expected, os.toString());
     }
 }

@@ -35,6 +35,7 @@ import java.util.List;
 
 public class UserListModel extends ArrayListModel<User> {
 
+    // the userId of the room owner - only used when this UserListModel represents the occupants of a room.
     private String ownerId;
 
     public UserListModel() {

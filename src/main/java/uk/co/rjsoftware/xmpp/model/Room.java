@@ -56,7 +56,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
     private CustomConnection customConnection;
 
     private final String roomId;
-    private final String name;
+    private String name;
     private RoomPrivacy privacy;
     private String ownerId;
 
@@ -83,6 +83,20 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
         return this.name;
     }
 
+    public void setName(final String name) {
+        if (this.name != name) {
+            final String oldNameValue = this.name;
+            final String oldTitleValue = this.getTitle();
+
+            this.name = name;
+
+            final String newTitleValue = this.getTitle();
+
+            firePropertyChange(ChatTarget.NAME_PROPERTY_NAME, oldNameValue, name);
+            firePropertyChange(ChatTarget.TITLE_PROPERTY_NAME, oldTitleValue, newTitleValue);
+        }
+    }
+
     public String getTitle() {
         if ((null == this.subject) || (this.subject.equals(""))) {
             return this.name;
@@ -93,12 +107,21 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
     }
 
     private void setSubject(final String subject) {
-        final String oldValue = this.getTitle();
-        this.subject = subject;
-        final String newValue = this.getTitle();
-        if (!oldValue.equals(newValue)) {
-            firePropertyChange(ChatTarget.TITLE_PROPERTY_NAME, oldValue, newValue);
+        if (this.subject != subject) {
+            final String oldSubjectValue = this.subject;
+            final String oldTitleValue = this.getTitle();
+
+            this.subject = subject;
+
+            final String newTitleValue = this.getTitle();
+
+            firePropertyChange(ChatTarget.SUBJECT_PROPERTY_NAME, oldSubjectValue, subject);
+            firePropertyChange(ChatTarget.TITLE_PROPERTY_NAME, oldTitleValue, newTitleValue);
         }
+    }
+
+    public String getSubject() {
+        return this.subject;
     }
 
     @Override

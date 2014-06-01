@@ -78,7 +78,8 @@ public class CustomConnection extends Model {
     private final ChatListModel chatListModel = new ChatListModel();
     private final int maxRoomCount;
     private User currentUser;
-    private final String hipChatClientPrefix;
+    private final String hipChatGroup;
+    private final String hipChatUser;
 
     private ChatTarget currentChatTarget;
     private final TitlePropertyChangeListener titleListener = new TitlePropertyChangeListener();
@@ -102,7 +103,8 @@ public class CustomConnection extends Model {
         }
 
         final String[] usernameParts = username.split("_");
-        this.hipChatClientPrefix = usernameParts[0];
+        this.hipChatGroup = usernameParts[0];
+        this.hipChatUser = usernameParts[1];
 
         this.roster = connection.getRoster();
 
@@ -344,6 +346,14 @@ public class CustomConnection extends Model {
         final Presence presence = new Presence(Presence.Type.available);
         presence.setMode(userStatus.getMode());
         connection.sendPacket(presence);
+    }
+
+    public String getHipChatGroup() {
+        return this.hipChatGroup;
+    }
+
+    public String getHipChatUser() {
+        return this.hipChatUser;
     }
 
     public String getCurrentChatTargetTitle() {

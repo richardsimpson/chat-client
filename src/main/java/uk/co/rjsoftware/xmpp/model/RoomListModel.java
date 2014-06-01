@@ -47,6 +47,15 @@ public class RoomListModel extends ArrayListModel<Room> {
         return -1;
     }
 
+    public void updateRoomName(final String roomId, final String newName) {
+        final int index = indexOf(roomId);
+
+        if (index != -1) {
+            get(index).setName(newName);
+            fireContentsChanged(index);
+        }
+    }
+
     public Room get(final String roomId) {
         final int index = indexOf(roomId);
         if (index == -1) {
@@ -54,5 +63,6 @@ public class RoomListModel extends ArrayListModel<Room> {
         }
         return get(index);
     }
+
 
 }
