@@ -72,26 +72,9 @@ import java.util.ArrayList;
 
 public class MainForm extends JFrame {
 
-    private final JTabbedPane chatSourceTabs;
-
-    private final JList<Room> roomList;
-    private final JScrollPane roomListScrollPane;
-    private final JList<User> userList;
-    private final JScrollPane userListScrollPane;
-    private final JList<User> chatList;
-    private final JScrollPane chatListScrollPane;
-
-    private final JPanel chatPanel;
-
-    private final JPanel chatHeaderPanel;
-    private final JLabel chatTitleLabel;
-    private final JList chatOccupantsList;
-    private final JScrollPane chatOccupantsScrollPane;
-
-    private final JList<CustomMessage> messageList;
-    private final JScrollPane messageListScrollPane;
-    private final JTextArea message;
-//    private final JButton newRoomButton;
+    private final CustomConnection connection;
+    private final YaccProperties yaccProperties;
+    private final BeanAdapter adapter;
 
     private final java.util.List<LogoutListener> listeners = new ArrayList<LogoutListener>();
 
@@ -106,52 +89,166 @@ public class MainForm extends JFrame {
             }
         });
 
+        this.connection = connection;
+        this.yaccProperties = yaccProperties;
+
+        this.adapter = new BeanAdapter(connection, true);
+
+        JTabbedPane chatSourceTabs = new JTabbedPane();
+        JList<ChatTarget> chatList = setupTabbedPane(chatSourceTabs);
+
         final Container pane = getContentPane();
 
-        this.chatSourceTabs = new JTabbedPane();
-
-        final BeanAdapter adapter = new BeanAdapter(connection, true);
-
-        //Add the list of rooms.
-        final ValueModel roomListModel = adapter.getValueModel(CustomConnection.ROOM_LIST_MODEL_PROPERTY_NAME);
-        this.roomList = BasicComponentFactory.createList(new SelectionInList(roomListModel), new RoomListCellRenderer());
-        this.roomListScrollPane = new JScrollPane(roomList);
-        this.chatSourceTabs.addTab("Rooms", this.roomListScrollPane);
-
-        //Add the list of users.
-        final ValueModel userListModel = adapter.getValueModel(CustomConnection.USER_LIST_MODEL_PROPERTY_NAME);
-        this.userList = BasicComponentFactory.createList(new SelectionInList<Object>(userListModel), new UserListCellRenderer());
-        this.userListScrollPane = new JScrollPane(userList);
-        this.chatSourceTabs.addTab("Users", this.userListScrollPane);
-
-        //Add the list of recent chats.
-        final ValueModel chatListModel = adapter.getValueModel(CustomConnection.CHAT_LIST_MODEL_PROPERTY_NAME);
-        this.chatList = BasicComponentFactory.createList(new SelectionInList(chatListModel), new RecentChatListCellRenderer());
-        this.chatListScrollPane = new JScrollPane(chatList);
-        this.chatSourceTabs.addTab("Recent", this.chatListScrollPane);
-
-        pane.add(this.chatSourceTabs, BorderLayout.LINE_START);
-
         // create a panel to contain the current chat information
-        this.chatPanel = new JPanel();
-        this.chatPanel.setLayout(new BorderLayout());
-        pane.add(this.chatPanel, BorderLayout.CENTER);
+        final JPanel chatPanel = new JPanel();
+        chatPanel.setLayout(new BorderLayout());
+        pane.add(chatPanel, BorderLayout.CENTER);
 
         // create a panel for the chat header
-        this.chatHeaderPanel = new JPanel();
-        this.chatHeaderPanel.setLayout(new BorderLayout());
-        this.chatPanel.add(this.chatHeaderPanel, BorderLayout.PAGE_START);
+        final JPanel chatHeaderPanel = new JPanel();
+        chatHeaderPanel.setLayout(new BorderLayout());
+        chatPanel.add(chatHeaderPanel, BorderLayout.PAGE_START);
 
         // create a panel for the chat title
         final JPanel chatTitlePanel = new JPanel();
         chatTitlePanel.setLayout(new BorderLayout());
-        this.chatHeaderPanel.add(chatTitlePanel, BorderLayout.PAGE_START);
+        chatHeaderPanel.add(chatTitlePanel, BorderLayout.PAGE_START);
 
         // add a label for the room / chat title into the chat header.
         final ValueModel currentChatTargetTitleModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_TITLE_PROPERTY_NAME);
-        this.chatTitleLabel = BasicComponentFactory.createLabel(currentChatTargetTitleModel);
-        chatTitlePanel.add(this.chatTitleLabel, BorderLayout.LINE_START);
+        final JLabel chatTitleLabel = BasicComponentFactory.createLabel(currentChatTargetTitleModel);
+        chatTitlePanel.add(chatTitleLabel, BorderLayout.LINE_START);
 
+        setupRoomSettingsMenu(chatTitlePanel);
+
+        // add a list for the list of room occupants
+        // TODO: Stop the horizontal scroll bar from hiding the bottom column entries
+        // TODO: Display a different view if in a private chat (as there will only be one user to display)
+        final ValueModel currentChatTargetOccupantsModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_OCCUPANTS_PROPERTY_NAME);
+        final JList chatOccupantsList = BasicComponentFactory.createList(new SelectionInList(currentChatTargetOccupantsModel), new CurrentChatOccupantsCellRenderer());
+        chatOccupantsList.setLayoutOrientation(JList.VERTICAL_WRAP);
+        chatOccupantsList.setVisibleRowCount(4);
+        final JScrollPane chatOccupantsScrollPane = new JScrollPane(chatOccupantsList);
+        chatOccupantsScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        chatHeaderPanel.add(chatOccupantsScrollPane, BorderLayout.CENTER);
+
+        //Add the message history window
+        final ValueModel messagesListModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_MESSAGES_LIST_PROPERTY_NAME);
+        final JList<CustomMessage> messageList = new JList<CustomMessage>() {
+            @Override
+            public boolean getScrollableTracksViewportWidth() {
+                return true;
+            }
+        };
+        Bindings.bind(messageList, new SelectionInList(messagesListModel));
+
+        messageList.setCellRenderer(new MessageListCellRenderer());
+        messageList.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                // next line possible if list is of type JXList
+                // MainForm.this.messageList.invalidateCellSizeCache();
+                // for core: force cache invalidation by temporarily setting fixed height
+                messageList.setFixedCellHeight(10);
+                messageList.setFixedCellHeight(-1);
+            }
+        });
+        final JScrollPane messageListScrollPane = new AutoScrollPane(messageList);
+        chatPanel.add(messageListScrollPane, BorderLayout.CENTER);
+
+        // Add the message window
+        final JTextArea message = new JTextArea();
+        message.setLineWrap(true);
+        chatPanel.add(message, BorderLayout.PAGE_END);
+
+//        // Add the create room button
+//        this.newRoomButton = new JButton("Create room");
+//        pane.add(this.newRoomButton, BorderLayout.PAGE_START);
+
+        message.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent event) {
+                if ((event.getKeyCode() == 13) || (event.getKeyCode() == 10)) {
+                    connection.getCurrentChatTarget().sendMessage(message.getText());
+                    message.setText("");
+                    // stop the carriage return from appearing in the text area.
+                    event.consume();
+                }
+            }
+        });
+
+        setupMainMenu(chatSourceTabs, chatList);
+
+        setPreferredSize(new Dimension(1150, 512));
+        pack();
+
+        DialogUtils.centerDialog(this);
+    }
+
+    private JList<ChatTarget> setupTabbedPane(final JTabbedPane chatSourceTabs) {
+        //Add the list of rooms.
+        final ValueModel roomListModel = adapter.getValueModel(CustomConnection.ROOM_LIST_MODEL_PROPERTY_NAME);
+        final JList<Room> roomList = BasicComponentFactory.createList(new SelectionInList(roomListModel), new RoomListCellRenderer());
+        final JScrollPane roomListScrollPane = new JScrollPane(roomList);
+        chatSourceTabs.addTab("Rooms", roomListScrollPane);
+
+        //Add the list of users.
+        final ValueModel userListModel = adapter.getValueModel(CustomConnection.USER_LIST_MODEL_PROPERTY_NAME);
+        final JList<User> userList = BasicComponentFactory.createList(new SelectionInList<Object>(userListModel), new UserListCellRenderer());
+        final JScrollPane userListScrollPane = new JScrollPane(userList);
+        chatSourceTabs.addTab("Users", userListScrollPane);
+
+        //Add the list of recent chats.
+        final ValueModel chatListModel = adapter.getValueModel(CustomConnection.CHAT_LIST_MODEL_PROPERTY_NAME);
+        final JList<ChatTarget> chatList = BasicComponentFactory.createList(new SelectionInList(chatListModel), new RecentChatListCellRenderer());
+        final JScrollPane chatListScrollPane = new JScrollPane(chatList);
+        chatSourceTabs.addTab("Recent", chatListScrollPane);
+
+        getContentPane().add(chatSourceTabs, BorderLayout.LINE_START);
+
+        roomList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent event) {
+                if (event.getClickCount() == 2) {
+                    // update the chat target
+                    final ChatTarget chatTarget = roomList.getSelectedValue();
+                    connection.setCurrentChatTarget(chatTarget);
+                    connection.getCurrentChatTarget().join(connection);
+                    chatList.setSelectedValue(chatTarget, true);
+                    // switch to the 'recent' tab
+                    chatSourceTabs.setSelectedIndex(2);
+                }
+            }
+        });
+
+        userList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent event) {
+                if (event.getClickCount() == 2) {
+                    // update the chat target
+                    final ChatTarget chatTarget = userList.getSelectedValue();
+                    connection.setCurrentChatTarget(chatTarget);
+                    connection.getCurrentChatTarget().join(connection);
+                    chatList.setSelectedValue(chatTarget, true);
+                    // switch to the 'recent' tab
+                    chatSourceTabs.setSelectedIndex(2);
+                }
+            }
+        });
+
+        chatList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent event) {
+                // update the chat target
+                connection.setCurrentChatTarget(chatList.getSelectedValue());
+                connection.getCurrentChatTarget().join(connection);
+            }
+        });
+
+        return chatList;
+    }
+
+    private void setupRoomSettingsMenu(final JPanel chatTitlePanel) {
         // add a room settings icon and handler
         final JPopupMenu settingsPopupMenu = new JPopupMenu();
         final JMenuItem inviteUsersMenuItem = new JMenuItem("Invite Users...");
@@ -198,8 +295,8 @@ public class MainForm extends JFrame {
                 // Display delete room dialog
                 final Object[] options = {"Delete", "Cancel"};
                 final int selectedOption = JOptionPane.showOptionDialog(MainForm.this, "Are you sure you want to delete the room?",
-                                            "Delete Room", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null,
-                                            options, options[1]);
+                        "Delete Room", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+                        options, options[1]);
                 if (0 == selectedOption) {
                     connection.deleteCurrentChatTarget();
                 }
@@ -253,110 +350,9 @@ public class MainForm extends JFrame {
             }
         });
 
-        // add a list for the list of room occupants
-        // TODO: Stop the horizontal scroll bar from hiding the bottom column entries
-        // TODO: Display a different view if in a private chat (as there will only be one user to display)
-        final ValueModel currentChatTargetOccupantsModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_OCCUPANTS_PROPERTY_NAME);
-        this.chatOccupantsList = BasicComponentFactory.createList(new SelectionInList(currentChatTargetOccupantsModel), new CurrentChatOccupantsCellRenderer());
-        this.chatOccupantsList.setLayoutOrientation(JList.VERTICAL_WRAP);
-        this.chatOccupantsList.setVisibleRowCount(4);
-        this.chatOccupantsScrollPane = new JScrollPane(this.chatOccupantsList);
-        this.chatOccupantsScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-        this.chatHeaderPanel.add(this.chatOccupantsScrollPane, BorderLayout.CENTER);
+    }
 
-        //Add the message history window
-        final ValueModel messagesListModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_MESSAGES_LIST_PROPERTY_NAME);
-        this.messageList = new JList<CustomMessage>() {
-            @Override
-            public boolean getScrollableTracksViewportWidth() {
-                return true;
-            }
-        };
-        Bindings.bind(this.messageList, new SelectionInList(messagesListModel));
-
-        this.messageList.setCellRenderer(new MessageListCellRenderer());
-        this.messageList.addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                // next line possible if list is of type JXList
-                // MainForm.this.messageList.invalidateCellSizeCache();
-                // for core: force cache invalidation by temporarily setting fixed height
-                MainForm.this.messageList.setFixedCellHeight(10);
-                MainForm.this.messageList.setFixedCellHeight(-1);
-            }
-        });
-        this.messageListScrollPane = new AutoScrollPane(messageList);
-        this.chatPanel.add(this.messageListScrollPane, BorderLayout.CENTER);
-
-        // Add the message window
-        this.message = new JTextArea();
-        this.message.setLineWrap(true);
-        this.chatPanel.add(this.message, BorderLayout.PAGE_END);
-
-//        // Add the create room button
-//        this.newRoomButton = new JButton("Create room");
-//        pane.add(this.newRoomButton, BorderLayout.PAGE_START);
-
-        this.roomList.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent event) {
-                if (event.getClickCount() == 2) {
-                    // update the chat target
-                    final ChatTarget chatTarget = MainForm.this.roomList.getSelectedValue();
-                    connection.setCurrentChatTarget(chatTarget);
-                    connection.getCurrentChatTarget().join(connection);
-                    MainForm.this.chatList.setSelectedValue(chatTarget, true);
-                    // switch to the 'recent' tab
-                    MainForm.this.chatSourceTabs.setSelectedIndex(2);
-                }
-            }
-        });
-
-        this.userList.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent event) {
-                if (event.getClickCount() == 2) {
-                    // update the chat target
-                    final ChatTarget chatTarget = MainForm.this.userList.getSelectedValue();
-                    connection.setCurrentChatTarget(chatTarget);
-                    connection.getCurrentChatTarget().join(connection);
-                    MainForm.this.chatList.setSelectedValue(chatTarget, true);
-                    // switch to the 'recent' tab
-                    MainForm.this.chatSourceTabs.setSelectedIndex(2);
-                }
-            }
-        });
-
-        this.chatList.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent event) {
-                // update the chat target
-                connection.setCurrentChatTarget(MainForm.this.chatList.getSelectedValue());
-                connection.getCurrentChatTarget().join(connection);
-            }
-        });
-
-        this.message.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent event) {
-                if ((event.getKeyCode() == 13) || (event.getKeyCode() == 10)) {
-                    connection.getCurrentChatTarget().sendMessage(MainForm.this.message.getText());
-                    MainForm.this.message.setText("");
-                    // stop the carriage return from appearing in the text area.
-                    event.consume();
-                }
-            }
-        });
-
-//        this.newRoomButton.addActionListener(new ActionListener() {
-//            @Override
-//            public void actionPerformed(ActionEvent e) {
-//                // TODO: really should do this via the Room class
-//                connection.createInstantRoom(MainForm.this.message.getText());
-//            }
-//        });
-
-
+    private void setupMainMenu(final JTabbedPane chatSourceTabs, final JList<ChatTarget> chatList) {
         // create the menu
         final JMenuBar menuBar = new JMenuBar();
         final JMenu menu = new JMenu("YACC");
@@ -374,9 +370,9 @@ public class MainForm extends JFrame {
                         // update the chat target
                         connection.setCurrentChatTarget(newRoom);
                         connection.getCurrentChatTarget().join(connection);
-                        MainForm.this.chatList.setSelectedValue(newRoom, true);
+                        chatList.setSelectedValue(newRoom, true);
                         // switch to the 'recent' tab
-                        MainForm.this.chatSourceTabs.setSelectedIndex(2);
+                        chatSourceTabs.setSelectedIndex(2);
                     }
                 });
                 createRoomForm.setVisible(true);
@@ -435,10 +431,6 @@ public class MainForm extends JFrame {
         menuBar.add(menu);
         setJMenuBar(menuBar);
 
-        setPreferredSize(new Dimension(1150, 512));
-        pack();
-
-        DialogUtils.centerDialog(this);
     }
 
     private void fireLogout() {
