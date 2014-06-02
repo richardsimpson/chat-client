@@ -97,85 +97,7 @@ public class MainForm extends JFrame {
         JTabbedPane chatSourceTabs = new JTabbedPane();
         JList<ChatTarget> chatList = setupTabbedPane(chatSourceTabs);
 
-        final Container pane = getContentPane();
-
-        // create a panel to contain the current chat information
-        final JPanel chatPanel = new JPanel();
-        chatPanel.setLayout(new BorderLayout());
-        pane.add(chatPanel, BorderLayout.CENTER);
-
-        // create a panel for the chat header
-        final JPanel chatHeaderPanel = new JPanel();
-        chatHeaderPanel.setLayout(new BorderLayout());
-        chatPanel.add(chatHeaderPanel, BorderLayout.PAGE_START);
-
-        // create a panel for the chat title
-        final JPanel chatTitlePanel = new JPanel();
-        chatTitlePanel.setLayout(new BorderLayout());
-        chatHeaderPanel.add(chatTitlePanel, BorderLayout.PAGE_START);
-
-        // add a label for the room / chat title into the chat header.
-        final ValueModel currentChatTargetTitleModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_TITLE_PROPERTY_NAME);
-        final JLabel chatTitleLabel = BasicComponentFactory.createLabel(currentChatTargetTitleModel);
-        chatTitlePanel.add(chatTitleLabel, BorderLayout.LINE_START);
-
-        setupRoomSettingsMenu(chatTitlePanel);
-
-        // add a list for the list of room occupants
-        // TODO: Stop the horizontal scroll bar from hiding the bottom column entries
-        // TODO: Display a different view if in a private chat (as there will only be one user to display)
-        final ValueModel currentChatTargetOccupantsModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_OCCUPANTS_PROPERTY_NAME);
-        final JList chatOccupantsList = BasicComponentFactory.createList(new SelectionInList(currentChatTargetOccupantsModel), new CurrentChatOccupantsCellRenderer());
-        chatOccupantsList.setLayoutOrientation(JList.VERTICAL_WRAP);
-        chatOccupantsList.setVisibleRowCount(4);
-        final JScrollPane chatOccupantsScrollPane = new JScrollPane(chatOccupantsList);
-        chatOccupantsScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-        chatHeaderPanel.add(chatOccupantsScrollPane, BorderLayout.CENTER);
-
-        //Add the message history window
-        final ValueModel messagesListModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_MESSAGES_LIST_PROPERTY_NAME);
-        final JList<CustomMessage> messageList = new JList<CustomMessage>() {
-            @Override
-            public boolean getScrollableTracksViewportWidth() {
-                return true;
-            }
-        };
-        Bindings.bind(messageList, new SelectionInList(messagesListModel));
-
-        messageList.setCellRenderer(new MessageListCellRenderer());
-        messageList.addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                // next line possible if list is of type JXList
-                // MainForm.this.messageList.invalidateCellSizeCache();
-                // for core: force cache invalidation by temporarily setting fixed height
-                messageList.setFixedCellHeight(10);
-                messageList.setFixedCellHeight(-1);
-            }
-        });
-        final JScrollPane messageListScrollPane = new AutoScrollPane(messageList);
-        chatPanel.add(messageListScrollPane, BorderLayout.CENTER);
-
-        // Add the message window
-        final JTextArea message = new JTextArea();
-        message.setLineWrap(true);
-        chatPanel.add(message, BorderLayout.PAGE_END);
-
-//        // Add the create room button
-//        this.newRoomButton = new JButton("Create room");
-//        pane.add(this.newRoomButton, BorderLayout.PAGE_START);
-
-        message.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent event) {
-                if ((event.getKeyCode() == 13) || (event.getKeyCode() == 10)) {
-                    connection.getCurrentChatTarget().sendMessage(message.getText());
-                    message.setText("");
-                    // stop the carriage return from appearing in the text area.
-                    event.consume();
-                }
-            }
-        });
+        setupCurrentChatComponents();
 
         setupMainMenu(chatSourceTabs, chatList);
 
@@ -246,6 +168,82 @@ public class MainForm extends JFrame {
         });
 
         return chatList;
+    }
+
+    private void setupCurrentChatComponents() {
+        // create a panel to contain the current chat information
+        final JPanel chatPanel = new JPanel();
+        chatPanel.setLayout(new BorderLayout());
+        getContentPane().add(chatPanel, BorderLayout.CENTER);
+
+        // create a panel for the chat header
+        final JPanel chatHeaderPanel = new JPanel();
+        chatHeaderPanel.setLayout(new BorderLayout());
+        chatPanel.add(chatHeaderPanel, BorderLayout.PAGE_START);
+
+        // create a panel for the chat title
+        final JPanel chatTitlePanel = new JPanel();
+        chatTitlePanel.setLayout(new BorderLayout());
+        chatHeaderPanel.add(chatTitlePanel, BorderLayout.PAGE_START);
+
+        // add a label for the room / chat title into the chat header.
+        final ValueModel currentChatTargetTitleModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_TITLE_PROPERTY_NAME);
+        final JLabel chatTitleLabel = BasicComponentFactory.createLabel(currentChatTargetTitleModel);
+        chatTitlePanel.add(chatTitleLabel, BorderLayout.LINE_START);
+
+        setupRoomSettingsMenu(chatTitlePanel);
+
+        // add a list for the list of room occupants
+        // TODO: Stop the horizontal scroll bar from hiding the bottom column entries
+        // TODO: Display a different view if in a private chat (as there will only be one user to display)
+        final ValueModel currentChatTargetOccupantsModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_OCCUPANTS_PROPERTY_NAME);
+        final JList chatOccupantsList = BasicComponentFactory.createList(new SelectionInList(currentChatTargetOccupantsModel), new CurrentChatOccupantsCellRenderer());
+        chatOccupantsList.setLayoutOrientation(JList.VERTICAL_WRAP);
+        chatOccupantsList.setVisibleRowCount(4);
+        final JScrollPane chatOccupantsScrollPane = new JScrollPane(chatOccupantsList);
+        chatOccupantsScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        chatHeaderPanel.add(chatOccupantsScrollPane, BorderLayout.CENTER);
+
+        //Add the message history window
+        final ValueModel messagesListModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_MESSAGES_LIST_PROPERTY_NAME);
+        final JList<CustomMessage> messageList = new JList<CustomMessage>() {
+            @Override
+            public boolean getScrollableTracksViewportWidth() {
+                return true;
+            }
+        };
+        Bindings.bind(messageList, new SelectionInList(messagesListModel));
+
+        messageList.setCellRenderer(new MessageListCellRenderer());
+        messageList.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                // next line possible if list is of type JXList
+                // MainForm.this.messageList.invalidateCellSizeCache();
+                // for core: force cache invalidation by temporarily setting fixed height
+                messageList.setFixedCellHeight(10);
+                messageList.setFixedCellHeight(-1);
+            }
+        });
+        final JScrollPane messageListScrollPane = new AutoScrollPane(messageList);
+        chatPanel.add(messageListScrollPane, BorderLayout.CENTER);
+
+        // Add the message window
+        final JTextArea message = new JTextArea();
+        message.setLineWrap(true);
+        chatPanel.add(message, BorderLayout.PAGE_END);
+
+        message.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent event) {
+                if ((event.getKeyCode() == 13) || (event.getKeyCode() == 10)) {
+                    connection.getCurrentChatTarget().sendMessage(message.getText());
+                    message.setText("");
+                    // stop the carriage return from appearing in the text area.
+                    event.consume();
+                }
+            }
+        });
     }
 
     private void setupRoomSettingsMenu(final JPanel chatTitlePanel) {
