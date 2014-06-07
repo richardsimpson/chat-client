@@ -298,8 +298,12 @@ public class MainForm extends JFrame {
 
                 if ((null != result) && (result.length() > 0)) {
                     HipChatRoom hipChatRoom = new HipChatRoom(yaccProperties);
-                    hipChatRoom.renameRoom((Room)connection.getCurrentChatTarget(), result, connection.getHipChatUser());
-
+                    MainForm.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                    try {
+                        hipChatRoom.renameRoom((Room)connection.getCurrentChatTarget(), result, connection.getHipChatUser());
+                    } finally {
+                        MainForm.this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                    }
                     final Room room = connection.getRoomListModel().get(((Room)connection.getCurrentChatTarget()).getRoomId());
                     if (room != null) {
                         room.setName(result);

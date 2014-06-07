@@ -149,13 +149,18 @@ public class CreateRoomForm extends JDialog {
         }
 
         HipChatRoom hipChatRoom = new HipChatRoom(this.yaccProperties);
-        final Room room = hipChatRoom.createRoom(this.nameField.getText(), privacy);
+        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        try {
+            final Room room = hipChatRoom.createRoom(this.nameField.getText(), privacy);
 
-        for (NewRoomListener listener : this.listeners) {
-            listener.onNewRoom(room);
+            for (NewRoomListener listener : this.listeners) {
+                listener.onNewRoom(room);
+            }
+
+            setVisible(false);
+        } finally {
+            this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         }
-
-        setVisible(false);
     }
 
     private void cancelRoomCreation() {
