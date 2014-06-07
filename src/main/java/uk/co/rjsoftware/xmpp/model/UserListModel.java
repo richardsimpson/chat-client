@@ -48,6 +48,10 @@ public class UserListModel extends AbstractListModel<User> implements PropertyCh
         super();
     }
 
+    public UserListModel(final UserListModel model) {
+        this(model.users);
+    }
+
     public UserListModel(final List<User> users) {
         for (User user : users) {
             user.addPropertyChangeListener(this);
@@ -62,12 +66,24 @@ public class UserListModel extends AbstractListModel<User> implements PropertyCh
         fireIntervalAdded(this, this.users.size() - 1, this.users.size() - 1);
     }
 
+    public void addAll(final List<User> users) {
+        for (User user : users) {
+            add(user);
+        }
+    }
+
     public void remove(final User user) {
         final int index = this.users.indexOf(user);
         if (index != -1) {
             this.users.remove(index);
             user.removePropertyChangeListener(this);
             fireIntervalRemoved(this, index, index);
+        }
+    }
+
+    public void removeAll(final List<User> users) {
+        for (User user : users) {
+            remove(user);
         }
     }
 

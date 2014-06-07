@@ -37,6 +37,7 @@ import com.jgoodies.binding.value.ValueModel;
 import uk.co.rjsoftware.xmpp.client.YaccInvitationListener;
 import uk.co.rjsoftware.xmpp.client.YaccProperties;
 import uk.co.rjsoftware.xmpp.dialogs.DialogUtils;
+import uk.co.rjsoftware.xmpp.dialogs.inviteusers.InviteUsersForm;
 import uk.co.rjsoftware.xmpp.model.hipchat.room.HipChatRoom;
 import uk.co.rjsoftware.xmpp.view.CurrentChatOccupantsCellRenderer;
 import uk.co.rjsoftware.xmpp.view.MessageListCellRenderer;
@@ -272,10 +273,9 @@ public class MainForm extends JFrame {
         inviteUsersMenuItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {
-                // TODO: Display invite user dialog
-                ((Room)MainForm.this.connection.getCurrentChatTarget()).invite(
-                        MainForm.this.connection.getCurrentUser().getUserId(), "Invitation Reason"
-                );
+                // Display invite user dialog
+                final InviteUsersForm inviteUsersForm = new InviteUsersForm(connection);
+                inviteUsersForm.setVisible(true);
             }
         });
 
