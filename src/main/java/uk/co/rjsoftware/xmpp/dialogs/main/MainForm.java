@@ -232,15 +232,18 @@ public class MainForm extends JFrame {
         // Add the message window
         final JTextArea message = new JTextArea();
         message.setLineWrap(true);
+        message.setFont(messageList.getFont());
         chatPanel.add(message, BorderLayout.PAGE_END);
 
         message.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent event) {
                 if ((event.getKeyCode() == 13) || (event.getKeyCode() == 10)) {
-                    connection.getCurrentChatTarget().sendMessage(message.getText());
-                    message.setText("");
-                    // stop the carriage return from appearing in the text area.
+                    if (connection.getCurrentChatTarget() != null) {
+                        connection.getCurrentChatTarget().sendMessage(message.getText());
+                        message.setText("");
+                        // stop the carriage return from appearing in the text area.
+                    }
                     event.consume();
                 }
             }
