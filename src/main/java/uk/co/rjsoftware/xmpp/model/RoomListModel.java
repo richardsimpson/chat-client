@@ -29,6 +29,8 @@
  */
 package uk.co.rjsoftware.xmpp.model;
 
+import org.jivesoftware.smack.util.StringUtils;
+
 import javax.swing.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -81,7 +83,8 @@ public class RoomListModel extends AbstractListModel<Room> implements PropertyCh
     }
 
     public Room get(final String roomId) {
-        final int index = indexOf(roomId);
+        final String parsedRoomId = StringUtils.parseBareAddress(roomId);
+        final int index = indexOf(parsedRoomId);
         if (index == -1) {
             return null;
         }

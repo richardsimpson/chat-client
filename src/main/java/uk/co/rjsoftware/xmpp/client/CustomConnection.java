@@ -30,8 +30,13 @@
 package uk.co.rjsoftware.xmpp.client;
 
 import com.jgoodies.binding.beans.Model;
-import org.jivesoftware.smack.util.StringUtils;
+import org.jivesoftware.smack.PacketListener;
+import org.jivesoftware.smack.packet.DefaultPacketExtension;
+import org.jivesoftware.smack.packet.Message;
+import org.jivesoftware.smack.packet.Packet;
+import org.jivesoftware.smack.packet.PacketExtension;
 import org.jivesoftware.smackx.ServiceDiscoveryManager;
+import org.jivesoftware.smackx.muc.InvitationListener;
 import org.jivesoftware.smackx.packet.DiscoverInfo;
 import uk.co.rjsoftware.xmpp.model.ChatTarget;
 import uk.co.rjsoftware.xmpp.model.ChatListModel;
@@ -53,6 +58,7 @@ import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smackx.muc.HostedRoom;
 import org.jivesoftware.smackx.muc.MultiUserChat;
 
+import javax.swing.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -83,6 +89,7 @@ public class CustomConnection extends Model {
 
     private ChatTarget currentChatTarget;
     private final TitlePropertyChangeListener titleListener = new TitlePropertyChangeListener();
+    private final List<YaccInvitationListener> invitationListeners = new ArrayList<YaccInvitationListener>();
 
     public CustomConnection(final String username, final String password, final int maxRoomCount) throws YaccException {
         this.maxRoomCount = maxRoomCount;
@@ -164,7 +171,7 @@ public class CustomConnection extends Model {
         int currentRoomNumber = 0;
         for (HostedRoom room : rooms) {
             currentRoomNumber++;
-            if (currentRoomNumber > this.maxRoomCount) {
+            if ((this.maxRoomCount > -1) && (currentRoomNumber > this.maxRoomCount)) {
                 break;
             }
             final Room newRoom = new Room(room.getJid(), room.getName());
@@ -179,8 +186,7 @@ public class CustomConnection extends Model {
             public void chatCreated(Chat chat, boolean createdLocally) {
                 if (!createdLocally) {
                     System.out.println("New Chat: Participant: " + chat.getParticipant());
-                    final String participantId = StringUtils.parseBareAddress(chat.getParticipant());
-                    final User user = CustomConnection.this.userListModel.get(participantId);
+                    final User user = CustomConnection.this.userListModel.get(chat.getParticipant());
 
                     if (user != null) {
                         CustomConnection.this.chatListModel.add(user);
@@ -189,7 +195,7 @@ public class CustomConnection extends Model {
                     }
 
                     // check for a room
-                    final Room room = CustomConnection.this.roomListModel.get(participantId);
+                    final Room room = CustomConnection.this.roomListModel.get(chat.getParticipant());
 
                     if (room != null) {
                         // don't 'join an existing chat' for rooms, so that we get the chat history.
@@ -202,14 +208,33 @@ public class CustomConnection extends Model {
             }
         });
 
-        // TODO: Add an invitation listener to the connection, so can automatically join rooms we are invited to.
+        // Add an invitation listener to the connection, so can automatically join rooms we are invited to.
+        MultiUserChat.addInvitationListener(this.connection, new InvitationListener() {
+            @Override
+            public void invitationReceived(Connection conn, String roomJid, String inviterJid, String reason, String password, Message message) {
+                String roomName = "";
 
-//        this.connection.addPacketListener(new PacketListener() {
-//            @Override
-//            public void processPacket(Packet packet) {
-//                System.out.println("Incomming Packet: " + packet.toString());
-//            }
-//        }, null);
+                PacketExtension packetExtension = message.getExtension("x", "http://hipchat.com/protocol/muc#room");
+                if ((packetExtension != null) && (packetExtension instanceof DefaultPacketExtension)) {
+                    final DefaultPacketExtension defaultPacketExtension = (DefaultPacketExtension)packetExtension;
+                    roomName = defaultPacketExtension.getValue("name");
+                }
+
+                final User inviterUser = CustomConnection.this.userListModel.get(inviterJid);
+                final String inviterName = inviterUser.getName();
+
+                for (YaccInvitationListener listener : CustomConnection.this.invitationListeners) {
+                    listener.invitationReceived(roomJid, roomName, inviterJid, inviterName, reason, password);
+                }
+            }
+        });
+
+        this.connection.addPacketListener(new PacketListener() {
+            @Override
+            public void processPacket(Packet packet) {
+                System.out.println("Incomming Packet: " + packet.toString());
+            }
+        }, null);
     }
 
     public void disconnect() {
@@ -254,6 +279,10 @@ public class CustomConnection extends Model {
     }
 
     // TODO: Stop leaking Smack classes to the rest of the application
+
+    /**
+     * Join a room that previously existed, and is known to this CustomConnection
+     */
     public MultiUserChat joinRoom(final Room room) {
         this.chatListModel.add(room);
         return new MultiUserChat(this.connection, room.getRoomId());
@@ -379,4 +408,9 @@ public class CustomConnection extends Model {
 
         return currentChatTarget.getOccupantsModel();
     }
+
+    public void addInvitationListener(final YaccInvitationListener listener) {
+        this.invitationListeners.add(listener);
+    }
+
 }

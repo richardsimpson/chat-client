@@ -29,6 +29,8 @@
  */
 package uk.co.rjsoftware.xmpp.model;
 
+import org.jivesoftware.smack.util.StringUtils;
+
 import javax.swing.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -80,7 +82,8 @@ public class UserListModel extends AbstractListModel<User> implements PropertyCh
     }
 
     public User get(final String userId) {
-        final int index = indexOf(userId);
+        final String parsedUserId = StringUtils.parseBareAddress(userId);
+        final int index = indexOf(parsedUserId);
         if (index == -1) {
             return null;
         }

@@ -44,7 +44,7 @@ public final class Main {
 
     private LoginForm loginForm;
     private YaccProperties yaccProperties;
-    private int maxRoomCount;
+    private int maxRoomCount = -1;
 
     public static void main(String [ ] args) throws XMPPException, InterruptedException {
         new Main(args);

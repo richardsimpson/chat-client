@@ -30,7 +30,6 @@
 package uk.co.rjsoftware.xmpp.model;
 
 import com.jgoodies.binding.beans.Model;
-import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smackx.muc.DefaultParticipantStatusListener;
 import org.jivesoftware.smackx.muc.Occupant;
 import org.jivesoftware.smackx.muc.SubjectUpdatedListener;
@@ -161,7 +160,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
                     final Occupant occupant = this.chat.getOccupant(occupantJID);
                     System.out.println("User JID: " + occupant.getJid());
 
-                    final User user = customConnection.getUserListModel().get(StringUtils.parseBareAddress(occupant.getJid()));
+                    final User user = customConnection.getUserListModel().get(occupant.getJid());
                     if (null != user) {
                         this.occupantsModel.add(user);
                         this.participantMap.put(occupantJID, user);
@@ -300,7 +299,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
 
             System.out.println("participant jid: " + occupant.getJid());
 
-            final User user = this.room.customConnection.getUserListModel().get(StringUtils.parseBareAddress(occupant.getJid()));
+            final User user = this.room.customConnection.getUserListModel().get(occupant.getJid());
             if (null != user) {
                 this.room.occupantsModel.add(user);
                 this.room.participantMap.put(participant, user);
@@ -380,4 +379,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
         }
     }
 
+    public void invite(final String user, final String reason) {
+        this.chat.invite(user, reason);
+    }
 }

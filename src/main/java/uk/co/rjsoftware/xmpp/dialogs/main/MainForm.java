@@ -34,6 +34,7 @@ import com.jgoodies.binding.adapter.Bindings;
 import com.jgoodies.binding.beans.BeanAdapter;
 import com.jgoodies.binding.list.SelectionInList;
 import com.jgoodies.binding.value.ValueModel;
+import uk.co.rjsoftware.xmpp.client.YaccInvitationListener;
 import uk.co.rjsoftware.xmpp.client.YaccProperties;
 import uk.co.rjsoftware.xmpp.dialogs.DialogUtils;
 import uk.co.rjsoftware.xmpp.model.hipchat.room.HipChatRoom;
@@ -107,6 +108,8 @@ public class MainForm extends JFrame {
         setupCurrentChatComponents();
 
         setupMainMenu(chatSourceTabs, chatList);
+
+        setupInvitationListener(chatSourceTabs, chatList);
 
         setPreferredSize(new Dimension(1150, 512));
         pack();
@@ -270,6 +273,9 @@ public class MainForm extends JFrame {
             @Override
             public void actionPerformed(ActionEvent event) {
                 // TODO: Display invite user dialog
+                ((Room)MainForm.this.connection.getCurrentChatTarget()).invite(
+                        MainForm.this.connection.getCurrentUser().getUserId(), "Invitation Reason"
+                );
             }
         });
 
@@ -401,6 +407,36 @@ public class MainForm extends JFrame {
             }
         });
 
+    }
+
+    private void setupInvitationListener(final JTabbedPane chatSourceTabs, final JList<ChatTarget> chatList) {
+        this.connection.addInvitationListener(new YaccInvitationListener() {
+            @Override
+            public void invitationReceived(String roomJid, String roomName, String inviterJId, String inviterName, String reason, String password) {
+                // Display delete room dialog
+                final Object[] options = {"Join", "Cancel"};
+                final int selectedOption = JOptionPane.showOptionDialog(MainForm.this,
+                        "You have been invited to the room '" + roomName + "' by "  + inviterName + ".  Do you wish to join the room now?",
+                        "Invite Received", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+                        options, options[1]);
+
+                if (0 == selectedOption) {
+                    // TODO: Fix the occupant list - it doesn't show up!
+                    // check if the room is already known
+                    Room room = connection.getRoomListModel().get(roomJid);
+                    if (null == room) {
+                        room = new Room(roomJid, roomName);
+                        connection.addRoom(room);
+                    }
+                    // update the chat target
+                    connection.setCurrentChatTarget(room);
+                    connection.getCurrentChatTarget().join(connection);
+                    chatList.setSelectedValue(room, true);
+                    // switch to the 'recent' tab
+                    chatSourceTabs.setSelectedIndex(2);
+                }
+            }
+        });
     }
 
     private void showChatTitleViewMode() {
