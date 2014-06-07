@@ -29,6 +29,7 @@
  */
 package uk.co.rjsoftware.xmpp.client;
 
+import uk.co.rjsoftware.xmpp.dialogs.exceptions.ExceptionForm;
 import uk.co.rjsoftware.xmpp.dialogs.login.LoginForm;
 import uk.co.rjsoftware.xmpp.dialogs.login.LoginListener;
 import uk.co.rjsoftware.xmpp.dialogs.main.MainForm;
@@ -63,6 +64,10 @@ public final class Main {
             e.printStackTrace();
         }
 
+        // setup the global exception handler.
+        final ExceptionHandler exceptionHandler = new ExceptionHandler();
+        Thread.setDefaultUncaughtExceptionHandler(exceptionHandler);
+
         for (String arg : args) {
             final String[] currentArg = arg.split("=");
             if (currentArg[0].equals("maxRoomCount")) {
@@ -83,6 +88,14 @@ public final class Main {
         });
     }
 
+    private class ExceptionHandler implements Thread.UncaughtExceptionHandler {
+
+        @Override
+        public void uncaughtException(Thread thread, Throwable exception) {
+            final ExceptionForm exceptionForm = new ExceptionForm(exception);
+            exceptionForm.setVisible(true);
+        }
+    }
     // TODO: Bug Fix: If logout, then close the login form, the app doesn't terminate.  It does if close login form without logging in.
 
     private void createAndShowLoginForm() {

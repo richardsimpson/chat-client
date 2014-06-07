@@ -242,8 +242,8 @@ public class MainForm extends JFrame {
                     if (connection.getCurrentChatTarget() != null) {
                         connection.getCurrentChatTarget().sendMessage(message.getText());
                         message.setText("");
-                        // stop the carriage return from appearing in the text area.
                     }
+                    // stop the carriage return from appearing in the text area.
                     event.consume();
                 }
             }
