@@ -90,38 +90,35 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
     public void setName(final String name) {
         if (this.name != name) {
             final String oldNameValue = this.name;
-            final String oldTitleValue = this.getTitle();
-
             this.name = name;
-
-            final String newTitleValue = this.getTitle();
-
             firePropertyChange(ChatTarget.NAME_PROPERTY_NAME, oldNameValue, name);
-            firePropertyChange(ChatTarget.TITLE_PROPERTY_NAME, oldTitleValue, newTitleValue);
         }
     }
 
     public String getTitle() {
-        if ((null == this.subject) || (this.subject.equals(""))) {
-            return this.name;
-        }
-        else {
-            return this.name + " (" + this.subject+  ")";
-        }
+        return this.subject;
     }
 
-    private void setSubject(final String subject) {
+    private void doSetSubject(final String subject) {
         if (this.subject != subject) {
             final String oldSubjectValue = this.subject;
-            final String oldTitleValue = this.getTitle();
+            final String oldTitleValue = oldSubjectValue;
 
             this.subject = subject;
 
-            final String newTitleValue = this.getTitle();
-
             firePropertyChange(SUBJECT_PROPERTY_NAME, oldSubjectValue, subject);
-            firePropertyChange(ChatTarget.TITLE_PROPERTY_NAME, oldTitleValue, newTitleValue);
+            firePropertyChange(ChatTarget.TITLE_PROPERTY_NAME, oldTitleValue, subject);
         }
+    }
+
+    public void setSubject(final String subject) {
+        try {
+            this.chat.changeSubject(subject);
+            doSetSubject(subject);
+        } catch (XMPPException exception) {
+            throw new RuntimeException(exception);
+        }
+
     }
 
     public String getSubject() {
@@ -247,7 +244,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
                     this.customMessageListModel.add(messagePayload.getCustomMessage());
                 }
                 else if (messagePayload.getSubject() != null) {
-                    this.room.setSubject(messagePayload.getSubject());
+                    this.room.doSetSubject(messagePayload.getSubject());
                 }
             }
         }
@@ -284,7 +281,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
 
         @Override
         public void subjectUpdated(String subject, String from) {
-            room.setSubject(subject);
+            room.doSetSubject(subject);
             System.out.println("Room.SubjectUpdatedListener: subject: " + subject + ", from: " + from);
         }
     }

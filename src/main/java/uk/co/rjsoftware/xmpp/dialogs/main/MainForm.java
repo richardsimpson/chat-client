@@ -72,11 +72,18 @@ import java.util.ArrayList;
 
 public class MainForm extends JFrame {
 
+    private JPanel chatTitlePanel;
+    private JPanel chatTitleEditModePanel;
+    private JPanel chatTitleViewModePanel;
+    private JTextField chatTitleTextField;
+    private JLabel chatTitleLabel;
+
     private final CustomConnection connection;
     private final YaccProperties yaccProperties;
     private final BeanAdapter adapter;
 
     private final java.util.List<LogoutListener> listeners = new ArrayList<LogoutListener>();
+    private ChatTarget currentChatTarget;
 
     public MainForm(final String title, final CustomConnection connection, final YaccProperties yaccProperties) {
         super(title);
@@ -181,17 +188,7 @@ public class MainForm extends JFrame {
         chatHeaderPanel.setLayout(new BorderLayout());
         chatPanel.add(chatHeaderPanel, BorderLayout.PAGE_START);
 
-        // create a panel for the chat title
-        final JPanel chatTitlePanel = new JPanel();
-        chatTitlePanel.setLayout(new BorderLayout());
-        chatHeaderPanel.add(chatTitlePanel, BorderLayout.PAGE_START);
-
-        // add a label for the room / chat title into the chat header.
-        final ValueModel currentChatTargetTitleModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_TITLE_PROPERTY_NAME);
-        final JLabel chatTitleLabel = BasicComponentFactory.createLabel(currentChatTargetTitleModel);
-        chatTitlePanel.add(chatTitleLabel, BorderLayout.LINE_START);
-
-        setupRoomSettingsMenu(chatTitlePanel);
+        setupChatHeader(chatHeaderPanel);
 
         // add a list for the list of room occupants
         // TODO: Stop the horizontal scroll bar from hiding the bottom column entries
@@ -246,7 +243,22 @@ public class MainForm extends JFrame {
         });
     }
 
-    private void setupRoomSettingsMenu(final JPanel chatTitlePanel) {
+    private void setupChatHeader(final JPanel chatHeaderPanel) {
+        // create a panel for the room / chat title
+        this.chatTitlePanel = new JPanel();
+        this.chatTitlePanel.setLayout(new BorderLayout());
+        chatHeaderPanel.add(this.chatTitlePanel, BorderLayout.PAGE_START);
+
+        // create a panel for the room / chat title (view mode)
+        this.chatTitleViewModePanel = new JPanel();
+        this.chatTitleViewModePanel.setLayout(new BorderLayout());
+        this.chatTitlePanel.add(this.chatTitleViewModePanel, BorderLayout.PAGE_START);
+
+        // add a label for the room / chat title into the chat header.
+        final ValueModel currentChatTargetTitleModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_TITLE_PROPERTY_NAME);
+        this.chatTitleLabel = BasicComponentFactory.createLabel(currentChatTargetTitleModel);
+        this.chatTitleViewModePanel.add(this.chatTitleLabel, BorderLayout.LINE_START);
+
         // add a room settings icon and handler
         final JPopupMenu settingsPopupMenu = new JPopupMenu();
         final JMenuItem inviteUsersMenuItem = new JMenuItem("Invite Users...");
@@ -264,7 +276,7 @@ public class MainForm extends JFrame {
         changeTopicMenuItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {
-                // TODO: Allow user to change the room subject
+                showChatTitleEditMode();
             }
         });
 
@@ -309,7 +321,7 @@ public class MainForm extends JFrame {
         settingsPopupMenu.add(deleteRoomMenuItem);
 
         final JButton roomSettingsButton = new JButton("settings");
-        chatTitlePanel.add(roomSettingsButton, BorderLayout.LINE_END);
+        this.chatTitleViewModePanel.add(roomSettingsButton, BorderLayout.LINE_END);
         roomSettingsButton.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent event) {
@@ -335,6 +347,7 @@ public class MainForm extends JFrame {
         currentChatTargetModel.addValueChangeListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent event) {
+                MainForm.this.currentChatTarget = (ChatTarget)event.getNewValue();
                 if (event.getNewValue() instanceof Room) {
                     final Room currentRoom = (Room)event.getNewValue();
                     final boolean isOwner = connection.getCurrentUser().getUserId().equals(currentRoom.getOwnerId());
@@ -348,6 +361,59 @@ public class MainForm extends JFrame {
             }
         });
 
+        // create a panel for the room / chat title (edit mode)
+        this.chatTitleEditModePanel = new JPanel();
+        this.chatTitleEditModePanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+
+        this.chatTitleTextField = new JTextField();
+        this.chatTitleTextField.setColumns(40);
+        this.chatTitleEditModePanel.add(this.chatTitleTextField);
+
+        final JButton okButton = new JButton("OK");
+        okButton.setPreferredSize(new Dimension(70, 20));
+        this.chatTitleEditModePanel.add(okButton);
+        okButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Update the current room's subject
+                ((Room)MainForm.this.currentChatTarget).setSubject(MainForm.this.chatTitleTextField.getText());
+                showChatTitleViewMode();
+            }
+        });
+
+        final JButton cancelButton = new JButton("Cancel");
+        cancelButton.setPreferredSize(new Dimension(70, 20));
+        this.chatTitleEditModePanel.add(cancelButton);
+        cancelButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                showChatTitleViewMode();
+            }
+        });
+
+        // add a mouse listener to the 'title label', to trigger the switch to the editable version
+        this.chatTitleLabel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent event) {
+                if ((currentChatTarget instanceof Room) && (event.getClickCount() == 2)) {
+                    showChatTitleEditMode();
+                }
+            }
+        });
+
+    }
+
+    private void showChatTitleViewMode() {
+        this.chatTitlePanel.remove(this.chatTitleEditModePanel);
+        this.chatTitlePanel.add(this.chatTitleViewModePanel, BorderLayout.PAGE_START);
+        MainForm.this.pack();
+    }
+
+    private void showChatTitleEditMode() {
+        this.chatTitleTextField.setText(this.chatTitleLabel.getText());
+        this.chatTitlePanel.remove(this.chatTitleViewModePanel);
+        this.chatTitlePanel.add(this.chatTitleEditModePanel, BorderLayout.PAGE_START);
+        MainForm.this.pack();
     }
 
     private void setupMainMenu(final JTabbedPane chatSourceTabs, final JList<ChatTarget> chatList) {
