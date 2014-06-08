@@ -35,6 +35,7 @@ import org.jivesoftware.smack.packet.DefaultPacketExtension;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Packet;
 import org.jivesoftware.smack.packet.PacketExtension;
+import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smackx.ServiceDiscoveryManager;
 import org.jivesoftware.smackx.muc.InvitationListener;
 import org.jivesoftware.smackx.packet.DiscoverInfo;
@@ -212,19 +213,22 @@ public class CustomConnection extends Model {
         MultiUserChat.addInvitationListener(this.connection, new InvitationListener() {
             @Override
             public void invitationReceived(Connection conn, String roomJid, String inviterJid, String reason, String password, Message message) {
-                String roomName = "";
+                // filter out invites for the current user.  This can happen if the user opens up a second client (e.g. hipchat)
+                if (!StringUtils.parseBareAddress(inviterJid).equals(CustomConnection.this.currentUser.getUserId())) {
+                    String roomName = "";
 
-                PacketExtension packetExtension = message.getExtension("x", "http://hipchat.com/protocol/muc#room");
-                if ((packetExtension != null) && (packetExtension instanceof DefaultPacketExtension)) {
-                    final DefaultPacketExtension defaultPacketExtension = (DefaultPacketExtension)packetExtension;
-                    roomName = defaultPacketExtension.getValue("name");
-                }
+                    PacketExtension packetExtension = message.getExtension("x", "http://hipchat.com/protocol/muc#room");
+                    if ((packetExtension != null) && (packetExtension instanceof DefaultPacketExtension)) {
+                        final DefaultPacketExtension defaultPacketExtension = (DefaultPacketExtension)packetExtension;
+                        roomName = defaultPacketExtension.getValue("name");
+                    }
 
-                final User inviterUser = CustomConnection.this.userListModel.get(inviterJid);
-                final String inviterName = inviterUser.getName();
+                    final User inviterUser = CustomConnection.this.userListModel.get(inviterJid);
+                    final String inviterName = inviterUser.getName();
 
-                for (YaccInvitationListener listener : CustomConnection.this.invitationListeners) {
-                    listener.invitationReceived(roomJid, roomName, inviterJid, inviterName, reason, password);
+                    for (YaccInvitationListener listener : CustomConnection.this.invitationListeners) {
+                        listener.invitationReceived(roomJid, roomName, inviterJid, inviterName, reason, password);
+                    }
                 }
             }
         });
