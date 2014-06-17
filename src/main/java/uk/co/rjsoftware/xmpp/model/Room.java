@@ -148,7 +148,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
                 final String password = "";
                 DiscussionHistory history = new DiscussionHistory();
                 // TODO: Get more of the history, and provide ability to get even more.
-                history.setMaxStanzas(20);
+                history.setMaxStanzas(50);
                 chat.join(customConnection.getCurrentUser().getName(), password, history, SmackConfiguration.getPacketReplyTimeout());
 
                 // create a separate thread that will fetch the chat history and all future messages for this room

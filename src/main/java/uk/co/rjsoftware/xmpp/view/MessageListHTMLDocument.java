@@ -33,6 +33,9 @@ import uk.co.rjsoftware.xmpp.model.CustomMessage;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
@@ -42,6 +45,9 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MessageListHTMLDocument extends HTMLDocument {
 
@@ -78,19 +84,20 @@ public class MessageListHTMLDocument extends HTMLDocument {
         final DateFormat formatter = new SimpleDateFormat("HH:mm");
         final Date date = new Date(message.getTimestamp());
 
+        final String messageBody = addLinks(message.getBody());
         try {
             if (this.messageCount == 0) {
                 insertAfterStart(getElement("table"),
                         "<tr id='" + this.messageCount + "'>"
                                 + "<td width='125' align='right' valign='top'>" + message.getSender() + "</td>"
-                                + "<td valign='top'>" + message.getBody() + "</td>"
+                                + "<td valign='top'>" + messageBody + "</td>"
                                 + "<td width='42' valign='top'>" + formatter.format(date) + "</td></tr>");
             }
             else {
                 insertAfterEnd(getElement(String.valueOf(this.messageCount - 1)),
                         "<tr id='" + this.messageCount + "'>"
                                 + "<td width='125' align='right' valign='top'>" + message.getSender() + "</td>"
-                                + "<td valign='top'>" + message.getBody() + "</td>"
+                                + "<td valign='top'>" + messageBody + "</td>"
                                 + "<td width='42' valign='top'>" + formatter.format(date) + "</td></tr>");
             }
         } catch (BadLocationException exception) {
@@ -99,5 +106,27 @@ public class MessageListHTMLDocument extends HTMLDocument {
             throw new RuntimeException(exception);
         }
         this.messageCount++;
+    }
+
+    private String addLinks(String messageText) {
+        Pattern p = Pattern.compile("<[iI][mM][gG] .+?/>|<[aA] .+?</[aA]>|\\(?https?://[-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_()|]");
+        Matcher m = p.matcher(messageText);
+        StringBuffer changedMessageText = new StringBuffer();
+        while (m.find()) {
+            // ingore existing <a> links
+            if (m.group().substring(0, 3).toLowerCase(Locale.getDefault()).equals("<a ")) {
+                m.appendReplacement(changedMessageText, m.group());
+            }
+            // ignore <img> tags - they contain href links we don't want to wrap
+            else if (m.group().substring(0, 5).toLowerCase(Locale.getDefault()).equals("<img ")) {
+                m.appendReplacement(changedMessageText, m.group());
+            }
+            else {
+                m.appendReplacement(changedMessageText, "<a href='" + m.group() + "'s>" + m.group() + "</a>");
+            }
+        }
+        m.appendTail(changedMessageText);
+
+        return changedMessageText.toString();
     }
 }
