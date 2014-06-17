@@ -35,7 +35,12 @@ import org.jivesoftware.smack.Chat;
 import org.jivesoftware.smack.MessageListener;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Message;
+import uk.co.rjsoftware.xmpp.view.MessageListHTMLDocument;
 
+import javax.swing.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.StyleContext;
+import javax.swing.text.StyledDocument;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
@@ -53,12 +58,14 @@ public class User extends Model implements Comparable<User>, ChatTarget {
 
     private Chat chat;
     private CustomMessageListModel customMessageListModel = new CustomMessageListModel();
+    private final MessageListHTMLDocument messagesDocument;
     private CustomConnection customConnection;
 
     public User(final String userId, final String name) {
         this.userId = userId;
         this.name = name;
         this.occupantsModel.add(this);
+        this.messagesDocument = new MessageListHTMLDocument();
     }
 
     public String getUserId() {
@@ -148,7 +155,7 @@ public class User extends Model implements Comparable<User>, ChatTarget {
         if (this.chat == null) {
             this.customConnection = customConnection;
             this.chat = customConnection.createChat(this);
-            this.chat.addMessageListener(new UserMessageListener(this.name, this.customMessageListModel));
+            this.chat.addMessageListener(new UserMessageListener(this.name, this.customMessageListModel, this.messagesDocument));
         }
     }
 
@@ -156,7 +163,7 @@ public class User extends Model implements Comparable<User>, ChatTarget {
         if (this.chat == null) {
             this.customConnection = customConnection;
             this.chat = chat;
-            this.chat.addMessageListener(new UserMessageListener(this.name, this.customMessageListModel));
+            this.chat.addMessageListener(new UserMessageListener(this.name, this.customMessageListModel, this.messagesDocument));
         }
     }
 
@@ -164,10 +171,13 @@ public class User extends Model implements Comparable<User>, ChatTarget {
 
         private final String senderName;
         private final CustomMessageListModel customMessageListModel;
+        private final MessageListHTMLDocument messagesDocument;
 
-        public UserMessageListener(final String senderName, final CustomMessageListModel customMessageListModel) {
+        public UserMessageListener(final String senderName, final CustomMessageListModel customMessageListModel,
+                                   final MessageListHTMLDocument messagesDocument) {
             this.senderName = senderName;
             this.customMessageListModel = customMessageListModel;
+            this.messagesDocument = messagesDocument;
         }
 
         @Override
@@ -197,6 +207,7 @@ public class User extends Model implements Comparable<User>, ChatTarget {
                     if (message.getBody() != null) {
                         final CustomMessage customMessage = new CustomMessage(extractTimestamp(message), this.senderName, message.getBody());
                         this.customMessageListModel.add(customMessage);
+                        this.messagesDocument.insertMessage(customMessage);
                     }
                 default: // do nothing
             }
@@ -213,8 +224,11 @@ public class User extends Model implements Comparable<User>, ChatTarget {
         if (this.chat != null) {
             try {
                 this.chat.sendMessage(messageText);
-                this.customMessageListModel.add(new CustomMessage(System.currentTimeMillis(),
-                        this.customConnection.getCurrentUser().getName(), messageText));
+                final CustomMessage customMessage = new CustomMessage(System.currentTimeMillis(),
+                        this.customConnection.getCurrentUser().getName(), messageText);
+                this.customMessageListModel.add(customMessage);
+                this.messagesDocument.insertMessage(customMessage);
+
             } catch (XMPPException exception) {
                 throw new RuntimeException(exception);
             }
@@ -224,6 +238,11 @@ public class User extends Model implements Comparable<User>, ChatTarget {
     @Override
     public CustomMessageListModel getCustomMessageListModel() {
         return this.customMessageListModel;
+    }
+
+    @Override
+    public StyledDocument getMessagesDocument() {
+        return this.messagesDocument;
     }
 
     @Override

@@ -31,6 +31,7 @@ package uk.co.rjsoftware.xmpp.model;
 
 import uk.co.rjsoftware.xmpp.client.CustomConnection;
 
+import javax.swing.text.StyledDocument;
 import java.beans.PropertyChangeListener;
 
 public interface ChatTarget {
@@ -45,6 +46,8 @@ public interface ChatTarget {
     String getTitle();
 
     CustomMessageListModel getCustomMessageListModel();
+
+    StyledDocument getMessagesDocument();
 
     void sendMessage(final String messageText);
 

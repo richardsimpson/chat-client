@@ -60,6 +60,7 @@ import org.jivesoftware.smackx.muc.HostedRoom;
 import org.jivesoftware.smackx.muc.MultiUserChat;
 
 import javax.swing.*;
+import javax.swing.text.StyledDocument;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -76,6 +77,7 @@ public class CustomConnection extends Model {
     public static final String CURRENT_CHAT_TARGET_PROPERTY_NAME = "currentChatTarget";
     public static final String CURRENT_CHAT_TARGET_TITLE_PROPERTY_NAME = "currentChatTargetTitle";
     public static final String CURRENT_CHAT_TARGET_MESSAGES_LIST_PROPERTY_NAME = "currentChatTargetMessagesList";
+    public static final String CURRENT_CHAT_TARGET_MESSAGES_DOCUMENT_PROPERTY_NAME = "currentChatTargetMessagesDocument";
     public static final String CURRENT_CHAT_TARGET_OCCUPANTS_PROPERTY_NAME = "currentChatTargetOccupants";
     
     private final Connection connection;
@@ -334,6 +336,7 @@ public class CustomConnection extends Model {
             final ChatTarget oldChatTarget = this.currentChatTarget;
             final String oldChatTitle = getCurrentChatTargetTitle();
             final CustomMessageListModel oldMessageList = getCurrentChatTargetMessagesList();
+            final StyledDocument oldMessagesDocument = getCurrentChatTargetMessagesDocument();
             final UserListModel oldOccupants = getCurrentChatTargetOccupants();
 
             this.currentChatTarget = currentChatTarget;
@@ -345,15 +348,18 @@ public class CustomConnection extends Model {
             // TODO: Remove the need to fire all of these here - this doesn't seem right
             String currentChatTitle = null;
             CustomMessageListModel currentMessageListModel = null;
+            StyledDocument currentMessagesDocument = null;
             UserListModel currentOccupants = null;
             if (null != currentChatTarget) {
                 currentChatTitle = currentChatTarget.getTitle();
                 currentMessageListModel = currentChatTarget.getCustomMessageListModel();
+                currentMessagesDocument = currentChatTarget.getMessagesDocument();
                 currentOccupants = currentChatTarget.getOccupantsModel();
             }
             firePropertyChange(CURRENT_CHAT_TARGET_PROPERTY_NAME, oldChatTarget, currentChatTarget);
             firePropertyChange(CURRENT_CHAT_TARGET_TITLE_PROPERTY_NAME, oldChatTitle, currentChatTitle);
             firePropertyChange(CURRENT_CHAT_TARGET_MESSAGES_LIST_PROPERTY_NAME, oldMessageList, currentMessageListModel);
+            firePropertyChange(CURRENT_CHAT_TARGET_MESSAGES_DOCUMENT_PROPERTY_NAME, oldMessagesDocument, currentMessagesDocument);
             firePropertyChange(CURRENT_CHAT_TARGET_OCCUPANTS_PROPERTY_NAME, oldOccupants, currentOccupants);
         }
     }
@@ -403,6 +409,14 @@ public class CustomConnection extends Model {
         }
 
         return currentChatTarget.getCustomMessageListModel();
+    }
+
+    public StyledDocument getCurrentChatTargetMessagesDocument() {
+        if (null == currentChatTarget) {
+            return null;
+        }
+
+        return currentChatTarget.getMessagesDocument();
     }
 
     public UserListModel getCurrentChatTargetOccupants() {

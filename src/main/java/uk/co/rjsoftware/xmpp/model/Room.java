@@ -41,8 +41,10 @@ import org.jivesoftware.smack.packet.PacketExtension;
 import org.jivesoftware.smackx.muc.DiscussionHistory;
 import org.jivesoftware.smackx.muc.MultiUserChat;
 import org.jivesoftware.smackx.packet.DelayInfo;
+import uk.co.rjsoftware.xmpp.view.MessageListHTMLDocument;
 
 import javax.swing.*;
+import javax.swing.text.StyledDocument;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -70,11 +72,13 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
     private String subject = "";
     private MultiUserChat chat;
     private CustomMessageListModel customMessageListModel = new CustomMessageListModel();
+    private final MessageListHTMLDocument messagesDocument;
     private Thread messageReceivingThread;
 
     public Room(final String roomId, final String name) {
         this.roomId = roomId;
         this.name = name;
+        this.messagesDocument = new MessageListHTMLDocument();
     }
 
     public String getRoomId() {
@@ -148,7 +152,8 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
                 chat.join(customConnection.getCurrentUser().getName(), password, history, SmackConfiguration.getPacketReplyTimeout());
 
                 // create a separate thread that will fetch the chat history and all future messages for this room
-                this.messageReceivingThread = new Thread(new MessageReceiver(this.chat, this.customMessageListModel, this));
+                this.messageReceivingThread = new Thread(new MessageReceiver(this.chat, this.customMessageListModel,
+                        this.messagesDocument, this));
                 this.messageReceivingThread.start();
 
                 // Note: List of occupants is fine for public rooms, but for private rooms, would like to
@@ -182,12 +187,14 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
 
         private final MultiUserChat chat;
         private final CustomMessageListModel customMessageListModel;
+        private final MessageListHTMLDocument messagesDocument;
         private final Room room;
 
         public MessageReceiver(final MultiUserChat chat, final CustomMessageListModel customMessageListModel,
-                               final Room room) {
+                               final MessageListHTMLDocument messagesDocument, final Room room) {
             this.chat = chat;
             this.customMessageListModel = customMessageListModel;
+            this.messagesDocument = messagesDocument;
             this.room = room;
         }
 
@@ -241,6 +248,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
             for (MessagePayload messagePayload : chunks) {
                 if (messagePayload.getCustomMessage() != null) {
                     this.customMessageListModel.add(messagePayload.getCustomMessage());
+                    this.messagesDocument.insertMessage(messagePayload.getCustomMessage());
                 }
                 else if (messagePayload.getSubject() != null) {
                     this.room.doSetSubject(messagePayload.getSubject());
@@ -338,6 +346,11 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
     @Override
     public CustomMessageListModel getCustomMessageListModel() {
         return this.customMessageListModel;
+    }
+
+    @Override
+    public StyledDocument getMessagesDocument() {
+        return this.messagesDocument;
     }
 
     @Override

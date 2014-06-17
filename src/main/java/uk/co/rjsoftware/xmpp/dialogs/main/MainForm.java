@@ -58,6 +58,7 @@ import uk.co.rjsoftware.xmpp.model.UserStatus;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -206,33 +207,42 @@ public class MainForm extends JFrame {
         chatHeaderPanel.add(chatOccupantsScrollPane, BorderLayout.CENTER);
 
         //Add the message history window
-        final ValueModel messagesListModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_MESSAGES_LIST_PROPERTY_NAME);
-        final JList<CustomMessage> messageList = new JList<CustomMessage>() {
+        final ValueModel messagesListModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_MESSAGES_DOCUMENT_PROPERTY_NAME);
+        final JTextPane messageTextPane = new JTextPane() {
             @Override
             public boolean getScrollableTracksViewportWidth() {
                 return true;
             }
         };
-        Bindings.bind(messageList, new SelectionInList(messagesListModel));
+        messageTextPane.setEditable(false);
+        messageTextPane.setContentType("text/html");
 
-        messageList.setCellRenderer(new MessageListCellRenderer());
-        messageList.addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                // next line possible if list is of type JXList
-                // MainForm.this.messageList.invalidateCellSizeCache();
-                // for core: force cache invalidation by temporarily setting fixed height
-                messageList.setFixedCellHeight(10);
-                messageList.setFixedCellHeight(-1);
-            }
-        });
-        final JScrollPane messageListScrollPane = new AutoScrollPane(messageList);
+        //Bindings.bind(messageList, new SelectionInList(messagesListModel));
+
+//        messageList.setCellRenderer(new MessageListCellRenderer());
+//        messageList.addComponentListener(new ComponentAdapter() {
+//            @Override
+//            public void componentResized(ComponentEvent e) {
+//                // next line possible if list is of type JXList
+//                // MainForm.this.messageList.invalidateCellSizeCache();
+//                // for core: force cache invalidation by temporarily setting fixed height
+//                messageList.setFixedCellHeight(10);
+//                messageList.setFixedCellHeight(-1);
+//            }
+//        });
+        final JScrollPane messageListScrollPane = new AutoScrollPane(messageTextPane);
         chatPanel.add(messageListScrollPane, BorderLayout.CENTER);
 
+        messagesListModel.addValueChangeListener(new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent event) {
+                messageTextPane.setStyledDocument((StyledDocument)event.getNewValue());
+            }
+        });
         // Add the message window
         final JTextArea message = new JTextArea();
         message.setLineWrap(true);
-        message.setFont(messageList.getFont());
+        message.setFont(chatOccupantsList.getFont());
         chatPanel.add(message, BorderLayout.PAGE_END);
 
         message.addKeyListener(new KeyAdapter() {
@@ -550,6 +560,7 @@ public class MainForm extends JFrame {
         this.listeners.add(listener);
     }
 
+    //TODO: Bug fix: when switch chats, the scroll bar doesn't switch to the last position for this chat
     private static class AutoScrollPane extends JScrollPane implements ChangeListener {
 
         private int lastScrollBarValueWhenAtBottom;
