@@ -55,6 +55,8 @@ import uk.co.rjsoftware.xmpp.model.UserStatus;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -68,6 +70,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.net.URL;
 import java.util.ArrayList;
 
 public class MainForm extends JFrame {
@@ -213,6 +216,7 @@ public class MainForm extends JFrame {
         };
         messageTextPane.setEditable(false);
         messageTextPane.setContentType("text/html");
+        messageTextPane.addHyperlinkListener(new HyperlinkActivator());
 
         //Bindings.bind(messageList, new SelectionInList(messagesListModel));
 
@@ -585,6 +589,36 @@ public class MainForm extends JFrame {
             final boolean isAtBottom = model.getValue() + model.getExtent() == model.getMaximum();
             if (isAtBottom) {
                 lastScrollBarValueWhenAtBottom = model.getValue();
+            }
+        }
+    }
+
+    private static class HyperlinkActivator implements HyperlinkListener {
+
+        @Override
+        public void hyperlinkUpdate(HyperlinkEvent event) {
+            if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                URL url = event.getURL();
+
+                launchUrl(url.toString());
+            }
+        }
+
+        private void launchUrl(String url) {
+            if (!java.awt.Desktop.isDesktopSupported()) {
+                throw new RuntimeException("Desktop is not supported (fatal)");
+            }
+
+            java.awt.Desktop desktop = java.awt.Desktop.getDesktop();
+            if (!desktop.isSupported(java.awt.Desktop.Action.BROWSE)) {
+                throw new RuntimeException("Desktop doesn't support the browse action (fatal)");
+            }
+
+            try {
+                java.net.URI uri = new java.net.URI(url);
+                desktop.browse(uri);
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
             }
         }
     }
