@@ -54,7 +54,6 @@ public class MessageListHTMLDocument extends HTMLDocument {
     private long messageCount;
 
     public MessageListHTMLDocument() {
-        // TODO: Get the links working
         // TODO: Get emoticons working
 
         // Setup the default HTML formatting
