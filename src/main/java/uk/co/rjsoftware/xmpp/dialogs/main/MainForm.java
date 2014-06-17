@@ -30,7 +30,6 @@
 package uk.co.rjsoftware.xmpp.dialogs.main;
 
 import com.jgoodies.binding.adapter.BasicComponentFactory;
-import com.jgoodies.binding.adapter.Bindings;
 import com.jgoodies.binding.beans.BeanAdapter;
 import com.jgoodies.binding.list.SelectionInList;
 import com.jgoodies.binding.value.ValueModel;
@@ -40,7 +39,6 @@ import uk.co.rjsoftware.xmpp.dialogs.DialogUtils;
 import uk.co.rjsoftware.xmpp.dialogs.inviteusers.InviteUsersForm;
 import uk.co.rjsoftware.xmpp.model.hipchat.room.HipChatRoom;
 import uk.co.rjsoftware.xmpp.view.CurrentChatOccupantsCellRenderer;
-import uk.co.rjsoftware.xmpp.view.MessageListCellRenderer;
 import uk.co.rjsoftware.xmpp.view.RecentChatListCellRenderer;
 import uk.co.rjsoftware.xmpp.view.RoomListCellRenderer;
 import uk.co.rjsoftware.xmpp.view.UserListCellRenderer;
@@ -49,7 +47,6 @@ import uk.co.rjsoftware.xmpp.dialogs.createroom.CreateRoomForm;
 import uk.co.rjsoftware.xmpp.dialogs.createroom.NewRoomListener;
 import uk.co.rjsoftware.xmpp.dialogs.settings.SettingsForm;
 import uk.co.rjsoftware.xmpp.model.ChatTarget;
-import uk.co.rjsoftware.xmpp.model.CustomMessage;
 import uk.co.rjsoftware.xmpp.model.LogoutListener;
 import uk.co.rjsoftware.xmpp.model.Room;
 import uk.co.rjsoftware.xmpp.model.User;

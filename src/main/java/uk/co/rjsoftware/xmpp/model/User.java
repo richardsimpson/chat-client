@@ -37,9 +37,6 @@ import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Message;
 import uk.co.rjsoftware.xmpp.view.MessageListHTMLDocument;
 
-import javax.swing.*;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.StyleContext;
 import javax.swing.text.StyledDocument;
 import java.util.Date;
 import java.util.HashMap;
