@@ -30,12 +30,11 @@
 package uk.co.rjsoftware.xmpp.view;
 
 import uk.co.rjsoftware.xmpp.model.CustomMessage;
+import uk.co.rjsoftware.xmpp.model.Emoticon;
+import uk.co.rjsoftware.xmpp.model.hipchat.emoticons.HipChatEmoticons;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledDocument;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
@@ -45,11 +44,17 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MessageListHTMLDocument extends HTMLDocument {
+
+    // this lovely regex will match all <img> tags, all <a> (link) tags, and any standalone
+    // http links, including any leading or trailing brackets '()'.  This is important, as html
+    // links that include brackets are in fact valid, albeit rather odd!
+    private static final Pattern LINK_PATTERN = Pattern.compile("<[iI][mM][gG] .+?/>|<[aA] .+?</[aA]>|\\(?https?://[-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_()|]");
 
     private long messageCount;
 
@@ -83,7 +88,9 @@ public class MessageListHTMLDocument extends HTMLDocument {
         final DateFormat formatter = new SimpleDateFormat("HH:mm");
         final Date date = new Date(message.getTimestamp());
 
-        final String messageBody = addLinks(message.getBody());
+        String messageBody = addLinks(message.getBody());
+        messageBody = addEmoticons(messageBody);
+
         try {
             if (this.messageCount == 0) {
                 insertAfterStart(getElement("table"),
@@ -108,11 +115,11 @@ public class MessageListHTMLDocument extends HTMLDocument {
     }
 
     private String addLinks(String messageText) {
-        Pattern p = Pattern.compile("<[iI][mM][gG] .+?/>|<[aA] .+?</[aA]>|\\(?https?://[-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_()|]");
-        Matcher m = p.matcher(messageText);
-        StringBuffer changedMessageText = new StringBuffer();
+        final Matcher m = LINK_PATTERN.matcher(messageText);
+        final StringBuffer changedMessageText = new StringBuffer();
+
         while (m.find()) {
-            // ingore existing <a> links
+            // ignore existing <a> links
             if (m.group().substring(0, 3).toLowerCase(Locale.getDefault()).equals("<a ")) {
                 m.appendReplacement(changedMessageText, m.group());
             }
@@ -121,7 +128,45 @@ public class MessageListHTMLDocument extends HTMLDocument {
                 m.appendReplacement(changedMessageText, m.group());
             }
             else {
-                m.appendReplacement(changedMessageText, "<a href='" + m.group() + "'s>" + m.group() + "</a>");
+                // TODO: Deal with the leading and trailing '(' and ')'
+                m.appendReplacement(changedMessageText, "<a href='" + m.group() + "'>" + m.group() + "</a>");
+            }
+        }
+        m.appendTail(changedMessageText);
+
+        return changedMessageText.toString();
+    }
+
+    private String addEmoticons(final String messageText) {
+        final List<Emoticon> emoticons = HipChatEmoticons.getEmoticons();
+
+        String changedMessageText = messageText;
+
+        for (Emoticon emoticon : emoticons) {
+            changedMessageText = addEmoticon(emoticon, changedMessageText);
+        }
+
+        return changedMessageText;
+    }
+
+    private String addEmoticon(final Emoticon emoticon, final String messageText) {
+        final Pattern p = Pattern.compile("<[iI][mM][gG] .+?/>|<[aA] .+?</[aA]>|" + emoticon.getRegexShortcut());
+        final Matcher m = p.matcher(messageText);
+        final StringBuffer changedMessageText = new StringBuffer();
+
+        while (m.find()) {
+            // ignore <a> links
+            if (m.group().substring(0, 3).toLowerCase(Locale.getDefault()).equals("<a ")) {
+                m.appendReplacement(changedMessageText, m.group());
+            }
+            // ignore <img> tags
+            else if (m.group().substring(0, 5).toLowerCase(Locale.getDefault()).equals("<img ")) {
+                m.appendReplacement(changedMessageText, m.group());
+            }
+            else {
+                // TODO: When copy an image from the message window, copy the 'alt' text
+                // TODO: Align the sender name with the first line of the message text.
+                m.appendReplacement(changedMessageText, "<img align='bottom' alt='" + m.group() + "' src='" + emoticon.getUrl() + "'/>");
             }
         }
         m.appendTail(changedMessageText);

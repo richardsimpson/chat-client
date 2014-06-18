@@ -35,6 +35,7 @@ import uk.co.rjsoftware.xmpp.dialogs.login.LoginListener;
 import uk.co.rjsoftware.xmpp.dialogs.main.MainForm;
 import uk.co.rjsoftware.xmpp.model.LogoutListener;
 import org.jivesoftware.smack.XMPPException;
+import uk.co.rjsoftware.xmpp.model.hipchat.emoticons.HipChatEmoticons;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -115,6 +116,9 @@ public final class Main {
 
     private void createAndShowMainForm(String username, String password) throws YaccException {
         final CustomConnection connection = new CustomConnection(username, password, this.maxRoomCount);
+
+        // download the list of emoticons
+        new HipChatEmoticons(this.yaccProperties);
 
         // TODO: Check if this is the correct way to 'close' a JFrame
         this.loginForm.setVisible(false);
