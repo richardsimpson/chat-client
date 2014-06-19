@@ -127,6 +127,11 @@ public class HipChatEmoticons {
         result.add(new Emoticon(";p", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/winktongue.png"));
         result.add(new Emoticon(">:-(", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/angry.png"));
         result.add(new Emoticon("O:)", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/innocent.png"));
+
+        result.add(new Emoticon("(embarrassed)", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/embarrassed.png"));
+        result.add(new Emoticon("(oops)", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/oops.png"));
+        result.add(new Emoticon("(thumbsup)", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/thumbs_up.png"));
+        result.add(new Emoticon("(thumbsdown)", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/thumbs_down.png"));
     }
 
     /**
