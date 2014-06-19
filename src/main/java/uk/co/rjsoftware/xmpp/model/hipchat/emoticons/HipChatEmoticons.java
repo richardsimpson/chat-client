@@ -73,7 +73,8 @@ public class HipChatEmoticons {
             addResponseToList(emoticonListResponse, result);
         }
 
-        // TODO: Add the standard emoticons: :-), etc
+        // Add the standard emoticons: :-), etc
+        addOtherHipchatEmoticons(result);
 
         return result;
     }
@@ -94,6 +95,38 @@ public class HipChatEmoticons {
             final Emoticon newEmoticon = new Emoticon("(" + item.getShortcut() + ")", item.getUrl());
             emoticons.add(newEmoticon);
         }
+    }
+
+    /**
+     * Adds the other hipchat emoticons, such as ;), ;-), etc
+     *
+     * @param result
+     */
+    private void addOtherHipchatEmoticons(List<Emoticon> result) {
+        result.add(new Emoticon("(zzz)", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/zzz.gif"));
+        result.add(new Emoticon("8)", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/cool.png"));
+        result.add(new Emoticon("8-)", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/cool.png"));
+        result.add(new Emoticon(":#", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/footinmouth.png"));
+        result.add(new Emoticon(":$", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/moneymouth.png"));
+        result.add(new Emoticon(":'(", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/cry.png"));
+        result.add(new Emoticon(":')", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/happytear.gif"));
+        result.add(new Emoticon(":(", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/frown.png"));
+        result.add(new Emoticon(":)", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/smile.png"));
+        result.add(new Emoticon(":-)", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/smile.png"));
+        result.add(new Emoticon(":-*", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/kiss.png"));
+        result.add(new Emoticon(":D", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/bigsmile.png"));
+        result.add(new Emoticon(":-D", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/bigsmile.png"));
+        result.add(new Emoticon(":Z", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/sealed.png"));
+        result.add(new Emoticon(":\\", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/slant.png"));
+        result.add(new Emoticon(":o", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/gasp.png"));
+        result.add(new Emoticon(":p", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/tongue.png"));
+        result.add(new Emoticon(":|", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/straightface.png"));
+        result.add(new Emoticon(":-|", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/straightface.png"));
+        result.add(new Emoticon(";)", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/wink.png"));
+        result.add(new Emoticon(";-)", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/wink.png"));
+        result.add(new Emoticon(";p", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/winktongue.png"));
+        result.add(new Emoticon(">:-(", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/angry.png"));
+        result.add(new Emoticon("O:)", "https://dujrsrsgsd3nh.cloudfront.net/img/emoticons/innocent.png"));
     }
 
     /**

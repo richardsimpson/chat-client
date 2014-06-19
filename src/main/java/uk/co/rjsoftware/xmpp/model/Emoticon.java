@@ -29,6 +29,9 @@
  */
 package uk.co.rjsoftware.xmpp.model;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class Emoticon {
 
     private final String shortcut;
@@ -42,8 +45,31 @@ public class Emoticon {
     }
 
     private String escapeRegexCharacters(final String shortcut) {
-        String regexShortcut = shortcut.replaceAll("\\(", "\\\\(");
-        regexShortcut = regexShortcut.replaceAll("\\)", "\\\\)");
+
+        // note that we MUST replace the \ character first.  Since the regex escape character is a \, doing
+        // other replacements first will add extra \ characters to the string, and we don't want to escape
+        // those ones.
+        String regexShortcut = shortcut.replaceAll(Pattern.quote("\\"), Matcher.quoteReplacement("\\\\"));
+        regexShortcut = regexShortcut.replaceAll(Pattern.quote("("), Matcher.quoteReplacement("\\("));
+        regexShortcut = regexShortcut.replaceAll(Pattern.quote(")"), Matcher.quoteReplacement("\\)"));
+        regexShortcut = regexShortcut.replaceAll(Pattern.quote("."), Matcher.quoteReplacement("\\."));
+        regexShortcut = regexShortcut.replaceAll(Pattern.quote("+"), Matcher.quoteReplacement("\\+"));
+        regexShortcut = regexShortcut.replaceAll(Pattern.quote("*"), Matcher.quoteReplacement("\\*"));
+        regexShortcut = regexShortcut.replaceAll(Pattern.quote("?"), Matcher.quoteReplacement("\\?"));
+        regexShortcut = regexShortcut.replaceAll(Pattern.quote("["), Matcher.quoteReplacement("\\["));
+        regexShortcut = regexShortcut.replaceAll(Pattern.quote("]"), Matcher.quoteReplacement("\\]"));
+        regexShortcut = regexShortcut.replaceAll(Pattern.quote("^"), Matcher.quoteReplacement("\\^"));
+        regexShortcut = regexShortcut.replaceAll(Pattern.quote("$"), Matcher.quoteReplacement("\\$"));
+        regexShortcut = regexShortcut.replaceAll(Pattern.quote("{"), Matcher.quoteReplacement("\\{"));
+        regexShortcut = regexShortcut.replaceAll(Pattern.quote("}"), Matcher.quoteReplacement("\\}"));
+        regexShortcut = regexShortcut.replaceAll(Pattern.quote("="), Matcher.quoteReplacement("\\="));
+        regexShortcut = regexShortcut.replaceAll(Pattern.quote("!"), Matcher.quoteReplacement("\\!"));
+        regexShortcut = regexShortcut.replaceAll(Pattern.quote("<"), Matcher.quoteReplacement("\\<"));
+        regexShortcut = regexShortcut.replaceAll(Pattern.quote(">"), Matcher.quoteReplacement("\\>"));
+        regexShortcut = regexShortcut.replaceAll(Pattern.quote("|"), Matcher.quoteReplacement("\\|"));
+        regexShortcut = regexShortcut.replaceAll(Pattern.quote(":"), Matcher.quoteReplacement("\\:"));
+        regexShortcut = regexShortcut.replaceAll(Pattern.quote("-"), Matcher.quoteReplacement("\\-"));
+
         return regexShortcut;
     }
 

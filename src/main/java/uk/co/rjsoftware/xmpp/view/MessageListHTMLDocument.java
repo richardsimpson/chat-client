@@ -156,11 +156,11 @@ public class MessageListHTMLDocument extends HTMLDocument {
 
         while (m.find()) {
             // ignore <a> links
-            if (m.group().substring(0, 3).toLowerCase(Locale.getDefault()).equals("<a ")) {
+            if ((m.group().length() >= 3) && ((m.group().substring(0, 3).toLowerCase(Locale.getDefault()).equals("<a ")))) {
                 m.appendReplacement(changedMessageText, m.group());
             }
             // ignore <img> tags
-            else if (m.group().substring(0, 5).toLowerCase(Locale.getDefault()).equals("<img ")) {
+            else if ((m.group().length() >= 5) && (m.group().substring(0, 5).toLowerCase(Locale.getDefault()).equals("<img "))) {
                 m.appendReplacement(changedMessageText, m.group());
             }
             else {
