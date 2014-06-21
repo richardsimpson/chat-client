@@ -46,37 +46,42 @@ import java.util.List;
 public class HipChatEmoticons {
 
     private final YaccProperties yaccProperties;
-    private static List<Emoticon> emoticons;
+    private static final List<Emoticon> emoticons;
+
+    static {
+        emoticons = new ArrayList<Emoticon>();
+    }
 
     public HipChatEmoticons(final YaccProperties yaccProperties) {
         this.yaccProperties = yaccProperties;
-        emoticons = retrieveEmoticons();
+        updateEmoticons();
     }
 
-    private List<Emoticon> retrieveEmoticons() {
-        final List<Emoticon> result = new ArrayList<Emoticon>();
-        Client client = ClientBuilder.newClient();
-
+    public void updateEmoticons() {
         final String apiEndpoint = this.yaccProperties.getProperty(YaccProperties.PROPERTY_NAME_HIPCHAT_API_ENDPOINT);
         final String authToken = this.yaccProperties.getProperty(YaccProperties.PROPERTY_NAME_HIPCHAT_API_AUTH_TOKEN);
 
-        WebTarget emoticonTarget = client.target(apiEndpoint).path("emoticon").queryParam("auth_token", authToken)
-                .queryParam("max-results", 0);
+        emoticons.clear();
 
-        EmoticonListResponse emoticonListResponse = requestEmoticons(emoticonTarget);
-        addResponseToList(emoticonListResponse, result);
+        if ((apiEndpoint != null) && (!apiEndpoint.equals("")) && (authToken != null) && (!authToken.equals(""))) {
+            Client client = ClientBuilder.newClient();
 
-        while (null != emoticonListResponse.getLinks().getNext()) {
-            emoticonTarget = client.target(emoticonListResponse.getLinks().getNext()).queryParam("auth_token", authToken);
+            WebTarget emoticonTarget = client.target(apiEndpoint).path("emoticon").queryParam("auth_token", authToken)
+                    .queryParam("max-results", 0);
 
-            emoticonListResponse = requestEmoticons(emoticonTarget);
-            addResponseToList(emoticonListResponse, result);
+            EmoticonListResponse emoticonListResponse = requestEmoticons(emoticonTarget);
+            addResponseToList(emoticonListResponse, emoticons);
+
+            while (null != emoticonListResponse.getLinks().getNext()) {
+                emoticonTarget = client.target(emoticonListResponse.getLinks().getNext()).queryParam("auth_token", authToken);
+
+                emoticonListResponse = requestEmoticons(emoticonTarget);
+                addResponseToList(emoticonListResponse, emoticons);
+            }
         }
 
         // Add the standard emoticons: :-), etc
-        addOtherHipchatEmoticons(result);
-
-        return result;
+        addOtherHipchatEmoticons(emoticons);
     }
 
     private EmoticonListResponse requestEmoticons(WebTarget emoticonTarget) {

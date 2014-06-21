@@ -117,9 +117,6 @@ public final class Main {
     private void createAndShowMainForm(String username, String password) throws YaccException {
         final CustomConnection connection = new CustomConnection(username, password, this.maxRoomCount);
 
-        // download the list of emoticons
-        new HipChatEmoticons(this.yaccProperties);
-
         // TODO: Check if this is the correct way to 'close' a JFrame
         this.loginForm.setVisible(false);
 

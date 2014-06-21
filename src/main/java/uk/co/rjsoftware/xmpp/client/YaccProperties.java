@@ -29,6 +29,8 @@
  */
 package uk.co.rjsoftware.xmpp.client;
 
+import com.jgoodies.common.bean.Bean;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -37,7 +39,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Properties;
 
-public final class YaccProperties {
+public final class YaccProperties extends Bean {
 
     public static final String PROPERTY_NAME_HIPCHAT_API_ENDPOINT = "hipChatApi.endpoint";
     public static final String PROPERTY_NAME_HIPCHAT_API_AUTH_TOKEN = "hipChatApi.authToken";
@@ -55,8 +57,27 @@ public final class YaccProperties {
         return this.properties.getProperty(key);
     }
 
+    private boolean propertyChanged(final String key, final String value) {
+        final String oldValue = this.properties.getProperty(key);
+
+        if ((oldValue == null) && (value != null)) {
+            return true;
+        }
+
+        if ((oldValue != null) && (value == null)) {
+            return true;
+        }
+
+        return !oldValue.equals(value);
+    }
+
+
     public void setProperty(final String key, final String value) {
-        this.properties.setProperty(key, value);
+        if (propertyChanged(key, value)) {
+            final String oldValue = this.properties.getProperty(key);
+            this.properties.setProperty(key, value);
+            firePropertyChange(key, oldValue, value);
+        }
     }
 
     public void store() {

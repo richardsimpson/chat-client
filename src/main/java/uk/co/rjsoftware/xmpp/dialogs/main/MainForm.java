@@ -37,6 +37,7 @@ import uk.co.rjsoftware.xmpp.client.YaccInvitationListener;
 import uk.co.rjsoftware.xmpp.client.YaccProperties;
 import uk.co.rjsoftware.xmpp.dialogs.DialogUtils;
 import uk.co.rjsoftware.xmpp.dialogs.inviteusers.InviteUsersForm;
+import uk.co.rjsoftware.xmpp.model.hipchat.emoticons.HipChatEmoticons;
 import uk.co.rjsoftware.xmpp.model.hipchat.room.HipChatRoom;
 import uk.co.rjsoftware.xmpp.view.CurrentChatOccupantsCellRenderer;
 import uk.co.rjsoftware.xmpp.view.RecentChatListCellRenderer;
@@ -83,7 +84,10 @@ public class MainForm extends JFrame {
 
     private final CustomConnection connection;
     private final YaccProperties yaccProperties;
+    private final YaccPropertyChangeListener yaccPropertiesChangeListener;
     private final BeanAdapter adapter;
+
+    private final HipChatEmoticons hipChatEmoticons;
 
     private final java.util.List<LogoutListener> listeners = new ArrayList<LogoutListener>();
     private ChatTarget currentChatTarget;
@@ -102,6 +106,11 @@ public class MainForm extends JFrame {
         this.connection = connection;
         this.yaccProperties = yaccProperties;
 
+        // download the list of emoticons
+        this.hipChatEmoticons = new HipChatEmoticons(this.yaccProperties);
+
+        this.yaccPropertiesChangeListener = new YaccPropertyChangeListener(this.yaccProperties, this.hipChatEmoticons);
+
         this.adapter = new BeanAdapter(connection, true);
 
         JTabbedPane chatSourceTabs = new JTabbedPane();
@@ -117,6 +126,36 @@ public class MainForm extends JFrame {
         pack();
 
         DialogUtils.centerDialog(this);
+    }
+
+    @Override
+    public void setVisible(boolean b) {
+        if (b) {
+            this.yaccProperties.addPropertyChangeListener(YaccProperties.PROPERTY_NAME_HIPCHAT_API_AUTH_TOKEN, this.yaccPropertiesChangeListener);
+            this.yaccProperties.addPropertyChangeListener(YaccProperties.PROPERTY_NAME_HIPCHAT_API_ENDPOINT, this.yaccPropertiesChangeListener);
+        }
+        else {
+            this.yaccProperties.removePropertyChangeListener(YaccProperties.PROPERTY_NAME_HIPCHAT_API_AUTH_TOKEN, this.yaccPropertiesChangeListener);
+            this.yaccProperties.removePropertyChangeListener(YaccProperties.PROPERTY_NAME_HIPCHAT_API_ENDPOINT, this.yaccPropertiesChangeListener);
+        }
+
+        super.setVisible(b);
+    }
+
+    private static class YaccPropertyChangeListener implements PropertyChangeListener {
+
+        private final YaccProperties yaccProperties;
+        private final HipChatEmoticons hipChatEmoticons;
+
+        public YaccPropertyChangeListener(final YaccProperties yaccProperties, final HipChatEmoticons hipChatEmoticons) {
+            this.yaccProperties = yaccProperties;
+            this.hipChatEmoticons = hipChatEmoticons;
+        }
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            this.hipChatEmoticons.updateEmoticons();
+        }
     }
 
     private JList<ChatTarget> setupTabbedPane(final JTabbedPane chatSourceTabs) {
