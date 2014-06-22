@@ -34,13 +34,20 @@ import uk.co.rjsoftware.xmpp.model.Emoticon;
 import uk.co.rjsoftware.xmpp.model.hipchat.emoticons.HipChatEmoticons;
 
 import javax.swing.*;
+import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.Element;
+import javax.swing.text.MutableAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import javax.swing.text.html.parser.ParserDelegator;
 import java.awt.*;
 import java.io.IOException;
+import java.io.StringReader;
+import java.lang.reflect.Field;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -50,6 +57,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MessageListHTMLDocument extends HTMLDocument {
+
+    private static final char[] NEWLINE;
+
+    static {
+        NEWLINE = new char[1];
+        NEWLINE[0] = '\n';
+    }
 
     // this lovely regex will match all <img> tags, all <a> (link) tags, and any standalone
     // http links, including any leading or trailing brackets '()'.  This is important, as html
@@ -172,5 +186,261 @@ public class MessageListHTMLDocument extends HTMLDocument {
         m.appendTail(changedMessageText);
 
         return changedMessageText.toString();
+    }
+
+    @Override
+    public void insertAfterStart(Element elem, String htmlText) throws
+            BadLocationException, IOException {
+        if (elem != null && elem.isLeaf()) {
+            throw new IllegalArgumentException("Can not insert HTML after start of a leaf");
+        }
+        insertHTMLWithCustomHTMLReader(elem, elem.getStartOffset(), htmlText);
+    }
+
+    @Override
+    public void insertAfterEnd(Element elem, String htmlText) throws
+            BadLocationException, IOException {
+        if (elem != null) {
+            Element parent = elem.getParentElement();
+
+            if (parent != null) {
+                int offset = elem.getEndOffset();
+                if (offset > getLength()) {
+                    offset--;
+                }
+                else if (elem.isLeaf() && getText(offset - 1, 1).
+                        charAt(0) == NEWLINE[0]) {
+                    offset--;
+                }
+                insertHTMLWithCustomHTMLReader(parent, offset, htmlText);
+            }
+        }
+    }
+
+    /**
+     * Inserts a string of HTML into the document at the given position.
+     * <code>parent</code> is used to identify the location to insert the
+     * <code>html</code>. If <code>parent</code> is a leaf this can have
+     * unexpected results.
+     */
+    private void insertHTMLWithCustomHTMLReader(Element parent, int offset, String html)
+            throws BadLocationException, IOException {
+        if (parent != null && html != null) {
+            HTMLEditorKit.Parser parser = getParser();
+            if (parser != null) {
+                int lastOffset = Math.max(0, offset - 1);
+                Element charElement = getCharacterElement(lastOffset);
+                Element commonParent = parent;
+                int pop = 0;
+                int push = 0;
+
+                if (parent.getStartOffset() > lastOffset) {
+                    while (commonParent != null && commonParent.getStartOffset() > lastOffset) {
+                        commonParent = commonParent.getParentElement();
+                        push++;
+                    }
+                    if (commonParent == null) {
+                        throw new BadLocationException("No common parent",
+                                offset);
+                    }
+                }
+                while (charElement != null && charElement != commonParent) {
+                    pop++;
+                    charElement = charElement.getParentElement();
+                }
+                if (charElement != null) {
+                    // Found it, do the insert.
+                    HTMLReader reader = new YaccHTMLReader(offset, pop - 1, push);
+
+                    parser.parse(new StringReader(html), reader, true);
+                    reader.flush();
+                }
+            }
+        }
+    }
+
+    public class YaccHTMLReader extends HTMLDocument.HTMLReader {
+
+        YaccHTMLReader(final int offset, final int popDepth, final int pushDepth) {
+
+            super(offset, popDepth, pushDepth, null);
+
+            TagAction sa = new YaccSpecialAction();
+            registerTag(HTML.Tag.IMG, sa);
+
+            // clear out the parseBuffer, which will have been added to by the super constructor.
+            // we  don't want any of the end tags that it will have added.
+            parseBuffer.clear();
+
+            setPopDepth(popDepth);
+            setPushDepth(pushDepth);
+            setInsertAfterImplied(true);
+            setFoundInsertTag(false);
+            setMidInsert(false);
+            setInsertInsertTag(true);
+            setWantsTrailingNewline(false);
+
+            // the next block from the superclass WAS NOT already executed - but we need it to be
+            /**
+             * This block initializes the <code>inParagraph</code> flag.
+             * It is left in <code>false</code> value automatically
+             * if the target document is empty or future inserts
+             * were positioned into the 'body' tag.
+             */
+            int targetOffset = Math.max(getOffset() - 1, 0);
+            Element elem =
+                    MessageListHTMLDocument.this.getCharacterElement(targetOffset);
+            /* Going up by the left document structure path */
+            for (int i = 0; i <= getPopDepth(); i++) {
+                elem = elem.getParentElement();
+            }
+            /* Going down by the right document structure path */
+            for (int i = 0; i < getPushDepth(); i++) {
+                int index = elem.getElementIndex(getOffset());
+                elem = elem.getElement(index);
+            }
+            AttributeSet attrs = elem.getAttributes();
+            if (attrs != null) {
+                HTML.Tag tagToInsertInto =
+                        (HTML.Tag) attrs.getAttribute(StyleConstants.NameAttribute);
+                if (tagToInsertInto != null) {
+                    setInParagraph(isParagraph(tagToInsertInto));
+                }
+            }
+        }
+
+        private void setPopDepth(final int popDepth) {
+            setPackageProtectedField("popDepth", popDepth);
+        }
+
+        private void setPushDepth(final int pushDepth) {
+            setPackageProtectedField("pushDepth", pushDepth);
+        }
+
+        private void setInsertAfterImplied(final boolean insertAfterImplied) {
+            setPackageProtectedField("insertAfterImplied", insertAfterImplied);
+        }
+
+        private void setFoundInsertTag(final boolean foundInsertTag) {
+            setPackageProtectedField("foundInsertTag", foundInsertTag);
+        }
+
+        private void setMidInsert(final boolean midInsert) {
+            setPackageProtectedField("midInsert", midInsert);
+        }
+
+        private void setInsertInsertTag(final boolean insertInsertTag) {
+            setPackageProtectedField("insertInsertTag", insertInsertTag);
+        }
+
+        private void setWantsTrailingNewline(final boolean wantsTrailingNewline) {
+            setPackageProtectedField("wantsTrailingNewline", wantsTrailingNewline);
+        }
+
+        private void setInParagraph(final boolean inParagraph) {
+            setPackageProtectedField("inParagraph", inParagraph);
+        }
+
+        private boolean getEmptyDocument() {
+            return (Boolean)getPackageProtectedField("emptyDocument");
+        }
+
+        private boolean getMidInsert() {
+            return (Boolean)getPackageProtectedField("midInsert");
+        }
+
+        private int getOffset() {
+            return (Integer)getPackageProtectedField("offset");
+        }
+
+        private int getPopDepth() {
+            return (Integer)getPackageProtectedField("popDepth");
+        }
+
+        private int getPushDepth() {
+            return (Integer)getPackageProtectedField("pushDepth");
+        }
+
+        private void setPackageProtectedField(final String fieldname, final Object newValue) {
+            try {
+                final Field field = this.getClass().getSuperclass().getDeclaredField(fieldname);
+                field.setAccessible(true);
+                field.set(this, newValue);
+            } catch (NoSuchFieldException exception) {
+                throw new RuntimeException(exception);
+            } catch (IllegalAccessException exception) {
+                throw new RuntimeException(exception);
+            }
+        }
+
+        private Object getPackageProtectedField(final String fieldname) {
+            try {
+                final Field field = this.getClass().getSuperclass().getDeclaredField(fieldname);
+                field.setAccessible(true);
+                return field.get(this);
+            } catch (NoSuchFieldException exception) {
+                throw new RuntimeException(exception);
+            } catch (IllegalAccessException exception) {
+                throw new RuntimeException(exception);
+            }
+        }
+
+        private boolean isParagraph(final HTML.Tag tag) {
+            return (
+                    tag == HTML.Tag.P
+                            || tag == HTML.Tag.IMPLIED
+                            || tag == HTML.Tag.DT
+                            || tag == HTML.Tag.H1
+                            || tag == HTML.Tag.H2
+                            || tag == HTML.Tag.H3
+                            || tag == HTML.Tag.H4
+                            || tag == HTML.Tag.H5
+                            || tag == HTML.Tag.H6
+            );
+        }
+
+        private class YaccSpecialAction extends TagAction {
+
+            public void start(HTML.Tag t, MutableAttributeSet a) {
+                addSpecialElementForImg(t, a);
+            }
+
+        }
+
+        /**
+         * Modified version of HTMLReader.addSpecialElement that sets the
+         * text of an IMG to be the same as the 'alt' text.
+         */
+        protected void addSpecialElementForImg(HTML.Tag t, MutableAttributeSet a) {
+            final int parseBufferOriginalSize = parseBuffer.size();
+
+            super.addSpecialElement(t, a);
+
+            // check if this is an img tag, and it any elements were actually added
+            if ((t.toString().equals("img")) && (parseBufferOriginalSize < parseBuffer.size())) {
+
+                // if they were, then there will either be one or two new elements.
+                // There is an optional end tag, and then there _may_ be an image tag,
+                // if the image could be added by the superclass.  So, we should check
+                // if the last tag added was the img tag, and if so, replace it.
+
+                final ElementSpec elementSpec = parseBuffer.get(parseBuffer.size()-1);
+                if (elementSpec.getType() == ElementSpec.ContentType) {
+
+                    final String altText = (String)a.getAttribute(HTML.Attribute.ALT);
+
+                    if ((altText != null) && (!altText.equals(""))) {
+                        // remove the last element
+                        parseBuffer.remove(parseBuffer.size()-1);
+
+                        // then add a replacement for them
+                        ElementSpec es = new ElementSpec(
+                                a.copyAttributes(), ElementSpec.ContentType, altText.toCharArray(), 0, altText.length());
+                        parseBuffer.addElement(es);
+                    }
+                }
+            }
+        }
+
     }
 }
