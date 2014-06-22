@@ -45,6 +45,7 @@ public class LoginForm extends JDialog {
     private final JLabel passwordLabel;
     private final JTextField usernameField;
     private final JTextField passwordField;
+    private final JButton usernameHelpButton;
     private final JButton loginButton;
 
     private final List<LoginListener> listeners = new ArrayList<LoginListener>();
@@ -77,6 +78,20 @@ public class LoginForm extends JDialog {
         constraints.fill = GridBagConstraints.HORIZONTAL;
         pane.add(this.usernameField, constraints);
 
+        this.usernameHelpButton = new JButton("Get");
+        constraints.insets = new Insets(2, 2, 2, 2);
+        constraints.gridx = 2;
+        constraints.gridy = 0;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        pane.add(this.usernameHelpButton, constraints);
+
+        this.usernameHelpButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                DialogUtils.launchUrl("https://www.hipchat.com/account/xmpp");
+            }
+        });
+
         this.passwordField = new JPasswordField();
         this.passwordField.setPreferredSize(new Dimension(120, 20));
         constraints.gridx = 1;
@@ -104,11 +119,11 @@ public class LoginForm extends JDialog {
         constraints.insets = new Insets(2, 10, 2, 10);
         constraints.gridx = 0;
         constraints.gridy = 3;
-        constraints.gridwidth = 3;
+        constraints.gridwidth = 4;
         constraints.weightx = 1;
         pane.add(this.loginMessageLabel, constraints);
 
-        setPreferredSize(new Dimension(250, 200));
+        setPreferredSize(new Dimension(291, 200));
         setResizable(false);
 
         getRootPane().setDefaultButton(this.loginButton);

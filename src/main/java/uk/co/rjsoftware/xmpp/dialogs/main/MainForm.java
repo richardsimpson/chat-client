@@ -639,25 +639,7 @@ public class MainForm extends JFrame {
             if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                 URL url = event.getURL();
 
-                launchUrl(url.toString());
-            }
-        }
-
-        private void launchUrl(String url) {
-            if (!java.awt.Desktop.isDesktopSupported()) {
-                throw new RuntimeException("Desktop is not supported (fatal)");
-            }
-
-            java.awt.Desktop desktop = java.awt.Desktop.getDesktop();
-            if (!desktop.isSupported(java.awt.Desktop.Action.BROWSE)) {
-                throw new RuntimeException("Desktop doesn't support the browse action (fatal)");
-            }
-
-            try {
-                java.net.URI uri = new java.net.URI(url);
-                desktop.browse(uri);
-            } catch (Exception exception) {
-                throw new RuntimeException(exception);
+                DialogUtils.launchUrl(url.toString());
             }
         }
     }
