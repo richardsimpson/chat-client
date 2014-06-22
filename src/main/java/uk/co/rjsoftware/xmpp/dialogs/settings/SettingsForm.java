@@ -43,6 +43,7 @@ public class SettingsForm extends JDialog {
     private final JLabel authTokenLabel;
     private final JTextField endpointField;
     private final JTextField authTokenField;
+    private final JButton authTokenHelpButton;
     private final JButton saveButton;
     private final JButton cancelButton;
 
@@ -75,6 +76,7 @@ public class SettingsForm extends JDialog {
         constraints.insets = new Insets(2, 2, 2, 2);
         constraints.gridx = 1;
         constraints.gridy = 0;
+        constraints.gridwidth = 2;
         constraints.fill = GridBagConstraints.HORIZONTAL;
         pane.add(this.endpointField, constraints);
 
@@ -83,15 +85,33 @@ public class SettingsForm extends JDialog {
         constraints.insets = new Insets(2, 2, 2, 2);
         constraints.gridx = 1;
         constraints.gridy = 1;
+        constraints.gridwidth = 1;
         pane.add(this.authTokenField, constraints);
 
         this.endpointField.setText(this.yaccProperties.getProperty(YaccProperties.PROPERTY_NAME_HIPCHAT_API_ENDPOINT));
         this.authTokenField.setText(this.yaccProperties.getProperty(YaccProperties.PROPERTY_NAME_HIPCHAT_API_AUTH_TOKEN));
 
-        this.saveButton = new JButton("Save");
+        this.authTokenHelpButton = new JButton("Get");
+        constraints.insets = new Insets(2, 2, 2, 2);
+        constraints.gridx = 2;
+        constraints.gridy = 1;
+        pane.add(this.authTokenHelpButton, constraints);
+
+        this.authTokenHelpButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                DialogUtils.launchUrl("https://www.hipchat.com/account/api");
+            }
+        });
+
+        final JPanel buttonPanel =  new JPanel(new FlowLayout(FlowLayout.RIGHT));
         constraints.gridx = 0;
         constraints.gridy = 2;
-        pane.add(this.saveButton, constraints);
+        constraints.gridwidth = 3;
+        pane.add(buttonPanel, constraints);
+
+        this.saveButton = new JButton("Save");
+        buttonPanel.add(this.saveButton, constraints);
 
         this.saveButton.addActionListener(new ActionListener() {
             @Override
@@ -101,9 +121,7 @@ public class SettingsForm extends JDialog {
         });
 
         this.cancelButton = new JButton("Cancel");
-        constraints.gridx = 1;
-        constraints.gridy = 2;
-        pane.add(this.cancelButton, constraints);
+        buttonPanel.add(this.cancelButton, constraints);
 
         this.cancelButton.addActionListener(new ActionListener() {
             @Override
@@ -112,7 +130,7 @@ public class SettingsForm extends JDialog {
             }
         });
 
-        setPreferredSize(new Dimension(250, 200));
+        setPreferredSize(new Dimension(535, 160));
         setResizable(false);
 
         getRootPane().setDefaultButton(this.saveButton);

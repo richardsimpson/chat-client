@@ -77,8 +77,8 @@ public final class Main {
 
         try {
             this.yaccProperties = new YaccProperties();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException exception) {
+            throw new RuntimeException(exception);
         }
 
         javax.swing.SwingUtilities.invokeLater(new Runnable() {
