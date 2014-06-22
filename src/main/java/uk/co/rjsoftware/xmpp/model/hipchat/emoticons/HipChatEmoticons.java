@@ -46,11 +46,7 @@ import java.util.List;
 public class HipChatEmoticons {
 
     private final YaccProperties yaccProperties;
-    private static final List<Emoticon> emoticons;
-
-    static {
-        emoticons = new ArrayList<Emoticon>();
-    }
+    private static final List<Emoticon> EMOTICONS = new ArrayList<Emoticon>();
 
     public HipChatEmoticons(final YaccProperties yaccProperties) {
         this.yaccProperties = yaccProperties;
@@ -61,7 +57,7 @@ public class HipChatEmoticons {
         final String apiEndpoint = this.yaccProperties.getProperty(YaccProperties.PROPERTY_NAME_HIPCHAT_API_ENDPOINT);
         final String authToken = this.yaccProperties.getProperty(YaccProperties.PROPERTY_NAME_HIPCHAT_API_AUTH_TOKEN);
 
-        emoticons.clear();
+        EMOTICONS.clear();
 
         if ((apiEndpoint != null) && (!apiEndpoint.equals("")) && (authToken != null) && (!authToken.equals(""))) {
             Client client = ClientBuilder.newClient();
@@ -70,18 +66,18 @@ public class HipChatEmoticons {
                     .queryParam("max-results", 0);
 
             EmoticonListResponse emoticonListResponse = requestEmoticons(emoticonTarget);
-            addResponseToList(emoticonListResponse, emoticons);
+            addResponseToList(emoticonListResponse, EMOTICONS);
 
             while (null != emoticonListResponse.getLinks().getNext()) {
                 emoticonTarget = client.target(emoticonListResponse.getLinks().getNext()).queryParam("auth_token", authToken);
 
                 emoticonListResponse = requestEmoticons(emoticonTarget);
-                addResponseToList(emoticonListResponse, emoticons);
+                addResponseToList(emoticonListResponse, EMOTICONS);
             }
         }
 
         // Add the standard emoticons: :-), etc
-        addOtherHipchatEmoticons(emoticons);
+        addOtherHipchatEmoticons(EMOTICONS);
     }
 
     private EmoticonListResponse requestEmoticons(WebTarget emoticonTarget) {
@@ -143,7 +139,7 @@ public class HipChatEmoticons {
      * Returns a list of all the known emoticons
      */
     public static List<Emoticon> getEmoticons() {
-        return emoticons;
+        return EMOTICONS;
     }
 
 }

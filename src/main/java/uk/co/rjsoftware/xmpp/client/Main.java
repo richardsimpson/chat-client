@@ -35,7 +35,6 @@ import uk.co.rjsoftware.xmpp.dialogs.login.LoginListener;
 import uk.co.rjsoftware.xmpp.dialogs.main.MainForm;
 import uk.co.rjsoftware.xmpp.model.LogoutListener;
 import org.jivesoftware.smack.XMPPException;
-import uk.co.rjsoftware.xmpp.model.hipchat.emoticons.HipChatEmoticons;
 
 import javax.swing.*;
 import java.io.IOException;
