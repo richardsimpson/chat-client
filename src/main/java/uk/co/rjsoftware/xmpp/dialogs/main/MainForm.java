@@ -64,7 +64,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.KeyAdapter;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -285,19 +285,26 @@ public class MainForm extends JFrame {
         message.setFont(chatOccupantsList.getFont());
         chatPanel.add(message, BorderLayout.PAGE_END);
 
-        message.addKeyListener(new KeyAdapter() {
+        final String textSubmit = "text-submit";
+        final String insertBreak = "insert-break";
+
+        InputMap input = message.getInputMap();
+        KeyStroke enter = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
+        KeyStroke shiftEnter = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_MASK);
+        input.put(shiftEnter, insertBreak);  // input.get(enter)) = "insert-break"
+        input.put(enter, textSubmit);
+
+        ActionMap actions = message.getActionMap();
+        actions.put(textSubmit, new AbstractAction() {
             @Override
-            public void keyPressed(KeyEvent event) {
-                if ((event.getKeyCode() == 13) || (event.getKeyCode() == 10)) {
-                    if (connection.getCurrentChatTarget() != null) {
-                        connection.getCurrentChatTarget().sendMessage(message.getText());
-                        message.setText("");
-                    }
-                    // stop the carriage return from appearing in the text area.
-                    event.consume();
+            public void actionPerformed(ActionEvent e) {
+                if (connection.getCurrentChatTarget() != null) {
+                    connection.getCurrentChatTarget().sendMessage(message.getText());
+                    message.setText("");
                 }
             }
         });
+
     }
 
     private void setupChatHeader(final JPanel chatHeaderPanel) {

@@ -104,6 +104,7 @@ public class MessageListHTMLDocument extends HTMLDocument {
 
         String messageBody = addLinks(message.getBody());
         messageBody = addEmoticons(messageBody);
+        messageBody = convertCarriageReturns(messageBody);
 
         try {
             if (this.messageCount == 0) {
@@ -188,6 +189,13 @@ public class MessageListHTMLDocument extends HTMLDocument {
         return changedMessageText.toString();
     }
 
+    private String convertCarriageReturns(final String messageText) {
+        String result = messageText.replaceAll("\\r\\n", "<br>");
+        result = result.replaceAll("\\r", "<br>");
+        result = result.replaceAll("\\n", "<br>");
+        return result;
+    }
+
     @Override
     public void insertAfterStart(Element elem, String htmlText) throws
             BadLocationException, IOException {
@@ -267,6 +275,7 @@ public class MessageListHTMLDocument extends HTMLDocument {
 
             TagAction sa = new YaccSpecialAction();
             registerTag(HTML.Tag.IMG, sa);
+            registerTag(HTML.Tag.BR, sa);
 
             // clear out the parseBuffer, which will have been added to by the super constructor.
             // we  don't want any of the end tags that it will have added.
@@ -416,26 +425,41 @@ public class MessageListHTMLDocument extends HTMLDocument {
 
             super.addSpecialElement(t, a);
 
-            // check if this is an img tag, and it any elements were actually added
-            if ((t.toString().equals("img")) && (parseBufferOriginalSize < parseBuffer.size())) {
+            // check if any elements were actually added
+            if (parseBufferOriginalSize < parseBuffer.size()) {
+                // check if this is a tag that requires further processing
+                final String tagName = t.toString().toUpperCase(Locale.getDefault());
+                if ((tagName.equals("IMG")) || (tagName.equals("BR"))){
 
-                // if they were, then there will either be one or two new elements.
-                // There is an optional end tag, and then there _may_ be an image tag,
-                // if the image could be added by the superclass.  So, we should check
-                // if the last tag added was the img tag, and if so, replace it.
+                    // if the tag was added, then there will either be one or two new elements.
+                    // There is an optional end tag, and then there _may_ be an image tag,
+                    // if the image could be added by the superclass.  So, we should check
+                    // if the last tag added was the img tag, and if so, replace it.
 
-                final ElementSpec elementSpec = parseBuffer.get(parseBuffer.size()-1);
-                if (elementSpec.getType() == ElementSpec.ContentType) {
+                    final ElementSpec elementSpec = parseBuffer.get(parseBuffer.size()-1);
 
-                    final String altText = (String)a.getAttribute(HTML.Attribute.ALT);
+                    final HTML.Tag tag = (HTML.Tag)elementSpec.getAttributes().getAttribute(StyleConstants.NameAttribute);
 
-                    if ((altText != null) && (!altText.equals(""))) {
+                    if ((tag != null) && (HTML.Tag.IMG.equals(tag))) {
+                        final String altText = (String)a.getAttribute(HTML.Attribute.ALT);
+
+                        if ((altText != null) && (!altText.equals(""))) {
+                            // remove the last element
+                            parseBuffer.remove(parseBuffer.size()-1);
+
+                            // then add a replacement tag (containing the images alt text in the plain text)
+                            ElementSpec es = new ElementSpec(
+                                    a.copyAttributes(), ElementSpec.ContentType, altText.toCharArray(), 0, altText.length());
+                            parseBuffer.addElement(es);
+                        }
+                    }
+                    else if ((tag != null) && (HTML.Tag.BR.equals(tag))) {
                         // remove the last element
                         parseBuffer.remove(parseBuffer.size()-1);
 
-                        // then add a replacement for them
+                        // then add a replacement tag (containing a carriage return in the plain text)
                         ElementSpec es = new ElementSpec(
-                                a.copyAttributes(), ElementSpec.ContentType, altText.toCharArray(), 0, altText.length());
+                                a.copyAttributes(), ElementSpec.ContentType, System.lineSeparator().toCharArray(), 0, System.lineSeparator().length());
                         parseBuffer.addElement(es);
                     }
                 }
