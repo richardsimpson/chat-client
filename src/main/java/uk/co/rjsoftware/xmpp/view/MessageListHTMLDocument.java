@@ -66,9 +66,8 @@ public class MessageListHTMLDocument extends HTMLDocument {
     }
 
     // this lovely regex will match all <img> tags, all <a> (link) tags, and any standalone
-    // http links, including any leading or trailing brackets '()'.  This is important, as html
-    // links that include brackets are in fact valid, albeit rather odd!
-    private static final Pattern LINK_PATTERN = Pattern.compile("<[iI][mM][gG] .+?/>|<[aA] .+?</[aA]>|\\(?https?://[-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_()|]");
+    // http links
+    private static final Pattern LINK_PATTERN = Pattern.compile("<[iI][mM][gG] .+?/>|<[aA] .+?</[aA]>|https?://[-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]");
 
     private long messageCount;
 
@@ -145,7 +144,6 @@ public class MessageListHTMLDocument extends HTMLDocument {
                 m.appendReplacement(changedMessageText, m.group());
             }
             else {
-                // TODO: Deal with the leading and trailing '(' and ')'
                 m.appendReplacement(changedMessageText, "<a href='" + m.group() + "'>" + m.group() + "</a>");
             }
         }
