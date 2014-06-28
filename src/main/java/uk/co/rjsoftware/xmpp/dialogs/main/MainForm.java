@@ -58,11 +58,15 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.text.AttributeSet;
 import javax.swing.text.Element;
+import javax.swing.text.Segment;
 import javax.swing.text.StyledDocument;
 import javax.swing.text.View;
 import javax.swing.text.ViewFactory;
+import javax.swing.text.html.CSS;
 import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.InlineView;
 import javax.swing.text.html.ParagraphView;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -674,6 +678,9 @@ public class MainForm extends JFrame {
             if (view instanceof ParagraphView) {
                 view = new WrapParagraphView(elem);
             }
+            else if (view instanceof InlineView) {
+                view = new InlineViewWithEllipsesSupport(elem);
+            }
 
             return view;
         }
@@ -695,6 +702,81 @@ public class MainForm extends JFrame {
                 default:
                     throw new IllegalArgumentException("Invalid axis: " + axis);
             }
+        }
+
+    }
+
+    private static class InlineViewWithEllipsesSupport extends InlineView {
+
+        private boolean nowrap;
+        private Graphics graphics;
+        private Shape shape;
+
+        public InlineViewWithEllipsesSupport(final Element elem) {
+            super(elem);
+        }
+
+        /**
+         * Set the cached properties from the attributes.
+         */
+        protected void setPropertiesFromAttributes() {
+            super.setPropertiesFromAttributes();
+
+            AttributeSet a = getAttributes();
+
+            Object whitespace = a.getAttribute(CSS.Attribute.WHITE_SPACE);
+            if ((whitespace != null) && whitespace.equals("nowrap")) {
+                nowrap = true;
+            } else {
+                nowrap = false;
+            }
+        }
+
+        public void paint(Graphics g, Shape a) {
+            this.graphics = g;
+            this.shape = a;
+            super.paint(g, a);
+        }
+
+        @Override
+        public Segment getText(int p0, int p1) {
+            final Segment segment = super.getText(p0, p1);
+
+            if (!this.nowrap) {
+                return segment;
+            }
+
+            if ((this.shape == null) || (this.graphics == null)) {
+                return segment;
+            }
+
+            String text = String.valueOf(segment.array, segment.offset, segment.count);
+
+            final double maxWidth = this.shape.getBounds().getWidth();
+            if (maxWidth == 0) {
+                return segment;
+            }
+
+            // get metrics from the graphics
+            final FontMetrics metrics = graphics.getFontMetrics(getFont());
+            int width = metrics.stringWidth(text);
+
+            if (width <= maxWidth) {
+                return segment;
+            }
+
+            while ((width > maxWidth) && (text.length() > 0)) {
+                text = text.substring(0, text.length()-1);
+                width = metrics.stringWidth(text + "...");
+            }
+
+            if (text.length() == 0) {
+                return segment;
+            }
+
+            // put text back into the segment
+            text = text + "...";
+            return new Segment(text.toCharArray(), 0, text.length());
         }
 
     }

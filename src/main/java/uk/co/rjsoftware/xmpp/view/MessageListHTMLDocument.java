@@ -94,7 +94,9 @@ public class MessageListHTMLDocument extends HTMLDocument {
         Font font = new JLabel().getFont();
         String bodyRule = "body { font-family: " + font.getFamily() + "; "
                 + "font-size: " + font.getSize() + "pt; }";
+        String senderRule = ".sender {white-space: nowrap;}";
         getStyleSheet().addRule(bodyRule);
+        getStyleSheet().addRule(senderRule);
     }
 
     public void insertMessage(final CustomMessage message) {
@@ -110,14 +112,14 @@ public class MessageListHTMLDocument extends HTMLDocument {
             if (this.messageCount == 0) {
                 insertAfterStart(getElement("table"),
                         "<tr id='" + this.messageCount + "'>"
-                                + "<td width='125' align='right' valign='top'>" + message.getSender() + "</td>"
+                                + "<td width='125' class='sender' align='right' valign='top'>" + message.getSender() + "</td>"
                                 + "<td valign='top'>" + messageBody + "</td>"
                                 + "<td width='42' valign='top'>" + formatter.format(date) + "</td></tr>");
             }
             else {
                 insertAfterEnd(getElement(String.valueOf(this.messageCount - 1)),
                         "<tr id='" + this.messageCount + "'>"
-                                + "<td width='125' align='right' valign='top'>" + message.getSender() + "</td>"
+                                + "<td width='125' class='sender' align='right' valign='top'>" + message.getSender() + "</td>"
                                 + "<td valign='top'>" + messageBody + "</td>"
                                 + "<td width='42' valign='top'>" + formatter.format(date) + "</td></tr>");
             }
