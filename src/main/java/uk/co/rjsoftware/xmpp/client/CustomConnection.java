@@ -30,10 +30,8 @@
 package uk.co.rjsoftware.xmpp.client;
 
 import com.jgoodies.binding.beans.Model;
-import org.jivesoftware.smack.PacketListener;
 import org.jivesoftware.smack.packet.DefaultPacketExtension;
 import org.jivesoftware.smack.packet.Message;
-import org.jivesoftware.smack.packet.Packet;
 import org.jivesoftware.smack.packet.PacketExtension;
 import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smackx.ServiceDiscoveryManager;
@@ -235,12 +233,12 @@ public class CustomConnection extends Model {
             }
         });
 
-        this.connection.addPacketListener(new PacketListener() {
-            @Override
-            public void processPacket(Packet packet) {
-                System.out.println("Incomming Packet: " + packet.toString());
-            }
-        }, null);
+//        this.connection.addPacketListener(new PacketListener() {
+//            @Override
+//            public void processPacket(Packet packet) {
+//                System.out.println("Incomming Packet: " + packet.toString());
+//            }
+//        }, null);
     }
 
     public void disconnect() {
