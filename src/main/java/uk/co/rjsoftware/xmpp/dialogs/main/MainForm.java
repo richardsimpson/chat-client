@@ -709,7 +709,7 @@ public class MainForm extends JFrame {
     private static class InlineViewWithEllipsesSupport extends InlineView {
 
         private boolean nowrap;
-        private Graphics graphics;
+        private FontMetrics fontMetrics;
         private Shape shape;
 
         public InlineViewWithEllipsesSupport(final Element elem) {
@@ -732,10 +732,10 @@ public class MainForm extends JFrame {
             }
         }
 
-        public void paint(Graphics g, Shape a) {
-            this.graphics = g;
-            this.shape = a;
-            super.paint(g, a);
+        public void paint(Graphics graphics, Shape shape) {
+            this.fontMetrics = graphics.getFontMetrics(getFont());
+            this.shape = shape;
+            super.paint(graphics, shape);
         }
 
         @Override
@@ -746,28 +746,27 @@ public class MainForm extends JFrame {
                 return segment;
             }
 
-            if ((this.shape == null) || (this.graphics == null)) {
+            if ((this.shape == null) || (this.fontMetrics == null)) {
                 return segment;
             }
-
-            String text = String.valueOf(segment.array, segment.offset, segment.count);
 
             final double maxWidth = this.shape.getBounds().getWidth();
             if (maxWidth == 0) {
                 return segment;
             }
 
-            // get metrics from the graphics
-            final FontMetrics metrics = graphics.getFontMetrics(getFont());
-            int width = metrics.stringWidth(text);
+            // get the width of the string
+            String text = String.valueOf(segment.array, segment.offset, segment.count);
+            int width = this.fontMetrics.stringWidth(text);
 
             if (width <= maxWidth) {
                 return segment;
             }
 
+            // continue making the string shorter until it fits (or is empty)
             while ((width > maxWidth) && (text.length() > 0)) {
                 text = text.substring(0, text.length()-1);
-                width = metrics.stringWidth(text + "...");
+                width = this.fontMetrics.stringWidth(text + "...");
             }
 
             if (text.length() == 0) {
@@ -775,6 +774,7 @@ public class MainForm extends JFrame {
             }
 
             // put text back into the segment
+
             text = text + "...";
             return new Segment(text.toCharArray(), 0, text.length());
         }
