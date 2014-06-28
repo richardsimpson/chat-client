@@ -33,32 +33,37 @@ import com.jgoodies.binding.adapter.BasicComponentFactory;
 import com.jgoodies.binding.beans.BeanAdapter;
 import com.jgoodies.binding.list.SelectionInList;
 import com.jgoodies.binding.value.ValueModel;
+import uk.co.rjsoftware.xmpp.client.CustomConnection;
 import uk.co.rjsoftware.xmpp.client.YaccInvitationListener;
 import uk.co.rjsoftware.xmpp.client.YaccProperties;
 import uk.co.rjsoftware.xmpp.dialogs.DialogUtils;
-import uk.co.rjsoftware.xmpp.dialogs.inviteusers.InviteUsersForm;
-import uk.co.rjsoftware.xmpp.model.hipchat.emoticons.HipChatEmoticons;
-import uk.co.rjsoftware.xmpp.model.hipchat.room.HipChatRoom;
-import uk.co.rjsoftware.xmpp.view.CurrentChatOccupantsCellRenderer;
-import uk.co.rjsoftware.xmpp.view.RecentChatListCellRenderer;
-import uk.co.rjsoftware.xmpp.view.RoomListCellRenderer;
-import uk.co.rjsoftware.xmpp.view.UserListCellRenderer;
-import uk.co.rjsoftware.xmpp.client.CustomConnection;
 import uk.co.rjsoftware.xmpp.dialogs.createroom.CreateRoomForm;
 import uk.co.rjsoftware.xmpp.dialogs.createroom.NewRoomListener;
+import uk.co.rjsoftware.xmpp.dialogs.inviteusers.InviteUsersForm;
 import uk.co.rjsoftware.xmpp.dialogs.settings.SettingsForm;
 import uk.co.rjsoftware.xmpp.model.ChatTarget;
 import uk.co.rjsoftware.xmpp.model.LogoutListener;
 import uk.co.rjsoftware.xmpp.model.Room;
 import uk.co.rjsoftware.xmpp.model.User;
 import uk.co.rjsoftware.xmpp.model.UserStatus;
+import uk.co.rjsoftware.xmpp.model.hipchat.emoticons.HipChatEmoticons;
+import uk.co.rjsoftware.xmpp.model.hipchat.room.HipChatRoom;
+import uk.co.rjsoftware.xmpp.view.CurrentChatOccupantsCellRenderer;
+import uk.co.rjsoftware.xmpp.view.RecentChatListCellRenderer;
+import uk.co.rjsoftware.xmpp.view.RoomListCellRenderer;
+import uk.co.rjsoftware.xmpp.view.UserListCellRenderer;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.text.Element;
 import javax.swing.text.StyledDocument;
+import javax.swing.text.View;
+import javax.swing.text.ViewFactory;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.ParagraphView;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -255,6 +260,7 @@ public class MainForm extends JFrame {
         };
         messageTextPane.setEditable(false);
         messageTextPane.setContentType("text/html");
+        messageTextPane.setEditorKit(new WrapHTMLEditorKit());
         messageTextPane.addHyperlinkListener(new HyperlinkActivator());
 
         //Bindings.bind(messageList, new SelectionInList(messagesListModel));
@@ -651,4 +657,45 @@ public class MainForm extends JFrame {
         }
     }
 
+    private static class WrapHTMLEditorKit extends HTMLEditorKit {
+        final ViewFactory defaultFactory = new WrapHTMLFactory();
+
+        @Override
+        public ViewFactory getViewFactory() {
+            return defaultFactory;
+        }
+    }
+
+    private static class WrapHTMLFactory extends HTMLEditorKit.HTMLFactory {
+        @Override
+        public View create(Element elem) {
+            View view = super.create(elem);
+
+            if (view instanceof ParagraphView) {
+                view = new WrapParagraphView(elem);
+            }
+
+            return view;
+        }
+
+    }
+
+    private static class WrapParagraphView extends ParagraphView {
+
+        public WrapParagraphView(final Element elem) {
+            super(elem);
+        }
+
+        public float getMinimumSpan(int axis) {
+            switch (axis) {
+                case View.X_AXIS:
+                    return 0;
+                case View.Y_AXIS:
+                    return super.getMinimumSpan(axis);
+                default:
+                    throw new IllegalArgumentException("Invalid axis: " + axis);
+            }
+        }
+
+    }
 }
