@@ -172,16 +172,17 @@ public class MessageListHTMLDocument extends HTMLDocument {
         while (m.find()) {
             // ignore <a> links
             if ((m.group().length() >= 3) && ((m.group().substring(0, 3).toLowerCase(Locale.getDefault()).equals("<a ")))) {
-                m.appendReplacement(changedMessageText, m.group());
+                m.appendReplacement(changedMessageText, Matcher.quoteReplacement(m.group()));
             }
             // ignore <img> tags
             else if ((m.group().length() >= 5) && (m.group().substring(0, 5).toLowerCase(Locale.getDefault()).equals("<img "))) {
-                m.appendReplacement(changedMessageText, m.group());
+                m.appendReplacement(changedMessageText, Matcher.quoteReplacement(m.group()));
             }
             else {
                 // TODO: When copy an image from the message window, copy the 'alt' text
                 // TODO: Align the sender name with the first line of the message text.
-                m.appendReplacement(changedMessageText, "<img align='bottom' alt='" + m.group() + "' src='" + emoticon.getUrl() + "'/>");
+                m.appendReplacement(changedMessageText,
+                        Matcher.quoteReplacement("<img align='bottom' alt='" + m.group() + "' src='" + emoticon.getUrl() + "'/>"));
             }
         }
         m.appendTail(changedMessageText);
