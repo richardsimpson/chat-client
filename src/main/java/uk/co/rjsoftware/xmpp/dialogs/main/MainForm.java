@@ -58,13 +58,16 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.Element;
 import javax.swing.text.Segment;
+import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import javax.swing.text.View;
 import javax.swing.text.ViewFactory;
 import javax.swing.text.html.CSS;
+import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.InlineView;
 import javax.swing.text.html.ParagraphView;
@@ -676,10 +679,22 @@ public class MainForm extends JFrame {
             View view = super.create(elem);
 
             if (view instanceof ParagraphView) {
-                view = new WrapParagraphView(elem);
+                return new WrapParagraphView(elem);
             }
-            else if (view instanceof InlineView) {
-                view = new InlineViewWithEllipsesSupport(elem);
+
+            final AttributeSet attrs = elem.getAttributes();
+            final Object elementName = attrs.getAttribute(AbstractDocument.ElementNameAttribute);
+
+            Object obj = null;
+            if (elementName == null) {
+                obj = attrs.getAttribute(StyleConstants.NameAttribute);
+            }
+
+            if (obj instanceof HTML.Tag) {
+                HTML.Tag kind = (HTML.Tag)obj;
+                if (kind == HTML.Tag.CONTENT) {
+                    return new InlineViewWithEllipsesSupport(elem);
+                }
             }
 
             return view;
