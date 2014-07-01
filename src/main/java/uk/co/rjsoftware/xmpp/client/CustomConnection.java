@@ -145,9 +145,6 @@ public class CustomConnection extends Model {
             }
         }
 
-        // TODO: Create the listener BEFORE iterating through the users and getting their presence.  Without this, we may miss
-        // some presence updates if the listener is registered too late.
-
         if (null == this.currentUser) {
             disconnect();
             throw new YaccException("Cannot locate current user information.");
@@ -156,6 +153,9 @@ public class CustomConnection extends Model {
         // TODO: Create a SortedListModel to decorate the UserListModel with sorting instead (see http://www.oracle.com/technetwork/articles/javase/sorted-jlist-136883.html)
         Collections.sort(userList);
         this.userListModel = new UserListModel(userList);
+
+        // TODO: Create the listener BEFORE iterating through the users and getting their presence.  Without this, we may miss
+        // some presence updates if the listener is registered too late.
 
         // ensure user model gets updated when changes occur
         this.roster.addRosterListener(new ClientRosterListener(this.userListModel));
