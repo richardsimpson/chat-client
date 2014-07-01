@@ -58,6 +58,7 @@ import java.util.regex.Pattern;
 
 public class MessageListHTMLDocument extends HTMLDocument {
 
+    private static final int TAB_SIZE = 4;
     private static final char[] NEWLINE;
 
     static {
@@ -106,6 +107,7 @@ public class MessageListHTMLDocument extends HTMLDocument {
         String messageBody = addLinks(message.getBody());
         messageBody = addEmoticons(messageBody);
         messageBody = convertCarriageReturns(messageBody);
+        messageBody = convertLeadingSpacesAndTabs(messageBody);
 
         try {
             if (this.messageCount == 0) {
@@ -195,6 +197,38 @@ public class MessageListHTMLDocument extends HTMLDocument {
         result = result.replaceAll("\\r", "<br>");
         result = result.replaceAll("\\n", "<br>");
         return result;
+    }
+
+    private String convertLeadingSpacesAndTabs(final String messageText) {
+        final StringBuffer changedMessageText = new StringBuffer();
+
+        int index = 0;
+        boolean inWhitespace = true;
+
+        while (inWhitespace && index < messageText.length()) {
+            if (messageText.charAt(index) == ' ') {
+                changedMessageText.append("&nbsp;");
+            }
+            else if (messageText.charAt(index) == '\t') {
+                changedMessageText.append(generateNonBreakingSpaces(TAB_SIZE));
+            }
+            else {
+                break;
+            }
+
+            index++;
+        }
+
+        changedMessageText.append(messageText.substring(index));
+        return changedMessageText.toString();
+    }
+
+    private String generateNonBreakingSpaces(final int numberOfSpaces) {
+        final StringBuffer spaces = new StringBuffer();
+        for (int index = 0 ; index < numberOfSpaces ; index++) {
+            spaces.append("&nbsp;");
+        }
+        return spaces.toString();
     }
 
     @Override
