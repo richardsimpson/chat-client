@@ -39,6 +39,12 @@ public class CustomMessage {
     private final String sender;
     private final String body;
 
+    /**
+     *
+     * @param timestamp
+     * @param sender The sender in the format {roomname}@conf.hipchat.com/{username}
+     * @param body
+     */
     public CustomMessage(final long timestamp, final String sender, final String body) {
         this.timestamp = timestamp;
         final int index = sender.indexOf("/");

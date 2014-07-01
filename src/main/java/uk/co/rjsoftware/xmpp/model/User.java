@@ -30,6 +30,7 @@
 package uk.co.rjsoftware.xmpp.model;
 
 import com.jgoodies.binding.beans.Model;
+import org.jivesoftware.smack.util.StringUtils;
 import uk.co.rjsoftware.xmpp.client.CustomConnection;
 import org.jivesoftware.smack.Chat;
 import org.jivesoftware.smack.MessageListener;
@@ -152,7 +153,7 @@ public class User extends Model implements Comparable<User>, ChatTarget {
         if (this.chat == null) {
             this.customConnection = customConnection;
             this.chat = customConnection.createChat(this);
-            this.chat.addMessageListener(new UserMessageListener(this.name, this.customMessageListModel, this.messagesDocument));
+            this.chat.addMessageListener(new UserMessageListener(this.userId, this.name, customConnection, this.customMessageListModel, this.messagesDocument));
         }
     }
 
@@ -160,19 +161,23 @@ public class User extends Model implements Comparable<User>, ChatTarget {
         if (this.chat == null) {
             this.customConnection = customConnection;
             this.chat = chat;
-            this.chat.addMessageListener(new UserMessageListener(this.name, this.customMessageListModel, this.messagesDocument));
+            this.chat.addMessageListener(new UserMessageListener(this.userId, this.name, customConnection, this.customMessageListModel, this.messagesDocument));
         }
     }
 
     private static class UserMessageListener implements MessageListener {
 
-        private final String senderName;
+        private final String otherUserId;
+        private final String otherUsername;
+        private final CustomConnection customConnection;
         private final CustomMessageListModel customMessageListModel;
         private final MessageListHTMLDocument messagesDocument;
 
-        public UserMessageListener(final String senderName, final CustomMessageListModel customMessageListModel,
-                                   final MessageListHTMLDocument messagesDocument) {
-            this.senderName = senderName;
+        public UserMessageListener(final String otherUserId, final String otherUsername, final CustomConnection customConnection,
+                                   final CustomMessageListModel customMessageListModel, final MessageListHTMLDocument messagesDocument) {
+            this.otherUserId = otherUserId;
+            this.otherUsername = otherUsername;
+            this.customConnection = customConnection;
             this.customMessageListModel = customMessageListModel;
             this.messagesDocument = messagesDocument;
         }
@@ -202,7 +207,19 @@ public class User extends Model implements Comparable<User>, ChatTarget {
                 case chat:
                 case groupchat:
                     if (message.getBody() != null) {
-                        final CustomMessage customMessage = new CustomMessage(extractTimestamp(message), this.senderName, message.getBody());
+                        // chec the sender (message.from) - e.g. 380.._nnnnnn@chat.hipchat.com..., and look it
+                        // up.  It's not always going to be the other person - it could be the current user
+                        // typing in another chat client.
+                        String username;
+                        if (StringUtils.parseBareAddress(message.getFrom()).equals(this.otherUserId)) {
+                            username = this.otherUsername;
+                        }
+                        else {
+                            // this is a one-2-one chat, so if the sender wasn't the other user, it must be the
+                            // current user.
+                            username = customConnection.getCurrentUser().getName();
+                        }
+                        final CustomMessage customMessage = new CustomMessage(extractTimestamp(message), username, message.getBody());
                         this.customMessageListModel.add(customMessage);
                         this.messagesDocument.insertMessage(customMessage);
                     }
