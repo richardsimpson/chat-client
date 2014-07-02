@@ -50,6 +50,7 @@ import java.io.StringReader;
 import java.lang.reflect.Field;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -61,6 +62,10 @@ public class MessageListHTMLDocument extends HTMLDocument {
     private static final int TAB_SIZE = 4;
     private static final char[] NEWLINE;
 
+    private int currentTableId;
+    private Calendar lastMessageDate;
+    private final DateFormat dateFormatter = new SimpleDateFormat("EEEE, d MMMM, yyyy");
+
     static {
         NEWLINE = new char[1];
         NEWLINE[0] = '\n';
@@ -70,7 +75,7 @@ public class MessageListHTMLDocument extends HTMLDocument {
     // http links
     private static final Pattern LINK_PATTERN = Pattern.compile("<[iI][mM][gG] .+?/>|<[aA] .+?</[aA]>|https?://[-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]");
 
-    private long messageCount;
+    private boolean firstMessage = true;
 
     public MessageListHTMLDocument() {
         // TODO: Get emoticons working
@@ -83,8 +88,9 @@ public class MessageListHTMLDocument extends HTMLDocument {
         setParser(new ParserDelegator());
 
         try {
+            this.currentTableId = 1;
             insertAfterStart(getRootElements()[0],
-                    "<html><head></head><body><table id='table' style='width:100%'></table></body></html>");
+                    "<html><head></head><body><table id='t" + this.currentTableId + "' style='width:100%'></table></body></html>");
         } catch (BadLocationException exception) {
             throw new RuntimeException(exception);
         } catch (IOException exception) {
@@ -95,8 +101,15 @@ public class MessageListHTMLDocument extends HTMLDocument {
         String bodyRule = "body { font-family: " + font.getFamily() + "; "
                 + "font-size: " + font.getSize() + "pt; }";
         String senderRule = ".sender {white-space: nowrap;}";
+        String dateHeaderRule = ".dateHeader {font-weight:bold; padding-top: 4px; padding-bottom: 4px; margin-top: 5px; margin-left: 100px; border-style:solid; "
+                + "border-width:0px; border-bottom-width:1px; border-top-width:1px; border-color:#ADD8E6; }";
+
         getStyleSheet().addRule(bodyRule);
         getStyleSheet().addRule(senderRule);
+        getStyleSheet().addRule(dateHeaderRule);
+
+        this.lastMessageDate = Calendar.getInstance(Locale.getDefault());
+        this.lastMessageDate.setTime(new Date(0));
     }
 
     public void insertMessage(final CustomMessage message) {
@@ -104,32 +117,55 @@ public class MessageListHTMLDocument extends HTMLDocument {
         final DateFormat formatter = new SimpleDateFormat("HH:mm");
         final Date date = new Date(message.getTimestamp());
 
+        final Calendar messageDate = Calendar.getInstance(Locale.getDefault());
+        messageDate.setTime(date);
+        messageDate.set(Calendar.HOUR_OF_DAY, 0);
+        messageDate.set(Calendar.MINUTE, 0);
+        messageDate.set(Calendar.SECOND, 0);
+        messageDate.set(Calendar.MILLISECOND, 0);
+        if (messageDate.after(this.lastMessageDate)) {
+            outputDateHeader(messageDate);
+            this.lastMessageDate = messageDate;
+        }
+
         String messageBody = addLinks(message.getBody());
         messageBody = addEmoticons(messageBody);
         messageBody = convertCarriageReturns(messageBody);
         messageBody = convertLeadingSpacesAndTabs(messageBody);
 
         try {
-            if (this.messageCount == 0) {
-                insertAfterStart(getElement("table"),
-                        "<tr id='" + this.messageCount + "'>"
-                                + "<td width='125' class='sender' align='right' valign='top'>" + message.getSender() + "</td>"
-                                + "<td valign='top'>" + messageBody + "</td>"
-                                + "<td width='42' valign='top'>" + formatter.format(date) + "</td></tr>");
+            insertBeforeEnd(getElement("t" + this.currentTableId),
+                    "<tr>"
+                            + "<td width='125' class='sender' align='right' valign='top'>" + message.getSender() + "</td>"
+                            + "<td valign='top'>" + messageBody + "</td>"
+                            + "<td width='42' valign='top'>" + formatter.format(date) + "</td></tr>");
+        } catch (BadLocationException exception) {
+            throw new RuntimeException(exception);
+        } catch (IOException exception) {
+            throw new RuntimeException(exception);
+        }
+        this.firstMessage = false;
+    }
+
+    private void outputDateHeader(final Calendar messageDate) {
+        try {
+            final Element element = getElement("t" + this.currentTableId);
+
+            if (this.firstMessage) {
+                insertBeforeStart(element,
+                        "<div class='dateHeader'>" + this.dateFormatter.format(messageDate.getTime())  + "</div>");
             }
             else {
-                insertAfterEnd(getElement(String.valueOf(this.messageCount - 1)),
-                        "<tr id='" + this.messageCount + "'>"
-                                + "<td width='125' class='sender' align='right' valign='top'>" + message.getSender() + "</td>"
-                                + "<td valign='top'>" + messageBody + "</td>"
-                                + "<td width='42' valign='top'>" + formatter.format(date) + "</td></tr>");
+                this.currentTableId++;
+                insertAfterEnd(element,
+                        "<div class='dateHeader'>" + this.dateFormatter.format(messageDate.getTime())  + "</div>"
+                        + "<table id='t" + this.currentTableId + "' style='width:100%'></table>");
             }
         } catch (BadLocationException exception) {
             throw new RuntimeException(exception);
         } catch (IOException exception) {
             throw new RuntimeException(exception);
         }
-        this.messageCount++;
     }
 
     private String addLinks(String messageText) {
