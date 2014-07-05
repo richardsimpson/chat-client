@@ -44,6 +44,8 @@ import org.jivesoftware.smackx.packet.DelayInfo;
 import uk.co.rjsoftware.xmpp.view.MessageListHTMLDocument;
 
 import javax.swing.*;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import javax.swing.text.StyledDocument;
 import java.util.Date;
 import java.util.HashMap;
@@ -75,10 +77,14 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
     private final MessageListHTMLDocument messagesDocument;
     private Thread messageReceivingThread;
 
+    private final ChatPersistor chatPersistor;
+
     public Room(final String roomId, final String name) {
         this.roomId = roomId;
         this.name = name;
         this.messagesDocument = new MessageListHTMLDocument();
+        this.chatPersistor = new ChatPersistor(this.roomId, this.customMessageListModel);
+        this.customMessageListModel.addListDataListener(new ChatListDataListener(this.customMessageListModel, this.messagesDocument));
     }
 
     public String getRoomId() {
@@ -143,17 +149,31 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
         this.customConnection = customConnection;
 
         if (this.chat == null) {
+            this.chatPersistor.readChatHistory();
             this.chat = customConnection.joinRoom(this);
             try {
                 final String password = "";
                 DiscussionHistory history = new DiscussionHistory();
-                // TODO: Get more of the history, and provide ability to get even more.
-                history.setMaxStanzas(50);
+
+                // request history starting from just after the last message retrieved from the local history, if any
+                final long lastMessageTimestamp;
+                if (this.customMessageListModel.isEmpty()) {
+                    lastMessageTimestamp = 0;
+                }
+                else {
+                    final CustomMessage latestMessage = this.customMessageListModel.get(this.customMessageListModel.size()-1);
+                    lastMessageTimestamp = latestMessage.getTimestamp();
+                }
+                history.setSince(new Date(lastMessageTimestamp + 1));
+
+                // note that the above doesn't seem to work in hipchat - it will reply with lots of messages before the
+                // specified date - about 75, it seems, so need to rely on the MessageReceiver to filter out old
+                // messages.
+
                 chat.join(customConnection.getCurrentUser().getName(), password, history, SmackConfiguration.getPacketReplyTimeout());
 
                 // create a separate thread that will fetch the chat history and all future messages for this room
-                this.messageReceivingThread = new Thread(new MessageReceiver(this.chat, this.customMessageListModel,
-                        this.messagesDocument, this));
+                this.messageReceivingThread = new Thread(new MessageReceiver(this.chat, this.customMessageListModel, this));
                 this.messageReceivingThread.start();
 
                 // Note: List of occupants is fine for public rooms, but for private rooms, would like to
@@ -178,6 +198,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
 
             } catch (XMPPException exception) {
                 this.chat = null;
+                // TODO: Remove the messages read from the local history
                 throw new RuntimeException(exception);
             }
         }
@@ -187,14 +208,14 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
 
         private final MultiUserChat chat;
         private final CustomMessageListModel customMessageListModel;
-        private final MessageListHTMLDocument messagesDocument;
+        private final CustomMessage mostRecentMessageFromLocalHistory;
         private final Room room;
 
         public MessageReceiver(final MultiUserChat chat, final CustomMessageListModel customMessageListModel,
-                               final MessageListHTMLDocument messagesDocument, final Room room) {
+                               final Room room) {
             this.chat = chat;
             this.customMessageListModel = customMessageListModel;
-            this.messagesDocument = messagesDocument;
+            this.mostRecentMessageFromLocalHistory = this.customMessageListModel.get(this.customMessageListModel.size()-1);
             this.room = room;
         }
 
@@ -243,12 +264,37 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
             return null;
         }
 
+        private boolean isNewMessage(final CustomMessage newMessage) {
+            if (this.mostRecentMessageFromLocalHistory.getTimestamp() > newMessage.getTimestamp()) {
+                return false;
+            }
+
+            if (this.mostRecentMessageFromLocalHistory.getTimestamp() < newMessage.getTimestamp()) {
+                return true;
+            }
+
+            // timestamps are the same.  hipchat messages are rounded (or truncated?) to the nearest second,
+            // so it's quite possible to have multiple messages with the same timestamp.  Therefore
+            // we need to check the sender and body to see if it's a new message.
+            if (!this.mostRecentMessageFromLocalHistory.getSender().equals(newMessage.getSender())) {
+                return true;
+            }
+
+            if (!this.mostRecentMessageFromLocalHistory.getBody().equals(newMessage.getBody())) {
+                return true;
+            }
+
+            // all parts of the new message are the same as the most recent one, so must assume that it is the same message
+            return false;
+        }
+
         @Override
         protected void process(List<MessagePayload> chunks) {
             for (MessagePayload messagePayload : chunks) {
                 if (messagePayload.getCustomMessage() != null) {
-                    this.customMessageListModel.add(messagePayload.getCustomMessage());
-                    this.messagesDocument.insertMessage(messagePayload.getCustomMessage());
+                    if (isNewMessage(messagePayload.getCustomMessage())) {
+                        this.customMessageListModel.add(messagePayload.getCustomMessage());
+                    }
                 }
                 else if (messagePayload.getSubject() != null) {
                     this.room.doSetSubject(messagePayload.getSubject());
@@ -276,6 +322,34 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
         public String getSubject() {
             return subject;
         }
+    }
+
+    private static final class ChatListDataListener implements ListDataListener {
+
+        private final CustomMessageListModel customMessageListModel;
+        private final MessageListHTMLDocument messagesDocument;
+
+        private ChatListDataListener(final CustomMessageListModel customMessageListModel, final MessageListHTMLDocument messagesDocument) {
+            this.customMessageListModel = customMessageListModel;
+            this.messagesDocument = messagesDocument;
+        }
+
+        @Override
+        public void intervalAdded(ListDataEvent event) {
+            final CustomMessage message = this.customMessageListModel.get(event.getIndex0());
+            this.messagesDocument.insertMessage(message);
+        }
+
+        @Override
+        public void intervalRemoved(ListDataEvent event) {
+            // should never happen
+        }
+
+        @Override
+        public void contentsChanged(ListDataEvent event) {
+            // should never happen
+        }
+
     }
 
     private static class SubjectUpdatedListenerImpl implements SubjectUpdatedListener {

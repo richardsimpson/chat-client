@@ -38,6 +38,8 @@ import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Message;
 import uk.co.rjsoftware.xmpp.view.MessageListHTMLDocument;
 
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import javax.swing.text.StyledDocument;
 import java.util.Date;
 import java.util.HashMap;
@@ -58,12 +60,15 @@ public class User extends Model implements Comparable<User>, ChatTarget {
     private CustomMessageListModel customMessageListModel = new CustomMessageListModel();
     private final MessageListHTMLDocument messagesDocument;
     private CustomConnection customConnection;
+    private final ChatPersistor chatPersistor;
 
     public User(final String userId, final String name) {
         this.userId = userId;
         this.name = name;
         this.occupantsModel.add(this);
         this.messagesDocument = new MessageListHTMLDocument();
+        this.chatPersistor = new ChatPersistor(this.userId, this.customMessageListModel);
+        this.customMessageListModel.addListDataListener(new ChatListDataListener(this.customMessageListModel, this.messagesDocument));
     }
 
     public String getUserId() {
@@ -151,17 +156,19 @@ public class User extends Model implements Comparable<User>, ChatTarget {
     @Override
     public void join(final CustomConnection customConnection) {
         if (this.chat == null) {
+            this.chatPersistor.readChatHistory();
             this.customConnection = customConnection;
             this.chat = customConnection.createChat(this);
-            this.chat.addMessageListener(new UserMessageListener(this.userId, this.name, customConnection, this.customMessageListModel, this.messagesDocument));
+            this.chat.addMessageListener(new UserMessageListener(this.userId, this.name, customConnection, this.customMessageListModel));
         }
     }
 
     public void joinExistingChat(final CustomConnection customConnection, final Chat chat) {
         if (this.chat == null) {
+            this.chatPersistor.readChatHistory();
             this.customConnection = customConnection;
             this.chat = chat;
-            this.chat.addMessageListener(new UserMessageListener(this.userId, this.name, customConnection, this.customMessageListModel, this.messagesDocument));
+            this.chat.addMessageListener(new UserMessageListener(this.userId, this.name, customConnection, this.customMessageListModel));
         }
     }
 
@@ -171,15 +178,13 @@ public class User extends Model implements Comparable<User>, ChatTarget {
         private final String otherUsername;
         private final CustomConnection customConnection;
         private final CustomMessageListModel customMessageListModel;
-        private final MessageListHTMLDocument messagesDocument;
 
         public UserMessageListener(final String otherUserId, final String otherUsername, final CustomConnection customConnection,
-                                   final CustomMessageListModel customMessageListModel, final MessageListHTMLDocument messagesDocument) {
+                                   final CustomMessageListModel customMessageListModel) {
             this.otherUserId = otherUserId;
             this.otherUsername = otherUsername;
             this.customConnection = customConnection;
             this.customMessageListModel = customMessageListModel;
-            this.messagesDocument = messagesDocument;
         }
 
         @Override
@@ -221,7 +226,6 @@ public class User extends Model implements Comparable<User>, ChatTarget {
                         }
                         final CustomMessage customMessage = new CustomMessage(extractTimestamp(message), username, message.getBody());
                         this.customMessageListModel.add(customMessage);
-                        this.messagesDocument.insertMessage(customMessage);
                     }
                 default: // do nothing
             }
@@ -241,12 +245,39 @@ public class User extends Model implements Comparable<User>, ChatTarget {
                 final CustomMessage customMessage = new CustomMessage(System.currentTimeMillis(),
                         this.customConnection.getCurrentUser().getName(), messageText);
                 this.customMessageListModel.add(customMessage);
-                this.messagesDocument.insertMessage(customMessage);
 
             } catch (XMPPException exception) {
                 throw new RuntimeException(exception);
             }
         }
+    }
+
+    private static final class ChatListDataListener implements ListDataListener {
+
+        private final CustomMessageListModel customMessageListModel;
+        private final MessageListHTMLDocument messagesDocument;
+
+        private ChatListDataListener(final CustomMessageListModel customMessageListModel, final MessageListHTMLDocument messagesDocument) {
+            this.customMessageListModel = customMessageListModel;
+            this.messagesDocument = messagesDocument;
+        }
+
+        @Override
+        public void intervalAdded(ListDataEvent event) {
+            final CustomMessage message = this.customMessageListModel.get(event.getIndex0());
+            this.messagesDocument.insertMessage(message);
+        }
+
+        @Override
+        public void intervalRemoved(ListDataEvent event) {
+            // should never happen
+        }
+
+        @Override
+        public void contentsChanged(ListDataEvent event) {
+            // should never happen
+        }
+
     }
 
     @Override
