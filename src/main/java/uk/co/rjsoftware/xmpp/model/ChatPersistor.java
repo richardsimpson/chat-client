@@ -71,7 +71,6 @@ public class ChatPersistor {
             try {
                 final BufferedReader reader = new BufferedReader(new FileReader(historyFile));
 
-                // TODO: Change Room and User so that adding items to the messageList populates the HTMLDocument
                 String line = reader.readLine();
                 while (null != line) {
                     final CustomMessage message = stringToMessage(line);
