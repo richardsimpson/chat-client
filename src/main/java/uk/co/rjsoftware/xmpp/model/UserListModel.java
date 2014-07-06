@@ -106,6 +106,11 @@ public class UserListModel extends AbstractListModel<User> implements PropertyCh
         return this.users.get(index);
     }
 
+    public boolean contains(final String userId) {
+        final String parsedUserId = StringUtils.parseBareAddress(userId);
+        return indexOf(parsedUserId) > -1;
+    }
+
     public String getOwnerId() {
         return this.ownerId;
     }

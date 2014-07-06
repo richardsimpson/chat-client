@@ -30,6 +30,7 @@
 package uk.co.rjsoftware.xmpp.model;
 
 import com.jgoodies.binding.beans.Model;
+import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smackx.muc.DefaultParticipantStatusListener;
 import org.jivesoftware.smackx.muc.Occupant;
 import org.jivesoftware.smackx.muc.SubjectUpdatedListener;
@@ -68,7 +69,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
     private String ownerId;
 
     private final UserListModel occupantsModel = new UserListModel();
-    // the participantMap maps occupantJid's (room@chat.hipchat.com/nick) to users
+    // the participantMap maps participantJid's (room@chat.hipchat.com/nick) to users
     // so that the occupants can be removed from the occupantsModel when they leave.
     private final Map<String, User> participantMap = new HashMap<String, User>();
     private String subject = "";
@@ -151,6 +152,11 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
         if (this.chat == null) {
             this.chatPersistor.readChatHistory();
             this.chat = customConnection.joinRoom(this);
+
+            // add all the chat listeners
+            this.chat.addSubjectUpdatedListener(new SubjectUpdatedListenerImpl(this));
+            this.chat.addParticipantStatusListener(new ParticipantStatusListenerImpl(this));
+
             try {
                 final String password = "";
                 DiscussionHistory history = new DiscussionHistory();
@@ -180,21 +186,13 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
                 // display all of the users who are allowed access, but who are not currently online.
                 final Iterator<String> occupants = this.chat.getOccupants();
                 while (occupants.hasNext()) {
-                    final String occupantJID = occupants.next();
-                    System.out.println("Occupant: " + occupantJID);
-                    final Occupant occupant = this.chat.getOccupant(occupantJID);
+                    final String participantJID = occupants.next();
+                    System.out.println("Participant: " + participantJID);
+                    final Occupant occupant = this.chat.getOccupant(participantJID);
                     System.out.println("User JID: " + occupant.getJid());
 
-                    final User user = customConnection.getUserListModel().get(occupant.getJid());
-                    if (null != user) {
-                        this.occupantsModel.add(user);
-                        this.participantMap.put(occupantJID, user);
-                    }
+                    addOccupant(participantJID, occupant);
                 }
-
-                // add all the chat listeners
-                this.chat.addSubjectUpdatedListener(new SubjectUpdatedListenerImpl(this));
-                this.chat.addParticipantStatusListener(new ParticipantStatusListenerImpl(this));
 
             } catch (XMPPException exception) {
                 this.chat = null;
@@ -202,6 +200,18 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
                 this.customMessageListModel.clear();
                 this.messagesDocument.clear();
                 throw new RuntimeException(exception);
+            }
+        }
+    }
+
+    private void addOccupant(final String participantJID, final Occupant occupant) {
+        final User user = customConnection.getUserListModel().get(occupant.getJid());
+        if (null != user) {
+            synchronized (this.occupantsModel) {
+                if (!this.occupantsModel.contains(user.getUserId())) {
+                    this.occupantsModel.add(user);
+                    this.participantMap.put(participantJID, user);
+                }
             }
         }
     }
@@ -390,23 +400,21 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
         public void joined(String participant) {
             final Occupant occupant = this.room.chat.getOccupant(participant);
 
-            System.out.println("participant jid: " + occupant.getJid());
+            System.out.println("participant name: " + StringUtils.parseResource(participant) +  ", jid: " + occupant.getJid());
 
-            final User user = this.room.customConnection.getUserListModel().get(occupant.getJid());
-            if (null != user) {
-                this.room.occupantsModel.add(user);
-                this.room.participantMap.put(participant, user);
-            }
+            this.room.addOccupant(participant, occupant);
         }
 
         @Override
         public void left(String participant) {
             System.out.println("participant left: " + participant);
 
-            final User user = this.room.participantMap.get(participant);
-            if (null != user) {
-                this.room.occupantsModel.remove(user);
-                this.room.participantMap.remove(participant);
+            synchronized (this.room.occupantsModel) {
+                final User user = this.room.participantMap.get(participant);
+                if (null != user) {
+                    this.room.occupantsModel.remove(user);
+                    this.room.participantMap.remove(participant);
+                }
             }
         }
     }
