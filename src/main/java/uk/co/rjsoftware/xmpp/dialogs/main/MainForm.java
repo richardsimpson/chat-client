@@ -68,6 +68,7 @@ import javax.swing.text.View;
 import javax.swing.text.ViewFactory;
 import javax.swing.text.html.CSS;
 import javax.swing.text.html.HTML;
+import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.InlineView;
 import javax.swing.text.html.ParagraphView;
@@ -289,7 +290,12 @@ public class MainForm extends JFrame {
         messagesListModel.addValueChangeListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent event) {
-                messageTextPane.setStyledDocument((StyledDocument)event.getNewValue());
+                if (null == event.getNewValue()) {
+                    messageTextPane.setStyledDocument(new HTMLDocument());
+                }
+                else {
+                    messageTextPane.setStyledDocument((StyledDocument)event.getNewValue());
+                }
             }
         });
         // Add the message window
