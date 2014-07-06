@@ -87,15 +87,8 @@ public class MessageListHTMLDocument extends HTMLDocument {
 
         setParser(new ParserDelegator());
 
-        try {
-            this.currentTableId = 1;
-            insertAfterStart(getRootElements()[0],
-                    "<html><head></head><body><table id='t" + this.currentTableId + "' style='width:100%'></table></body></html>");
-        } catch (BadLocationException exception) {
-            throw new RuntimeException(exception);
-        } catch (IOException exception) {
-            throw new RuntimeException(exception);
-        }
+        this.currentTableId = 1;
+        clear();
 
         Font font = new JLabel().getFont();
         String bodyRule = "body { font-family: " + font.getFamily() + "; "
@@ -110,6 +103,18 @@ public class MessageListHTMLDocument extends HTMLDocument {
 
         this.lastMessageDate = Calendar.getInstance(Locale.getDefault());
         this.lastMessageDate.setTime(new Date(0));
+    }
+
+    public void clear() {
+        try {
+            remove(0, getLength());
+            insertAfterStart(getRootElements()[0],
+                    "<html><head></head><body><table id='t" + this.currentTableId + "' style='width:100%'></table></body></html>");
+        } catch (BadLocationException exception) {
+            throw new RuntimeException(exception);
+        } catch (IOException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
     }
 
     public void insertMessage(final CustomMessage message) {

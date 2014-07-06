@@ -198,7 +198,9 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
 
             } catch (XMPPException exception) {
                 this.chat = null;
-                // TODO: Remove the messages read from the local history
+                // Remove the messages read from the local history
+                this.customMessageListModel.clear();
+                this.messagesDocument.clear();
                 throw new RuntimeException(exception);
             }
         }
@@ -215,7 +217,12 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
                                final Room room) {
             this.chat = chat;
             this.customMessageListModel = customMessageListModel;
-            this.mostRecentMessageFromLocalHistory = this.customMessageListModel.get(this.customMessageListModel.size()-1);
+            if (this.customMessageListModel.isEmpty()) {
+                this.mostRecentMessageFromLocalHistory = null;
+            }
+            else {
+                this.mostRecentMessageFromLocalHistory = this.customMessageListModel.get(this.customMessageListModel.size()-1);
+            }
             this.room = room;
         }
 
@@ -265,6 +272,10 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
         }
 
         private boolean isNewMessage(final CustomMessage newMessage) {
+            if (null == this.mostRecentMessageFromLocalHistory) {
+                return true;
+
+            }
             if (this.mostRecentMessageFromLocalHistory.getTimestamp() > newMessage.getTimestamp()) {
                 return false;
             }
