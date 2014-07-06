@@ -273,8 +273,22 @@ public class MessageListHTMLDocument extends HTMLDocument {
     }
 
     @Override
-    public void insertAfterStart(Element elem, String htmlText) throws
-            BadLocationException, IOException {
+    public void insertBeforeEnd(Element elem, String htmlText) throws BadLocationException, IOException {
+        if (elem != null && elem.isLeaf()) {
+            throw new IllegalArgumentException("Can not set inner HTML before end of leaf");
+        }
+        if (elem != null) {
+            int offset = elem.getEndOffset();
+            if (elem.getElement(elem.getElementIndex(offset - 1)).isLeaf()
+                    && getText(offset - 1, 1).charAt(0) == NEWLINE[0]) {
+                offset--;
+            }
+            insertHTMLWithCustomHTMLReader(elem, offset, htmlText);
+        }
+    }
+
+    @Override
+    public void insertAfterStart(Element elem, String htmlText) throws BadLocationException, IOException {
         if (elem != null && elem.isLeaf()) {
             throw new IllegalArgumentException("Can not insert HTML after start of a leaf");
         }
@@ -282,8 +296,7 @@ public class MessageListHTMLDocument extends HTMLDocument {
     }
 
     @Override
-    public void insertAfterEnd(Element elem, String htmlText) throws
-            BadLocationException, IOException {
+    public void insertAfterEnd(Element elem, String htmlText) throws BadLocationException, IOException {
         if (elem != null) {
             Element parent = elem.getParentElement();
 
