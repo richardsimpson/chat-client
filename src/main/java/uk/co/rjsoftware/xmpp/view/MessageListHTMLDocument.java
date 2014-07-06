@@ -30,8 +30,6 @@
 package uk.co.rjsoftware.xmpp.view;
 
 import uk.co.rjsoftware.xmpp.model.CustomMessage;
-import uk.co.rjsoftware.xmpp.model.Emoticon;
-import uk.co.rjsoftware.xmpp.model.hipchat.emoticons.HipChatEmoticons;
 
 import javax.swing.*;
 import javax.swing.text.AttributeSet;
@@ -52,14 +50,10 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class MessageListHTMLDocument extends HTMLDocument {
 
-    private static final int TAB_SIZE = 4;
     private static final char[] NEWLINE;
 
     private int currentTableId;
@@ -70,10 +64,6 @@ public class MessageListHTMLDocument extends HTMLDocument {
         NEWLINE = new char[1];
         NEWLINE[0] = '\n';
     }
-
-    // this lovely regex will match all <img> tags, all <a> (link) tags, and any standalone
-    // http links
-    private static final Pattern LINK_PATTERN = Pattern.compile("<[iI][mM][gG] .+?/>|<[aA] .+?</[aA]>|https?://[-A-Za-z0-9+&@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]");
 
     private boolean firstMessage = true;
 
@@ -133,10 +123,11 @@ public class MessageListHTMLDocument extends HTMLDocument {
             this.lastMessageDate = messageDate;
         }
 
-        String messageBody = addLinks(message.getBody());
-        messageBody = addEmoticons(messageBody);
-        messageBody = convertCarriageReturns(messageBody);
-        messageBody = convertLeadingSpacesAndTabs(messageBody);
+        String messageBody = MessageUtils.escapeHtml(message.getBody());
+        messageBody = MessageUtils.addLinks(messageBody);
+        messageBody = MessageUtils.addEmoticons(messageBody);
+        messageBody = MessageUtils.convertCarriageReturns(messageBody);
+        messageBody = MessageUtils.convertLeadingSpacesAndTabs(messageBody);
 
         try {
             insertBeforeEnd(getElement("t" + this.currentTableId),
@@ -171,105 +162,6 @@ public class MessageListHTMLDocument extends HTMLDocument {
         } catch (IOException exception) {
             throw new RuntimeException(exception);
         }
-    }
-
-    private String addLinks(String messageText) {
-        final Matcher m = LINK_PATTERN.matcher(messageText);
-        final StringBuffer changedMessageText = new StringBuffer();
-
-        while (m.find()) {
-            // ignore existing <a> links
-            if (m.group().substring(0, 3).toLowerCase(Locale.getDefault()).equals("<a ")) {
-                m.appendReplacement(changedMessageText, m.group());
-            }
-            // ignore <img> tags - they contain href links we don't want to wrap
-            else if (m.group().substring(0, 5).toLowerCase(Locale.getDefault()).equals("<img ")) {
-                m.appendReplacement(changedMessageText, m.group());
-            }
-            else {
-                m.appendReplacement(changedMessageText, "<a href='" + m.group() + "'>" + m.group() + "</a>");
-            }
-        }
-        m.appendTail(changedMessageText);
-
-        return changedMessageText.toString();
-    }
-
-    private String addEmoticons(final String messageText) {
-        final List<Emoticon> emoticons = HipChatEmoticons.getEmoticons();
-
-        String changedMessageText = messageText;
-
-        for (Emoticon emoticon : emoticons) {
-            changedMessageText = addEmoticon(emoticon, changedMessageText);
-        }
-
-        return changedMessageText;
-    }
-
-    private String addEmoticon(final Emoticon emoticon, final String messageText) {
-        final Pattern p = Pattern.compile("<[iI][mM][gG] .+?/>|<[aA] .+?</[aA]>|" + emoticon.getRegexShortcut());
-        final Matcher m = p.matcher(messageText);
-        final StringBuffer changedMessageText = new StringBuffer();
-
-        while (m.find()) {
-            // ignore <a> links
-            if ((m.group().length() >= 3) && ((m.group().substring(0, 3).toLowerCase(Locale.getDefault()).equals("<a ")))) {
-                m.appendReplacement(changedMessageText, Matcher.quoteReplacement(m.group()));
-            }
-            // ignore <img> tags
-            else if ((m.group().length() >= 5) && (m.group().substring(0, 5).toLowerCase(Locale.getDefault()).equals("<img "))) {
-                m.appendReplacement(changedMessageText, Matcher.quoteReplacement(m.group()));
-            }
-            else {
-                // TODO: When copy an image from the message window, copy the 'alt' text
-                // TODO: Align the sender name with the first line of the message text.
-                m.appendReplacement(changedMessageText,
-                        Matcher.quoteReplacement("<img align='bottom' alt='" + m.group() + "' src='" + emoticon.getUrl() + "'/>"));
-            }
-        }
-        m.appendTail(changedMessageText);
-
-        return changedMessageText.toString();
-    }
-
-    private String convertCarriageReturns(final String messageText) {
-        String result = messageText.replaceAll("\\r\\n", "<br>");
-        result = result.replaceAll("\\r", "<br>");
-        result = result.replaceAll("\\n", "<br>");
-        return result;
-    }
-
-    private String convertLeadingSpacesAndTabs(final String messageText) {
-        final StringBuffer changedMessageText = new StringBuffer();
-
-        int index = 0;
-        boolean inWhitespace = true;
-
-        while (inWhitespace && index < messageText.length()) {
-            if (messageText.charAt(index) == ' ') {
-                changedMessageText.append("&nbsp;");
-            }
-            else if (messageText.charAt(index) == '\t') {
-                changedMessageText.append(generateNonBreakingSpaces(TAB_SIZE));
-            }
-            else {
-                break;
-            }
-
-            index++;
-        }
-
-        changedMessageText.append(messageText.substring(index));
-        return changedMessageText.toString();
-    }
-
-    private String generateNonBreakingSpaces(final int numberOfSpaces) {
-        final StringBuffer spaces = new StringBuffer();
-        for (int index = 0 ; index < numberOfSpaces ; index++) {
-            spaces.append("&nbsp;");
-        }
-        return spaces.toString();
     }
 
     @Override
