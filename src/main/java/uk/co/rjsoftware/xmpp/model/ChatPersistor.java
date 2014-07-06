@@ -44,16 +44,20 @@ import java.io.PrintWriter;
 
 public class ChatPersistor {
 
+    private final String currentUserId;
     private final String chatJid;
     private final CustomMessageListModel customMessageListModel;
     private final ChatListDataListener listener;
+    private final String filename;
     private final Gson gson = new Gson();
 
-    public ChatPersistor(final String chatJid, final CustomMessageListModel customMessageListModel) {
+    public ChatPersistor(final String currentUserId, final String chatJid, final CustomMessageListModel customMessageListModel) {
+        this.currentUserId = currentUserId;
         this.chatJid = chatJid;
         this.customMessageListModel = customMessageListModel;
 
-        this.listener = new ChatListDataListener(this.customMessageListModel, "chathistory" + File.separator + this.chatJid + ".txt");
+        this.filename = "chathistory" + File.separator + this.currentUserId + File.separator + this.chatJid + ".txt";
+        this.listener = new ChatListDataListener(this.customMessageListModel, this.filename);
         this.customMessageListModel.addListDataListener(this.listener);
     }
 
@@ -63,7 +67,7 @@ public class ChatPersistor {
     }
 
     public void readChatHistory() {
-        final File historyFile = new File("chathistory" + File.separator + this.chatJid + ".txt");
+        final File historyFile = new File(this.filename);
         if (historyFile.exists()) {
             // read the history from the file system, and update the message list model
             this.customMessageListModel.removeListDataListener(this.listener);
@@ -111,8 +115,10 @@ public class ChatPersistor {
                 return;
             }
 
+            final File file = new File(this.filename);
+            file.getParentFile().mkdirs();
             try {
-                this.printWriter = new PrintWriter(new BufferedWriter(new FileWriter(this.filename, true)));
+                this.printWriter = new PrintWriter(new BufferedWriter(new FileWriter(file, true)));
             } catch (IOException exception) {
                 throw new RuntimeException(exception);
             }

@@ -78,13 +78,12 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
     private final MessageListHTMLDocument messagesDocument;
     private Thread messageReceivingThread;
 
-    private final ChatPersistor chatPersistor;
+    private ChatPersistor chatPersistor;
 
     public Room(final String roomId, final String name) {
         this.roomId = roomId;
         this.name = name;
         this.messagesDocument = new MessageListHTMLDocument();
-        this.chatPersistor = new ChatPersistor(this.roomId, this.customMessageListModel);
         this.customMessageListModel.addListDataListener(new ChatListDataListener(this.customMessageListModel, this.messagesDocument));
     }
 
@@ -150,6 +149,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
         this.customConnection = customConnection;
 
         if (this.chat == null) {
+            this.chatPersistor = new ChatPersistor(customConnection.getCurrentUser().getUserId(), this.roomId, this.customMessageListModel);
             this.chatPersistor.readChatHistory();
             this.chat = customConnection.joinRoom(this);
 
