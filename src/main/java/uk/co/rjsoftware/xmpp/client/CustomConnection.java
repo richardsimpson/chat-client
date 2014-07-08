@@ -41,6 +41,7 @@ import uk.co.rjsoftware.xmpp.model.ChatTarget;
 import uk.co.rjsoftware.xmpp.model.ChatListModel;
 import uk.co.rjsoftware.xmpp.model.CustomMessageListModel;
 import uk.co.rjsoftware.xmpp.model.CustomPresence;
+import uk.co.rjsoftware.xmpp.model.RecentChatPersistor;
 import uk.co.rjsoftware.xmpp.model.Room;
 import uk.co.rjsoftware.xmpp.model.RoomListModel;
 import uk.co.rjsoftware.xmpp.model.User;
@@ -91,6 +92,8 @@ public class CustomConnection extends Model {
     private ChatTarget currentChatTarget;
     private final TitlePropertyChangeListener titleListener = new TitlePropertyChangeListener();
     private final List<YaccInvitationListener> invitationListeners = new ArrayList<YaccInvitationListener>();
+
+    private final RecentChatPersistor recentChatPersistor;
 
     public CustomConnection(final String username, final String password, final int maxRoomCount) throws YaccException {
         this.maxRoomCount = maxRoomCount;
@@ -233,12 +236,19 @@ public class CustomConnection extends Model {
             }
         });
 
+        this.recentChatPersistor = new RecentChatPersistor(this);
+        this.recentChatPersistor.loadRecentChatList();
+
 //        this.connection.addPacketListener(new PacketListener() {
 //            @Override
 //            public void processPacket(Packet packet) {
 //                System.out.println("Incomming Packet: " + packet.toString());
 //            }
 //        }, null);
+    }
+
+    public void saveRecentChats() {
+        this.recentChatPersistor.saveRecentChatList();
     }
 
     public void disconnect() {

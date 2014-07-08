@@ -44,6 +44,8 @@ import java.io.PrintWriter;
 
 public class ChatPersistor {
 
+    public static final String CHAT_HISTORY_DIR = "chathistory";
+
     private final String currentUserId;
     private final String chatJid;
     private final CustomMessageListModel customMessageListModel;
@@ -56,7 +58,7 @@ public class ChatPersistor {
         this.chatJid = chatJid;
         this.customMessageListModel = customMessageListModel;
 
-        this.filename = "chathistory" + File.separator + this.currentUserId + File.separator + this.chatJid + ".txt";
+        this.filename = CHAT_HISTORY_DIR + File.separator + this.currentUserId + File.separator + this.chatJid + ".txt";
         this.listener = new ChatListDataListener(this.customMessageListModel, this.filename);
         this.customMessageListModel.addListDataListener(this.listener);
     }

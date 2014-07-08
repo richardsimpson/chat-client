@@ -87,7 +87,13 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
         this.customMessageListModel.addListDataListener(new ChatListDataListener(this.customMessageListModel, this.messagesDocument));
     }
 
+    // TODO: Remove getRoomId
     public String getRoomId() {
+        return this.roomId;
+    }
+
+    @Override
+    public String getId() {
         return this.roomId;
     }
 

@@ -105,7 +105,8 @@ public class MainForm extends JFrame {
     private final java.util.List<LogoutListener> listeners = new ArrayList<LogoutListener>();
     private ChatTarget currentChatTarget;
 
-    public MainForm(final String title, final CustomConnection connection, final YaccProperties yaccProperties) {
+    public MainForm(final String title, final CustomConnection connection, final YaccProperties yaccProperties,
+                    final HipChatEmoticons hipChatEmoticons) {
         super(title);
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -118,9 +119,7 @@ public class MainForm extends JFrame {
 
         this.connection = connection;
         this.yaccProperties = yaccProperties;
-
-        // download the list of emoticons
-        this.hipChatEmoticons = new HipChatEmoticons(this.yaccProperties);
+        this.hipChatEmoticons = hipChatEmoticons;
 
         this.yaccPropertiesChangeListener = new YaccPropertyChangeListener(this.yaccProperties, this.hipChatEmoticons);
 
@@ -150,6 +149,7 @@ public class MainForm extends JFrame {
         else {
             this.yaccProperties.removePropertyChangeListener(YaccProperties.PROPERTY_NAME_HIPCHAT_API_AUTH_TOKEN, this.yaccPropertiesChangeListener);
             this.yaccProperties.removePropertyChangeListener(YaccProperties.PROPERTY_NAME_HIPCHAT_API_ENDPOINT, this.yaccPropertiesChangeListener);
+            this.connection.saveRecentChats();
         }
 
         super.setVisible(b);

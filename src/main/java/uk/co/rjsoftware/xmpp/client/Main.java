@@ -35,6 +35,7 @@ import uk.co.rjsoftware.xmpp.dialogs.login.LoginListener;
 import uk.co.rjsoftware.xmpp.dialogs.main.MainForm;
 import uk.co.rjsoftware.xmpp.model.LogoutListener;
 import org.jivesoftware.smack.XMPPException;
+import uk.co.rjsoftware.xmpp.model.hipchat.emoticons.HipChatEmoticons;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -46,6 +47,8 @@ public final class Main {
     private LoginForm loginForm;
     private YaccProperties yaccProperties;
     private int maxRoomCount = -1;
+
+    private HipChatEmoticons hipChatEmoticons;
 
     public static void main(String [ ] args) throws XMPPException, InterruptedException {
         new Main(args);
@@ -114,15 +117,23 @@ public final class Main {
     }
 
     private void createAndShowMainForm(String username, String password) throws YaccException {
+        // TODO: Place the authToken in a user specific properties file (not yacc.properties), and reload it before loading the emoticons.
+
+        // download the list of emoticons
+        if (null == this.hipChatEmoticons) {
+            this.hipChatEmoticons = new HipChatEmoticons(this.yaccProperties);
+        }
+
         final CustomConnection connection = new CustomConnection(username, password, this.maxRoomCount);
 
         // TODO: Check if this is the correct way to 'close' a JFrame
         this.loginForm.setVisible(false);
 
-        final MainForm mainForm = new MainForm("YACC", connection, yaccProperties);
+        final MainForm mainForm = new MainForm("YACC", connection, this.yaccProperties, this.hipChatEmoticons);
         mainForm.addLogoutListener(new LogoutListener() {
             @Override
             public void logout() {
+                //mainForm.dispose();
                 mainForm.setVisible(false);
                 Main.this.loginForm.setVisible(true);
             }

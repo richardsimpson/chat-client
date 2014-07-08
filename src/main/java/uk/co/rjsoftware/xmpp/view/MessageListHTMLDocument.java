@@ -68,8 +68,6 @@ public class MessageListHTMLDocument extends HTMLDocument {
     private boolean firstMessage = true;
 
     public MessageListHTMLDocument() {
-        // TODO: Get emoticons working
-
         // Setup the default HTML formatting
         final HTMLEditorKit editorKit = new HTMLEditorKit();
         final StyleSheet styles = editorKit.getStyleSheet();

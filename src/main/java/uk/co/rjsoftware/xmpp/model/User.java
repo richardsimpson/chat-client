@@ -70,7 +70,13 @@ public class User extends Model implements Comparable<User>, ChatTarget {
         this.customMessageListModel.addListDataListener(new ChatListDataListener(this.customMessageListModel, this.messagesDocument));
     }
 
+    // TODO: Remove getUserId
     public String getUserId() {
+        return this.userId;
+    }
+
+    @Override
+    public String getId() {
         return this.userId;
     }
 
