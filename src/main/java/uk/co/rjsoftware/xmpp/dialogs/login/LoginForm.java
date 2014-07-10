@@ -133,6 +133,14 @@ public class LoginForm extends JDialog {
         DialogUtils.centerDialog(this);
     }
 
+    @Override
+    public void setVisible(boolean b) {
+        if (b) {
+            this.passwordField.setText("");
+        }
+        super.setVisible(b);
+    }
+
     private void fireLoginAttempt() {
         for (LoginListener listener : this.listeners) {
             listener.loginAttempt(this.usernameField.getText(), this.passwordField.getText());
