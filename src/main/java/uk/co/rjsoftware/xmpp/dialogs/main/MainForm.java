@@ -109,7 +109,7 @@ public class MainForm extends JFrame {
                     final HipChatEmoticons hipChatEmoticons) {
         super(title);
 
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(WindowEvent winEvt) {
@@ -122,6 +122,8 @@ public class MainForm extends JFrame {
         this.hipChatEmoticons = hipChatEmoticons;
 
         this.yaccPropertiesChangeListener = new YaccPropertyChangeListener(this.yaccProperties, this.hipChatEmoticons);
+        this.yaccProperties.addPropertyChangeListener(YaccProperties.PROPERTY_NAME_HIPCHAT_API_AUTH_TOKEN, this.yaccPropertiesChangeListener);
+        this.yaccProperties.addPropertyChangeListener(YaccProperties.PROPERTY_NAME_HIPCHAT_API_ENDPOINT, this.yaccPropertiesChangeListener);
 
         this.adapter = new BeanAdapter(connection, true);
 
@@ -141,18 +143,12 @@ public class MainForm extends JFrame {
     }
 
     @Override
-    public void setVisible(boolean b) {
-        if (b) {
-            this.yaccProperties.addPropertyChangeListener(YaccProperties.PROPERTY_NAME_HIPCHAT_API_AUTH_TOKEN, this.yaccPropertiesChangeListener);
-            this.yaccProperties.addPropertyChangeListener(YaccProperties.PROPERTY_NAME_HIPCHAT_API_ENDPOINT, this.yaccPropertiesChangeListener);
-        }
-        else {
-            this.yaccProperties.removePropertyChangeListener(YaccProperties.PROPERTY_NAME_HIPCHAT_API_AUTH_TOKEN, this.yaccPropertiesChangeListener);
-            this.yaccProperties.removePropertyChangeListener(YaccProperties.PROPERTY_NAME_HIPCHAT_API_ENDPOINT, this.yaccPropertiesChangeListener);
-            this.connection.saveRecentChats();
-        }
+    public void dispose() {
+        this.yaccProperties.removePropertyChangeListener(YaccProperties.PROPERTY_NAME_HIPCHAT_API_AUTH_TOKEN, this.yaccPropertiesChangeListener);
+        this.yaccProperties.removePropertyChangeListener(YaccProperties.PROPERTY_NAME_HIPCHAT_API_ENDPOINT, this.yaccPropertiesChangeListener);
+        this.connection.saveRecentChats();
 
-        super.setVisible(b);
+        super.dispose();
     }
 
     private static class YaccPropertyChangeListener implements PropertyChangeListener {
