@@ -149,6 +149,10 @@ public class MainForm extends JFrame {
         this.connection.saveRecentChats();
 
         super.dispose();
+
+        for (LogoutListener listener : this.listeners) {
+            listener.logout();
+        }
     }
 
     private static class YaccPropertyChangeListener implements PropertyChangeListener {
@@ -602,8 +606,7 @@ public class MainForm extends JFrame {
         signOutMenuItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                connection.disconnect();
-                fireLogout();
+                logout();
             }
         });
 
@@ -612,10 +615,9 @@ public class MainForm extends JFrame {
 
     }
 
-    private void fireLogout() {
-        for (LogoutListener listener : this.listeners) {
-            listener.logout();
-        }
+    private void logout() {
+        connection.disconnect();
+        dispose();
     }
 
     public void addLogoutListener(final LogoutListener listener) {

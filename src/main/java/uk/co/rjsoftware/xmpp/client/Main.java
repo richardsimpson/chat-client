@@ -133,7 +133,7 @@ public final class Main {
         mainForm.addLogoutListener(new LogoutListener() {
             @Override
             public void logout() {
-                mainForm.dispose();
+//                mainForm.dispose();
                 Main.this.loginForm.setVisible(true);
             }
         });
