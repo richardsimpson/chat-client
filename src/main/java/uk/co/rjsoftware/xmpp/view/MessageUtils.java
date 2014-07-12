@@ -120,16 +120,20 @@ public final class MessageUtils {
                 m.appendReplacement(changedMessageText, Matcher.quoteReplacement(m.group()));
             }
             else {
-                // TODO: When copy an image from the message window, copy the 'alt' text
                 // TODO: Align the sender name with the first line of the message text.
+                // TODO: Support emoticons with double quote marks in them.
                 m.appendReplacement(changedMessageText,
-                        Matcher.quoteReplacement("<img align='bottom' alt='" + m.group() + "' src='" + emoticon.getUrl() + "'/>"));
+                        Matcher.quoteReplacement("<img align='bottom' alt=\"" + m.group() + "\" src='" + emoticon.getUrl() + "'/>"));
             }
         }
         m.appendTail(changedMessageText);
 
         return changedMessageText.toString();
     }
+
+//    private static String escapeSingleQuotes(final String text) {
+//        text
+//    }
 
     public static String convertCarriageReturns(final String messageText) {
         String result = messageText.replaceAll("\\r\\n", "<br>");
