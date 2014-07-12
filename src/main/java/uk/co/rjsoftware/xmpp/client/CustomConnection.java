@@ -213,28 +213,7 @@ public class CustomConnection extends Model {
         });
 
         // Add an invitation listener to the connection, so can automatically join rooms we are invited to.
-        MultiUserChat.addInvitationListener(this.connection, new InvitationListener() {
-            @Override
-            public void invitationReceived(Connection conn, String roomJid, String inviterJid, String reason, String password, Message message) {
-                // filter out invites for the current user.  This can happen if the user opens up a second client (e.g. hipchat)
-                if (!StringUtils.parseBareAddress(inviterJid).equals(CustomConnection.this.currentUser.getUserId())) {
-                    String roomName = "";
-
-                    PacketExtension packetExtension = message.getExtension("x", "http://hipchat.com/protocol/muc#room");
-                    if ((packetExtension != null) && (packetExtension instanceof DefaultPacketExtension)) {
-                        final DefaultPacketExtension defaultPacketExtension = (DefaultPacketExtension)packetExtension;
-                        roomName = defaultPacketExtension.getValue("name");
-                    }
-
-                    final User inviterUser = CustomConnection.this.userListModel.get(inviterJid);
-                    final String inviterName = inviterUser.getName();
-
-                    for (YaccInvitationListener listener : CustomConnection.this.invitationListeners) {
-                        listener.invitationReceived(roomJid, roomName, inviterJid, inviterName, reason, password);
-                    }
-                }
-            }
-        });
+        MultiUserChat.addInvitationListener(this.connection, new InvitationListenerImpl(this));
 
         this.recentChatPersistor = new RecentChatPersistor(this);
         this.recentChatPersistor.loadRecentChatList();
@@ -245,6 +224,36 @@ public class CustomConnection extends Model {
 //                System.out.println("Incomming Packet: " + packet.toString());
 //            }
 //        }, null);
+    }
+
+    private static class InvitationListenerImpl implements InvitationListener {
+
+        private final CustomConnection connection;
+
+        public InvitationListenerImpl(final CustomConnection connection) {
+            this.connection = connection;
+        }
+
+        @Override
+        public void invitationReceived(Connection conn, String roomJid, String inviterJid, String reason, String password, Message message) {
+            // filter out invites for the current user.  This can happen if the user opens up a second client (e.g. hipchat)
+            if (!StringUtils.parseBareAddress(inviterJid).equals(this.connection.currentUser.getUserId())) {
+                String roomName = "";
+
+                PacketExtension packetExtension = message.getExtension("x", "http://hipchat.com/protocol/muc#room");
+                if ((packetExtension != null) && (packetExtension instanceof DefaultPacketExtension)) {
+                    final DefaultPacketExtension defaultPacketExtension = (DefaultPacketExtension)packetExtension;
+                    roomName = defaultPacketExtension.getValue("name");
+                }
+
+                final User inviterUser = this.connection.userListModel.get(inviterJid);
+                final String inviterName = inviterUser.getName();
+
+                for (YaccInvitationListener listener : this.connection.invitationListeners) {
+                    listener.invitationReceived(roomJid, roomName, inviterJid, inviterName, reason, password);
+                }
+            }
+        }
     }
 
     public void saveRecentChats() {
