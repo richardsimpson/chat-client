@@ -494,4 +494,9 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
     public void invite(final String user, final String reason) {
         this.chat.invite(user, reason);
     }
+
+    @Override
+    public void writeChatHistory() {
+        this.chatPersistor.writeChatHistory();
+    }
 }

@@ -94,6 +94,33 @@ public class ChatPersistor {
         }
     }
 
+    public void writeChatHistory() {
+        final File file = new File(this.filename);
+        file.getParentFile().mkdirs();
+
+        // read the history from the file system, and update the message list model
+        this.customMessageListModel.removeListDataListener(this.listener);
+        this.listener.closeFile();
+
+        try {
+            final PrintWriter printWriter;
+            try {
+                printWriter = new PrintWriter(new BufferedWriter(new FileWriter(file, false)));
+            } catch (IOException exception) {
+                throw new RuntimeException(exception);
+            }
+
+            for (CustomMessage message : this.customMessageListModel) {
+                printWriter.println(this.gson.toJson(message));
+            }
+
+            printWriter.flush();
+            printWriter.close();
+        } finally {
+            this.customMessageListModel.addListDataListener(this.listener);
+        }
+    }
+
     private static final class ChatListDataListener implements ListDataListener {
 
         private final CustomMessageListModel customMessageListModel;
@@ -127,6 +154,12 @@ public class ChatPersistor {
 
         }
 
+        public void closeFile() {
+            if (null != this.printWriter) {
+                this.printWriter.close();
+            }
+        }
+
         @Override
         public void intervalAdded(ListDataEvent event) {
             ensureWriterCreated();
@@ -147,9 +180,7 @@ public class ChatPersistor {
 
         @Override
         protected void finalize() throws Throwable {
-            if (null != this.printWriter) {
-                this.printWriter.close();
-            }
+            closeFile();
         }
 
     }

@@ -307,4 +307,8 @@ public class User extends Model implements Comparable<User>, ChatTarget {
         throw new RuntimeException("Cannot delete a single user chat");
     }
 
+    @Override
+    public void writeChatHistory() {
+        this.chatPersistor.writeChatHistory();
+    }
 }

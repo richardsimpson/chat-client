@@ -60,4 +60,6 @@ public interface ChatTarget {
     UserListModel getOccupantsModel();
 
     void delete();
+
+    void writeChatHistory();
 }

@@ -258,6 +258,10 @@ public class CustomConnection extends Model {
 
     public void saveRecentChats() {
         this.recentChatPersistor.saveRecentChatList();
+
+        for (ChatTarget chatTarget : this.chatListModel) {
+            chatTarget.writeChatHistory();
+        }
     }
 
     public void disconnect() {
