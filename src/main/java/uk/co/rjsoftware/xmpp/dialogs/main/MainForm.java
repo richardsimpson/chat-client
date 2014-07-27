@@ -287,6 +287,10 @@ public class MainForm extends JFrame {
         final JScrollPane messageListScrollPane = new AutoScrollPane(messageTextPane);
         chatPanel.add(messageListScrollPane, BorderLayout.CENTER);
 
+        // ensure that the messages get marked as read when appropriate
+        MessageStateChanger stateChanger = new MessageStateChanger();
+        stateChanger.addChangeListener(messageListScrollPane, this);
+
         messagesListModel.addValueChangeListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent event) {
@@ -624,6 +628,10 @@ public class MainForm extends JFrame {
         this.listeners.add(listener);
     }
 
+    public ChatTarget getCurrentChatTarget() {
+        return this.currentChatTarget;
+    }
+
     //TODO: Bug fix: when switch chats, the scroll bar doesn't switch to the last position for this chat
     private static class AutoScrollPane extends JScrollPane implements ChangeListener {
 
@@ -648,11 +656,16 @@ public class MainForm extends JFrame {
 
         @Override
         public void stateChanged(ChangeEvent event) {
+            // if state has changed such that the viewport is showing the last message, update the
+            // cached value for the scrollBarValue (so we know if the viewport needs moving when the component
+            // gets resized, e.g. by adding a new message)
             final BoundedRangeModel model = (BoundedRangeModel)event.getSource();
             final boolean isAtBottom = model.getValue() + model.getExtent() == model.getMaximum();
             if (isAtBottom) {
                 lastScrollBarValueWhenAtBottom = model.getValue();
             }
+
+
         }
     }
 

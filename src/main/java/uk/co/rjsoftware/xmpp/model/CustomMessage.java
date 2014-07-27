@@ -38,7 +38,7 @@ public class CustomMessage {
     private final long timestamp;
     private final String sender;
     private final String body;
-    private final boolean unread;
+    private boolean read;
 
     /**
      *
@@ -47,7 +47,7 @@ public class CustomMessage {
      * @param body
      */
     public CustomMessage(final long timestamp, final String sender, final String body) {
-        this(timestamp, sender, body, true);
+        this(timestamp, sender, body, false);
     }
 
     /**
@@ -55,9 +55,9 @@ public class CustomMessage {
      * @param timestamp
      * @param sender The sender in the format {roomname}@conf.hipchat.com/{username}
      * @param body
-     * @param unread Indicates whether or not the message has already been read or not.
+     * @param read Indicates whether or not the message has already been read or not.
      */
-    public CustomMessage(final long timestamp, final String sender, final String body, final boolean unread) {
+    public CustomMessage(final long timestamp, final String sender, final String body, final boolean read) {
         this.timestamp = timestamp;
         final int index = sender.indexOf("/");
         if (index == -1) {
@@ -67,7 +67,7 @@ public class CustomMessage {
             this.sender = sender.substring(index+1);
         }
         this.body = body;
-        this.unread = unread;
+        this.read = read;
     }
 
     public long getTimestamp() {
@@ -82,8 +82,12 @@ public class CustomMessage {
         return this.body;
     }
 
-    public boolean isUnread() {
-        return unread;
+    public boolean isRead() {
+        return read;
+    }
+
+    public void setRead(final boolean read) {
+        this.read = read;
     }
 
     @Override

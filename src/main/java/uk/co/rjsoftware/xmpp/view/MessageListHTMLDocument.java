@@ -81,12 +81,14 @@ public class MessageListHTMLDocument extends HTMLDocument {
         Font font = new JLabel().getFont();
         String bodyRule = "body { font-family: " + font.getFamily() + "; "
                 + "font-size: " + font.getSize() + "pt; }";
-        String senderRule = ".sender {white-space: nowrap;}";
+        String senderRule = ".sender {white-space: nowrap; color: blue;}";
+        String unreadSenderRule = ".unreadSender {white-space: nowrap; color: orange;}";
         String dateHeaderRule = ".dateHeader {font-weight:bold; padding-top: 4px; padding-bottom: 4px; margin-top: 5px; margin-left: 100px; border-style:solid; "
                 + "border-width:0px; border-bottom-width:1px; border-top-width:1px; border-color:#ADD8E6; }";
 
         getStyleSheet().addRule(bodyRule);
         getStyleSheet().addRule(senderRule);
+        getStyleSheet().addRule(unreadSenderRule);
         getStyleSheet().addRule(dateHeaderRule);
 
         this.lastMessageDate = Calendar.getInstance(Locale.getDefault());
@@ -105,7 +107,7 @@ public class MessageListHTMLDocument extends HTMLDocument {
         }
     }
 
-    public void insertMessage(final CustomMessage message) {
+    public void insertMessage(final CustomMessage message, final long messageNumber) {
         // TODO: Use a thread-safe date formatter, and change it into a class attribute, so it doesn't need creating here
         final DateFormat formatter = new SimpleDateFormat("HH:mm");
         final Date date = new Date(message.getTimestamp());
@@ -128,9 +130,17 @@ public class MessageListHTMLDocument extends HTMLDocument {
         messageBody = MessageUtils.convertLeadingSpacesAndTabs(messageBody);
 
         try {
+            final String senderClassName;
+            if (message.isRead()) {
+                senderClassName = "sender";
+            }
+            else {
+                senderClassName = "unreadSender";
+            }
+
             insertBeforeEnd(getElement("t" + this.currentTableId),
                     "<tr>"
-                            + "<td width='125' class='sender' align='right' valign='top'>" + message.getSender() + "</td>"
+                            + "<td id='" + messageNumber + "' width='125' class='" + senderClassName + "' align='right' valign='top'>" + message.getSender() + "</td>"
                             + "<td valign='top'>" + messageBody + "</td>"
                             + "<td width='42' valign='top'>" + formatter.format(date) + "</td></tr>");
         } catch (BadLocationException exception) {

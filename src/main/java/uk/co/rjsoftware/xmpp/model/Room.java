@@ -363,8 +363,9 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
 
         @Override
         public void intervalAdded(ListDataEvent event) {
-            final CustomMessage message = this.customMessageListModel.get(event.getIndex0());
-            this.messagesDocument.insertMessage(message);
+            final int index = event.getIndex0();
+            final CustomMessage message = this.customMessageListModel.get(index);
+            this.messagesDocument.insertMessage(message, index);
         }
 
         @Override
