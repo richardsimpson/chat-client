@@ -59,7 +59,8 @@ public class MessageStateChanger {
         scrollPane.getVerticalScrollBar().getModel().addChangeListener(new MessageChangeListener(scrollPane, mainForm));
     }
 
-    // TODO: If the current chat window starts with a TABLE tag, then it doesn't mark the visible messages as 'read'.
+    // TODO: If move to the top of the chat window, we get a DIV, then TABLE, then DIV, etc.  We aren't iterating
+    //       inside the table, so we never get to the TD's, so it doesn't mark the visible messages as 'read'.
     // TODO: Messages are not marked as read unless the window resizes or the scroll bar value changes.  So new chats don't get marked as unread.
 
     private static final class MessageChangeListener implements ChangeListener {
@@ -162,13 +163,22 @@ public class MessageStateChanger {
                     return null;
                 }
 
+                final HTML.Tag tag = getTag(element);
+                if (HTML.Tag.BODY == tag) {
+                    return null;
+
+                }
+                if (HTML.Tag.TABLE == tag) {
+                    element = element.getElement(0);
+                }
+
                 if (isElementASenderTableCell(element)) {
                     if (isCompletelyVisible(pos, visibleRect)) {
                         return element;
                     }
                 }
 
-                pos = pos + element.getEndOffset() - element.getStartOffset();
+                pos = element.getEndOffset();
             }
 
             return null;
@@ -177,6 +187,10 @@ public class MessageStateChanger {
         private boolean isCompletelyVisible(final int pos, final Rectangle visibleRect) {
             Rectangle r = modelToView(pos);
             return intersects(r, visibleRect);
+        }
+
+        private HTML.Tag getTag(final Element element) {
+            return (HTML.Tag)element.getAttributes().getAttribute(StyleConstants.NameAttribute);
         }
 
         private boolean isElementASenderTableCell(final Element element) {
