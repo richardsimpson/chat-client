@@ -59,8 +59,6 @@ public class MessageStateChanger {
         scrollPane.getVerticalScrollBar().getModel().addChangeListener(new MessageChangeListener(scrollPane, mainForm));
     }
 
-    // TODO: If move to the top of the chat window, we get a DIV, then TABLE, then DIV, etc.  We aren't iterating
-    //       inside the table, so we never get to the TD's, so it doesn't mark the visible messages as 'read'.
     // TODO: Messages are not marked as read unless the window resizes or the scroll bar value changes.  So new chats don't get marked as unread.
 
     private static final class MessageChangeListener implements ChangeListener {
