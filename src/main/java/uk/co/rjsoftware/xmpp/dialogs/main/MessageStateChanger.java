@@ -66,12 +66,16 @@ public class MessageStateChanger {
         this.scrollPane.getVerticalScrollBar().getModel().addChangeListener(this.messageChangeListener);
 
         // fire off an immediate check, as the app may have just got focus
-        final ChangeEvent event = new ChangeEvent(this.scrollPane.getVerticalScrollBar().getModel());
-        this.messageChangeListener.stateChanged(event);
+        forceReadMessageCheck();
     }
 
     public void disable() {
         this.scrollPane.getVerticalScrollBar().getModel().removeChangeListener(this.messageChangeListener);
+    }
+
+    public void forceReadMessageCheck() {
+        final ChangeEvent event = new ChangeEvent(this.scrollPane.getVerticalScrollBar().getModel());
+        this.messageChangeListener.stateChanged(event);
     }
 
     // TODO: Messages are not marked as read unless the window resizes or the scroll bar value changes.  So new chats don't get marked as unread.

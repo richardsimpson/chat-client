@@ -42,6 +42,8 @@ import uk.co.rjsoftware.xmpp.dialogs.createroom.NewRoomListener;
 import uk.co.rjsoftware.xmpp.dialogs.inviteusers.InviteUsersForm;
 import uk.co.rjsoftware.xmpp.dialogs.settings.SettingsForm;
 import uk.co.rjsoftware.xmpp.model.ChatTarget;
+import uk.co.rjsoftware.xmpp.model.CustomMessage;
+import uk.co.rjsoftware.xmpp.model.CustomMessageListModel;
 import uk.co.rjsoftware.xmpp.model.LogoutListener;
 import uk.co.rjsoftware.xmpp.model.Room;
 import uk.co.rjsoftware.xmpp.model.User;
@@ -49,6 +51,7 @@ import uk.co.rjsoftware.xmpp.model.UserStatus;
 import uk.co.rjsoftware.xmpp.model.hipchat.emoticons.HipChatEmoticons;
 import uk.co.rjsoftware.xmpp.model.hipchat.room.HipChatRoom;
 import uk.co.rjsoftware.xmpp.view.CurrentChatOccupantsCellRenderer;
+import uk.co.rjsoftware.xmpp.view.MessageListHTMLDocument;
 import uk.co.rjsoftware.xmpp.view.RecentChatListCellRenderer;
 import uk.co.rjsoftware.xmpp.view.RoomListCellRenderer;
 import uk.co.rjsoftware.xmpp.view.UserListCellRenderer;
@@ -58,6 +61,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.Element;
@@ -260,7 +265,6 @@ public class MainForm extends JFrame {
         chatHeaderPanel.add(chatOccupantsScrollPane, BorderLayout.CENTER);
 
         //Add the message history window
-        final ValueModel messagesListModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_MESSAGES_DOCUMENT_PROPERTY_NAME);
         final JTextPane messageTextPane = new JTextPane() {
             @Override
             public boolean getScrollableTracksViewportWidth() {
@@ -272,19 +276,6 @@ public class MainForm extends JFrame {
         messageTextPane.setEditorKit(new WrapHTMLEditorKit());
         messageTextPane.addHyperlinkListener(new HyperlinkActivator());
 
-        //Bindings.bind(messageList, new SelectionInList(messagesListModel));
-
-//        messageList.setCellRenderer(new MessageListCellRenderer());
-//        messageList.addComponentListener(new ComponentAdapter() {
-//            @Override
-//            public void componentResized(ComponentEvent e) {
-//                // next line possible if list is of type JXList
-//                // MainForm.this.messageList.invalidateCellSizeCache();
-//                // for core: force cache invalidation by temporarily setting fixed height
-//                messageList.setFixedCellHeight(10);
-//                messageList.setFixedCellHeight(-1);
-//            }
-//        });
         final JScrollPane messageListScrollPane = new AutoScrollPane(messageTextPane);
         chatPanel.add(messageListScrollPane, BorderLayout.CENTER);
 
@@ -304,7 +295,28 @@ public class MainForm extends JFrame {
             }
         });
 
+        final ChatListDataListener chatListDataListener = new ChatListDataListener(stateChanger);
+
+        // add a listener to the current chat target's messages list, so that incoming messages that don't cause a
+        // change to the scroll bar still get marked as read
+        final ValueModel messagesListModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_MESSAGES_LIST_PROPERTY_NAME);
         messagesListModel.addValueChangeListener(new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent event) {
+                if (null != event.getOldValue()) {
+                    ((CustomMessageListModel)event.getOldValue()).removeListDataListener(chatListDataListener);
+                }
+
+                if (null != event.getNewValue()) {
+                    ((CustomMessageListModel)event.getNewValue()).addListDataListener(chatListDataListener);
+                }
+            }
+        });
+
+        // add a listener to the current chat target's messages document, so that a change in the current chat target
+        // updates the message view.
+        final ValueModel messagesDocumentModel = adapter.getValueModel(CustomConnection.CURRENT_CHAT_TARGET_MESSAGES_DOCUMENT_PROPERTY_NAME);
+        messagesDocumentModel.addValueChangeListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent event) {
                 if (null == event.getNewValue()) {
@@ -340,6 +352,31 @@ public class MainForm extends JFrame {
                 }
             }
         });
+
+    }
+
+    private static final class ChatListDataListener implements ListDataListener {
+
+        private final MessageStateChanger stateChanger;
+
+        private ChatListDataListener(final MessageStateChanger stateChanger) {
+            this.stateChanger = stateChanger;
+        }
+
+        @Override
+        public void intervalAdded(ListDataEvent event) {
+            this.stateChanger.forceReadMessageCheck();
+        }
+
+        @Override
+        public void intervalRemoved(ListDataEvent event) {
+            // should never happen
+        }
+
+        @Override
+        public void contentsChanged(ListDataEvent event) {
+            // should never happen
+        }
 
     }
 
