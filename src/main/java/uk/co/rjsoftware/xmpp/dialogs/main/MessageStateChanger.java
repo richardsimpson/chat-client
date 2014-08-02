@@ -79,151 +79,178 @@ public class MessageStateChanger {
         }
 
         @Override
-        public void stateChanged(ChangeEvent event) {
-            final ChatTarget currentChatTarget = this.mainForm.getCurrentChatTarget();
+        public void stateChanged(final ChangeEvent event) {
+            final StateChanger stateChanger = new StateChanger(this.pendingElementsToChange, this.scrollableComponent, this.mainForm, event);
+            SwingUtilities.invokeLater(stateChanger);
+        }
 
-            if (!((BoundedRangeModel)event.getSource()).getValueIsAdjusting()) {
+        private static final class StateChanger implements Runnable {
+
+            // is pendingElementsToChange really required?
+            private final Map<ChatTarget, Set<Element>> pendingElementsToChange;
+            private final JTextComponent scrollableComponent;
+            private final MainForm mainForm;
+            private final ChangeEvent event;
+
+            private StateChanger(final Map<ChatTarget, Set<Element>> pendingElementsToChange, final JTextComponent scrollableComponent,
+                                 final MainForm mainForm, final ChangeEvent event) {
+
+                this.pendingElementsToChange = pendingElementsToChange;
+                this.scrollableComponent = scrollableComponent;
+                this.mainForm = mainForm;
+                this.event = event;
+            }
+
+            @Override
+            public void run() {
+                final ChatTarget currentChatTarget = this.mainForm.getCurrentChatTarget();
+
+                if (!((BoundedRangeModel)event.getSource()).getValueIsAdjusting()) {
+                    Rectangle visibleRect = this.scrollableComponent.getVisibleRect();
+
+                    final java.util.List<Element> elementsToChange = new ArrayList<Element>();
+                    final java.util.List<Integer> elementIdsToChange = new ArrayList<Integer>();
+
+                    // get the first visible sender tag
+                    Element element = getFirstVisibleSenderTableCell();
+                    if (null == element) {
+                        return;
+                    }
+
+                    int i = getIdOfElement(element);
+
+                    while (null != element) {
+
+                        final Element paragraphElement = ((HTMLDocument)this.scrollableComponent.getDocument()).getParagraphElement(element.getStartOffset());
+                        final String classname = (String)paragraphElement.getAttributes().getAttribute(HTML.Attribute.CLASS);
+
+                        // check if element is already 'read'
+                        if ("unreadSender".equals(classname)) {
+                            // check if visible
+                            int pos = element.getStartOffset();
+                            if (!isCompletelyVisible(pos, visibleRect)) {
+                                // not visible, so must have exhausted the visible items
+                                break;
+                            }
+                            elementsToChange.add(element);
+                            elementIdsToChange.add(i);
+                        }
+
+                        i++;
+                        element = ((HTMLDocument)this.scrollableComponent.getDocument()).getElement("" + i);
+                    }
+
+                    if (!elementsToChange.isEmpty()) {
+                        synchronized (this.pendingElementsToChange) {
+                            if (!this.pendingElementsToChange.containsKey(currentChatTarget)) {
+                                this.pendingElementsToChange.put(currentChatTarget, new HashSet<Element>());
+                            }
+
+                            this.pendingElementsToChange.get(currentChatTarget).addAll(elementsToChange);
+                        }
+
+                        final ReadActionListener listener = new ReadActionListener(this.mainForm, currentChatTarget, elementsToChange, elementIdsToChange,
+                                this.scrollableComponent, this.pendingElementsToChange);
+                        final ReadTimer timer = new ReadTimer(5000, listener);
+                        timer.setRepeats(false);
+                        timer.start();
+                    }
+                }
+            }
+
+            private Rectangle modelToView(int pos) {
+                try {
+                    return this.scrollableComponent.modelToView(pos);
+                } catch (BadLocationException exception) {
+                    throw new RuntimeException(exception);
+                }
+            }
+
+            private Element getFirstVisibleSenderTableCell() {
                 Rectangle visibleRect = this.scrollableComponent.getVisibleRect();
 
-                final java.util.List<Element> elementsToChange = new ArrayList<Element>();
-                final java.util.List<Integer> elementIdsToChange = new ArrayList<Integer>();
-
-                // get the first visible sender tag
-                Element element = getFirstVisibleSenderTableCell();
-                if (null == element) {
-                    return;
+                int pos = this.scrollableComponent.viewToModel(visibleRect.getLocation());
+                if (-1 == pos) {
+                    return null;
                 }
 
-                int i = getIdOfElement(element);
-
-                while (null != element) {
-
-                    final Element paragraphElement = ((HTMLDocument)this.scrollableComponent.getDocument()).getParagraphElement(element.getStartOffset());
-                    final String classname = (String)paragraphElement.getAttributes().getAttribute(HTML.Attribute.CLASS);
-
-                    // check if element is already 'read'
-                    if ("unreadSender".equals(classname)) {
-                        // check if visible
-                        int pos = element.getStartOffset();
-                        if (!isCompletelyVisible(pos, visibleRect)) {
-                            // not visible, so must have exhausted the visible items
-                            break;
-                        }
-                        elementsToChange.add(element);
-                        elementIdsToChange.add(i);
+                while (pos < this.scrollableComponent.getDocument().getLength()) {
+                    //attempt to get first table cell
+                    Element element = ((HTMLDocument)this.scrollableComponent.getDocument()).getParagraphElement(pos);
+                    if (null == element) {
+                        return null;
+                    }
+                    element = element.getParentElement();
+                    if (null == element) {
+                        return null;
                     }
 
-                    i++;
-                    element = ((HTMLDocument)this.scrollableComponent.getDocument()).getElement("" + i);
-                }
+                    final HTML.Tag tag = getTag(element);
+                    if (HTML.Tag.BODY == tag) {
+                        return null;
 
-                if (!elementsToChange.isEmpty()) {
-                    synchronized (this.pendingElementsToChange) {
-                        if (!this.pendingElementsToChange.containsKey(currentChatTarget)) {
-                            this.pendingElementsToChange.put(currentChatTarget, new HashSet<Element>());
-                        }
-
-                        this.pendingElementsToChange.get(currentChatTarget).addAll(elementsToChange);
+                    }
+                    if (HTML.Tag.TABLE == tag) {
+                        element = element.getElement(0);
                     }
 
-                    final ReadActionListener listener = new ReadActionListener(this.mainForm, currentChatTarget, elementsToChange, elementIdsToChange);
-                    final ReadTimer timer = new ReadTimer(5000, listener);
-                    timer.setRepeats(false);
-                    timer.start();
+                    if (isElementASenderTableCell(element)) {
+                        if (isCompletelyVisible(pos, visibleRect)) {
+                            return element;
+                        }
+                    }
+
+                    pos = element.getEndOffset();
                 }
-            }
-        }
 
-        private Rectangle modelToView(int pos) {
-            try {
-                return this.scrollableComponent.modelToView(pos);
-            } catch (BadLocationException exception) {
-                throw new RuntimeException(exception);
-            }
-        }
-
-        private Element getFirstVisibleSenderTableCell() {
-            Rectangle visibleRect = this.scrollableComponent.getVisibleRect();
-
-            int pos = this.scrollableComponent.viewToModel(visibleRect.getLocation());
-            if (-1 == pos) {
                 return null;
             }
 
-            while (pos < this.scrollableComponent.getDocument().getLength()) {
-                //attempt to get first table cell
-                Element element = ((HTMLDocument)this.scrollableComponent.getDocument()).getParagraphElement(pos);
-                if (null == element) {
-                    return null;
-                }
-                element = element.getParentElement();
-                if (null == element) {
-                    return null;
-                }
-
-                final HTML.Tag tag = getTag(element);
-                if (HTML.Tag.BODY == tag) {
-                    return null;
-
-                }
-                if (HTML.Tag.TABLE == tag) {
-                    element = element.getElement(0);
-                }
-
-                if (isElementASenderTableCell(element)) {
-                    if (isCompletelyVisible(pos, visibleRect)) {
-                        return element;
-                    }
-                }
-
-                pos = element.getEndOffset();
+            private boolean isCompletelyVisible(final int pos, final Rectangle visibleRect) {
+                Rectangle r = modelToView(pos);
+                return intersects(r, visibleRect);
             }
 
-            return null;
-        }
+            private HTML.Tag getTag(final Element element) {
+                return (HTML.Tag)element.getAttributes().getAttribute(StyleConstants.NameAttribute);
+            }
 
-        private boolean isCompletelyVisible(final int pos, final Rectangle visibleRect) {
-            Rectangle r = modelToView(pos);
-            return intersects(r, visibleRect);
-        }
+            private boolean isElementASenderTableCell(final Element element) {
+                final HTML.Tag tag = (HTML.Tag)element.getAttributes().getAttribute(StyleConstants.NameAttribute);
+                if ((tag != null) && (HTML.Tag.TD.equals(tag))) {
+                    final String id = (String)element.getAttributes().getAttribute(HTML.Attribute.ID);
+                    return null != id;
+                }
 
-        private HTML.Tag getTag(final Element element) {
-            return (HTML.Tag)element.getAttributes().getAttribute(StyleConstants.NameAttribute);
-        }
+                return false;
+            }
 
-        private boolean isElementASenderTableCell(final Element element) {
-            final HTML.Tag tag = (HTML.Tag)element.getAttributes().getAttribute(StyleConstants.NameAttribute);
-            if ((tag != null) && (HTML.Tag.TD.equals(tag))) {
+            private int getIdOfElement(final Element element) {
                 final String id = (String)element.getAttributes().getAttribute(HTML.Attribute.ID);
-                return null != id;
+
+                if (null == id) {
+                    return 0;
+                }
+                else {
+                    return Integer.parseInt(id);
+                }
             }
 
-            return false;
-        }
+            private boolean intersects(final Rectangle elementRect, final Rectangle viewportRect) {
+                // check the location of the top of the element
+                if ((elementRect.y < viewportRect.y) || (elementRect.y > viewportRect.y + viewportRect.height)) {
+                    return false;
+                }
 
-        private int getIdOfElement(final Element element) {
-            final String id = (String)element.getAttributes().getAttribute(HTML.Attribute.ID);
+                // check the location of the bottom of the element
+                if ((elementRect.y + elementRect.height < viewportRect.y) || (elementRect.y + elementRect.height > viewportRect.y + viewportRect.height)) {
+                    return false;
+                }
 
-            if (null == id) {
-                return 0;
-            }
-            else {
-                return Integer.parseInt(id);
-            }
-        }
-
-        private boolean intersects(final Rectangle elementRect, final Rectangle viewportRect) {
-            // check the location of the top of the element
-            if ((elementRect.y < viewportRect.y) || (elementRect.y > viewportRect.y + viewportRect.height)) {
-                return false;
+                return true;
             }
 
-            // check the location of the bottom of the element
-            if ((elementRect.y + elementRect.height < viewportRect.y) || (elementRect.y + elementRect.height > viewportRect.y + viewportRect.height)) {
-                return false;
-            }
 
-            return true;
         }
 
         private static class ReadTimer extends Timer {
@@ -233,25 +260,30 @@ public class MessageStateChanger {
             }
         }
 
-        private class ReadActionListener implements ActionListener {
+        private static class ReadActionListener implements ActionListener {
 
             private final MainForm mainForm;
             private final ChatTarget currentChatTarget;
             private final List<Element> elements;
             private final List<Integer> elementIdsToChange;
+            private final JTextComponent scrollableComponent;
+            private final Map<ChatTarget, Set<Element>> pendingElementsToChange;
 
-            public ReadActionListener(final MainForm mainForm, final ChatTarget currentChatTarget, final List<Element> elements, final List<Integer> elementIdsToChange) {
+            public ReadActionListener(final MainForm mainForm, final ChatTarget currentChatTarget, final List<Element> elements, final List<Integer> elementIdsToChange,
+                                      final JTextComponent scrollableComponent, final Map<ChatTarget, Set<Element>> pendingElementsToChange) {
                 this.mainForm = mainForm;
                 this.currentChatTarget = currentChatTarget;
                 this.elements = elements;
                 this.elementIdsToChange = elementIdsToChange;
+                this.scrollableComponent = scrollableComponent;
+                this.pendingElementsToChange = pendingElementsToChange;
             }
 
             @Override
             public void actionPerformed(ActionEvent e) {
                 final ChatTarget newCurrentChatTarget = this.mainForm.getCurrentChatTarget();
 
-                synchronized (MessageChangeListener.this.pendingElementsToChange) {
+                synchronized (this.pendingElementsToChange) {
                     for (int index = 0 ; index < this.elements.size() ; index++) {
                         final Element element = this.elements.get(index);
 
@@ -262,14 +294,14 @@ public class MessageStateChanger {
 
                             divAttributes.addAttribute(HTML.Attribute.CLASS, "sender");
 
-                            ((HTMLDocument)MessageChangeListener.this.scrollableComponent.getDocument()).setParagraphAttributes(element.getStartOffset(),
+                            ((HTMLDocument)this.scrollableComponent.getDocument()).setParagraphAttributes(element.getStartOffset(),
                                     1, divAttributes, false);
 
                             // set the element to be 'read' in the model
                             this.currentChatTarget.getCustomMessageListModel().get(elementIdsToChange.get(index)).setRead(true);
                         }
 
-                        MessageChangeListener.this.pendingElementsToChange.remove(element);
+                        this.pendingElementsToChange.remove(element);
                     }
                 }
 
