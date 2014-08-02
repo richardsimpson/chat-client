@@ -35,7 +35,6 @@ import javax.swing.*;
 import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.text.BadLocationException;
 import javax.swing.text.Element;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.MutableAttributeSet;
@@ -128,7 +127,7 @@ public class MessageStateChanger {
                         if ("unreadSender".equals(classname)) {
                             // check if visible
                             int pos = element.getStartOffset();
-                            if (!isCompletelyVisible(pos, visibleRect)) {
+                            if (!StateChangerUtils.isCompletelyVisible(this.scrollableComponent, pos, visibleRect)) {
                                 // not visible, so must have exhausted the visible items
                                 break;
                             }
@@ -155,14 +154,6 @@ public class MessageStateChanger {
                         timer.setRepeats(false);
                         timer.start();
                     }
-                }
-            }
-
-            private Rectangle modelToView(int pos) {
-                try {
-                    return this.scrollableComponent.modelToView(pos);
-                } catch (BadLocationException exception) {
-                    throw new RuntimeException(exception);
                 }
             }
 
@@ -195,7 +186,7 @@ public class MessageStateChanger {
                     }
 
                     if (isElementASenderTableCell(element)) {
-                        if (isCompletelyVisible(pos, visibleRect)) {
+                        if (StateChangerUtils.isCompletelyVisible(this.scrollableComponent, pos, visibleRect)) {
                             return element;
                         }
                     }
@@ -204,11 +195,6 @@ public class MessageStateChanger {
                 }
 
                 return null;
-            }
-
-            private boolean isCompletelyVisible(final int pos, final Rectangle visibleRect) {
-                Rectangle r = modelToView(pos);
-                return intersects(r, visibleRect);
             }
 
             private HTML.Tag getTag(final Element element) {
@@ -235,21 +221,6 @@ public class MessageStateChanger {
                     return Integer.parseInt(id);
                 }
             }
-
-            private boolean intersects(final Rectangle elementRect, final Rectangle viewportRect) {
-                // check the location of the top of the element
-                if ((elementRect.y < viewportRect.y) || (elementRect.y > viewportRect.y + viewportRect.height)) {
-                    return false;
-                }
-
-                // check the location of the bottom of the element
-                if ((elementRect.y + elementRect.height < viewportRect.y) || (elementRect.y + elementRect.height > viewportRect.y + viewportRect.height)) {
-                    return false;
-                }
-
-                return true;
-            }
-
 
         }
 
@@ -282,6 +253,7 @@ public class MessageStateChanger {
             @Override
             public void actionPerformed(ActionEvent e) {
                 final ChatTarget newCurrentChatTarget = this.mainForm.getCurrentChatTarget();
+                Rectangle newVisibleRect = this.scrollableComponent.getVisibleRect();
 
                 synchronized (this.pendingElementsToChange) {
                     for (int index = 0 ; index < this.elements.size() ; index++) {
@@ -289,16 +261,22 @@ public class MessageStateChanger {
 
                         // only update the 'read / unread' status of the message if the current chat target has not changed
                         if (newCurrentChatTarget == this.currentChatTarget) {
-                            // set element to be 'read' in the view
-                            final MutableAttributeSet divAttributes = new SimpleAttributeSet();
 
-                            divAttributes.addAttribute(HTML.Attribute.CLASS, "sender");
+                            // only update the 'read / unread status of the message if it is still completely visible
+                            int pos = element.getStartOffset();
+                            if (StateChangerUtils.isCompletelyVisible(this.scrollableComponent, pos, newVisibleRect)) {
 
-                            ((HTMLDocument)this.scrollableComponent.getDocument()).setParagraphAttributes(element.getStartOffset(),
-                                    1, divAttributes, false);
+                                // set element to be 'read' in the view
+                                final MutableAttributeSet divAttributes = new SimpleAttributeSet();
 
-                            // set the element to be 'read' in the model
-                            this.currentChatTarget.getCustomMessageListModel().get(elementIdsToChange.get(index)).setRead(true);
+                                divAttributes.addAttribute(HTML.Attribute.CLASS, "sender");
+
+                                ((HTMLDocument)this.scrollableComponent.getDocument()).setParagraphAttributes(element.getStartOffset(),
+                                        1, divAttributes, false);
+
+                                // set the element to be 'read' in the model
+                                this.currentChatTarget.getCustomMessageListModel().get(elementIdsToChange.get(index)).setRead(true);
+                            }
                         }
 
                         this.pendingElementsToChange.remove(element);
