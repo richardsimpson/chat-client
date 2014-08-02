@@ -81,6 +81,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -288,8 +289,20 @@ public class MainForm extends JFrame {
         chatPanel.add(messageListScrollPane, BorderLayout.CENTER);
 
         // ensure that the messages get marked as read when appropriate
-        MessageStateChanger stateChanger = new MessageStateChanger();
-        stateChanger.addChangeListener(messageListScrollPane, this);
+        final MessageStateChanger stateChanger = new MessageStateChanger(messageListScrollPane, this);
+        this.addWindowFocusListener(new WindowAdapter() {
+            @Override
+            public void windowGainedFocus(WindowEvent e) {
+                System.out.println("Main Windows has Gained Focus");
+                stateChanger.enable();
+            }
+
+            @Override
+            public void windowLostFocus(WindowEvent e) {
+                System.out.println("Main Windows has Lost Focus");
+                stateChanger.disable();
+            }
+        });
 
         messagesListModel.addValueChangeListener(new PropertyChangeListener() {
             @Override

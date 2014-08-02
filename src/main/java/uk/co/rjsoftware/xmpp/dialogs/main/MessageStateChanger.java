@@ -54,8 +54,24 @@ import java.util.Set;
 
 public class MessageStateChanger {
 
-    public void addChangeListener(final JScrollPane scrollPane, final MainForm mainForm) {
-        scrollPane.getVerticalScrollBar().getModel().addChangeListener(new MessageChangeListener(scrollPane, mainForm));
+    private final JScrollPane scrollPane;
+    private final MessageChangeListener messageChangeListener;
+
+    public MessageStateChanger(final JScrollPane scrollPane, final MainForm mainForm) {
+        this.scrollPane = scrollPane;
+        this.messageChangeListener = new MessageChangeListener(scrollPane, mainForm);
+    }
+
+    public void enable() {
+        this.scrollPane.getVerticalScrollBar().getModel().addChangeListener(this.messageChangeListener);
+
+        // fire off an immediate check, as the app may have just got focus
+        final ChangeEvent event = new ChangeEvent(this.scrollPane.getVerticalScrollBar().getModel());
+        this.messageChangeListener.stateChanged(event);
+    }
+
+    public void disable() {
+        this.scrollPane.getVerticalScrollBar().getModel().removeChangeListener(this.messageChangeListener);
     }
 
     // TODO: Messages are not marked as read unless the window resizes or the scroll bar value changes.  So new chats don't get marked as unread.
