@@ -106,7 +106,7 @@ public final class MessageUtils {
     }
 
     private static String addEmoticon(final Emoticon emoticon, final String messageText) {
-        final Pattern p = Pattern.compile("<[iI][mM][gG] .+?/>|<[aA] .+?</[aA]>|" + emoticon.getRegexShortcut());
+        final Pattern p = Pattern.compile("<[iI][mM][gG] .+?/>|<[aA] .+?</[aA]>|&.+?;|" + emoticon.getRegexShortcut());
         final Matcher m = p.matcher(messageText);
         final StringBuffer changedMessageText = new StringBuffer();
 
@@ -117,6 +117,10 @@ public final class MessageUtils {
             }
             // ignore <img> tags
             else if ((m.group().length() >= 5) && (m.group().substring(0, 5).toLowerCase(Locale.getDefault()).equals("<img "))) {
+                m.appendReplacement(changedMessageText, Matcher.quoteReplacement(m.group()));
+            }
+            // ignore escaped html
+            else if (m.group().startsWith("&") && m.group().endsWith(";")) {
                 m.appendReplacement(changedMessageText, Matcher.quoteReplacement(m.group()));
             }
             else {

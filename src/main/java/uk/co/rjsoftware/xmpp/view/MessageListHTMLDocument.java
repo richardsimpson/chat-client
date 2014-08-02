@@ -123,10 +123,15 @@ public class MessageListHTMLDocument extends HTMLDocument {
             this.lastMessageDate = messageDate;
         }
 
+        // escape all HTML, except for <img> and <a> tags
         String messageBody = MessageUtils.escapeHtml(message.getBody());
+        // add HTML <a> tags around text that looks like web references (http(s)...)
         messageBody = MessageUtils.addLinks(messageBody);
+        // convert emoticons into Image tags
         messageBody = MessageUtils.addEmoticons(messageBody);
+        // convert carriage returns into <br> tags
         messageBody = MessageUtils.convertCarriageReturns(messageBody);
+        // convert leading spaces into non-breaking spaces (&nbsp;)
         messageBody = MessageUtils.convertLeadingSpacesAndTabs(messageBody);
 
         try {
