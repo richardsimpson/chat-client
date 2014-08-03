@@ -55,6 +55,7 @@ import java.util.Locale;
 public class MessageListHTMLDocument extends HTMLDocument {
 
     private static final char[] NEWLINE;
+    private static final String DODGER_BLUE = "#1E90FF";
 
     private int currentTableId;
     private Calendar lastMessageDate;
@@ -81,10 +82,10 @@ public class MessageListHTMLDocument extends HTMLDocument {
         Font font = new JLabel().getFont();
         String bodyRule = "body { font-family: " + font.getFamily() + "; "
                 + "font-size: " + font.getSize() + "pt; }";
-        String senderRule = ".sender {white-space: nowrap; color: blue;}";
+        String senderRule = ".sender {white-space: nowrap; color: " + DODGER_BLUE + ";}";
         String unreadSenderRule = ".unreadSender {white-space: nowrap; color: orange;}";
         String dateHeaderRule = ".dateHeader {font-weight:bold; padding-top: 4px; padding-bottom: 4px; margin-top: 5px; margin-left: 100px; border-style:solid; "
-                + "border-width:0px; border-bottom-width:1px; border-top-width:1px; border-color:#ADD8E6; }";
+                + "border-width:0px; border-bottom-width:1px; border-top-width:1px; border-color:" + DODGER_BLUE + "; }";
 
         getStyleSheet().addRule(bodyRule);
         getStyleSheet().addRule(senderRule);
