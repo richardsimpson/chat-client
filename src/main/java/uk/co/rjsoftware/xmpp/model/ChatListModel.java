@@ -29,8 +29,56 @@
  */
 package uk.co.rjsoftware.xmpp.model;
 
-import com.jgoodies.common.collect.ArrayListModel;
+import javax.swing.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
-public class ChatListModel extends ArrayListModel<ChatTarget> {
+public class ChatListModel extends AbstractListModel<ChatTarget> implements PropertyChangeListener, Iterable<ChatTarget> {
 
+    private final List<ChatTarget> chats = new ArrayList<ChatTarget>();
+
+    public ChatListModel() {
+        super();
+    }
+
+    public void add(final ChatTarget chat) {
+        chat.addPropertyChangeListener(ChatTarget.LATEST_MESSAGE_TIMESTAMP_PROPERTY_NAME, this);
+        this.chats.add(chat);
+        fireIntervalAdded(this, this.chats.size() - 1, this.chats.size() - 1);
+    }
+
+    public void remove(final ChatTarget chat) {
+        final int index = this.chats.indexOf(chat);
+        if (index != -1) {
+            this.chats.remove(index);
+            chat.removePropertyChangeListener(ChatTarget.LATEST_MESSAGE_TIMESTAMP_PROPERTY_NAME, this);
+            fireIntervalRemoved(this, index, index);
+        }
+    }
+
+    @Override
+    public int getSize() {
+        return this.chats.size();
+    }
+
+    @Override
+    public ChatTarget getElementAt(int index) {
+        return this.chats.get(index);
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent event) {
+        final int index = this.chats.indexOf(event.getSource());
+        if (index != -1) {
+            fireContentsChanged(this, index, index);
+        }
+    }
+
+    @Override
+    public Iterator<ChatTarget> iterator() {
+        return this.chats.iterator();
+    }
 }

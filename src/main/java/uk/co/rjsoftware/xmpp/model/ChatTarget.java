@@ -38,6 +38,7 @@ public interface ChatTarget {
 
     String TITLE_PROPERTY_NAME = "title";
     String NAME_PROPERTY_NAME = "name";
+    String LATEST_MESSAGE_TIMESTAMP_PROPERTY_NAME = "latestMessageTimestamp";
 
     void join(final CustomConnection customConnection);
 
@@ -62,4 +63,7 @@ public interface ChatTarget {
     void delete();
 
     void writeChatHistory();
+
+    long getLatestMessageTimestamp();
+
 }

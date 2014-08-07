@@ -57,6 +57,7 @@ import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smackx.muc.HostedRoom;
 import org.jivesoftware.smackx.muc.MultiUserChat;
+import uk.co.rjsoftware.xmpp.model.sortedmodel.SortedArrayListModel;
 
 import javax.swing.*;
 import javax.swing.text.StyledDocument;
@@ -65,6 +66,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -83,7 +85,8 @@ public class CustomConnection extends Model {
     private final Roster roster;
     private final UserListModel userListModel;
     private final RoomListModel roomListModel;
-    private final ChatListModel chatListModel = new ChatListModel();
+    private final ChatListModel internalChatListModel;
+    private final AbstractListModel<ChatTarget> chatListModel;
     private final int maxRoomCount;
     private User currentUser;
     private final String hipChatGroup;
@@ -96,6 +99,10 @@ public class CustomConnection extends Model {
     private final RecentChatPersistor recentChatPersistor;
 
     public CustomConnection(final String username, final String password, final int maxRoomCount) throws YaccException {
+        this.internalChatListModel = new ChatListModel();
+        this.chatListModel = new SortedArrayListModel<ChatTarget>(internalChatListModel, SortOrder.DESCENDING,
+                new TimestampComparator());
+
         this.maxRoomCount = maxRoomCount;
         // TODO: Put 'chat.hipchat.com' into config
         this.connection = new XMPPConnection("chat.hipchat.com");
@@ -193,7 +200,7 @@ public class CustomConnection extends Model {
                     final User user = CustomConnection.this.userListModel.get(chat.getParticipant());
 
                     if (user != null) {
-                        CustomConnection.this.chatListModel.add(user);
+                        CustomConnection.this.internalChatListModel.add(user);
                         user.joinExistingChat(CustomConnection.this, chat);
                         return;
                     }
@@ -259,7 +266,7 @@ public class CustomConnection extends Model {
     public void saveRecentChats() {
         this.recentChatPersistor.saveRecentChatList();
 
-        for (ChatTarget chatTarget : this.chatListModel) {
+        for (ChatTarget chatTarget : this.internalChatListModel) {
             chatTarget.writeChatHistory();
         }
     }
@@ -284,7 +291,7 @@ public class CustomConnection extends Model {
         return this.roomListModel;
     }
 
-    public ChatListModel getChatListModel() {
+    public AbstractListModel<ChatTarget> getChatListModel() {
         return this.chatListModel;
     }
 
@@ -311,7 +318,7 @@ public class CustomConnection extends Model {
      * Join a room that previously existed, and is known to this CustomConnection
      */
     public MultiUserChat joinRoom(final Room room) {
-        this.chatListModel.add(room);
+        this.internalChatListModel.add(room);
         return new MultiUserChat(this.connection, room.getRoomId());
     }
 
@@ -335,7 +342,7 @@ public class CustomConnection extends Model {
 //    }
 
     public Chat createChat(final User user) {
-        this.chatListModel.add(user);
+        this.internalChatListModel.add(user);
         return this.connection.getChatManager().createChat(user.getUserId(), null);
     }
 
@@ -395,7 +402,7 @@ public class CustomConnection extends Model {
     public void deleteCurrentChatTarget() {
         if (null != this.currentChatTarget) {
             this.currentChatTarget.delete();
-            this.chatListModel.remove(this.currentChatTarget);
+            this.internalChatListModel.remove(this.currentChatTarget);
             // assuming that the chat is a room, since one-2-one chats can't be deleted via Smack.
             this.roomListModel.remove((Room)this.currentChatTarget);
             setCurrentChatTarget(null);
@@ -452,4 +459,10 @@ public class CustomConnection extends Model {
         this.invitationListeners.add(listener);
     }
 
+    private static class TimestampComparator implements Comparator<ChatTarget> {
+        @Override
+        public int compare(final ChatTarget chatTarget1, final ChatTarget chatTarget2) {
+            return (int)(chatTarget1.getLatestMessageTimestamp() - chatTarget2.getLatestMessageTimestamp());
+        }
+    }
 }

@@ -69,7 +69,8 @@ public class RecentChatPersistor {
             throw new RuntimeException(exception);
         }
 
-        for (ChatTarget chatTarget : this.connection.getChatListModel()) {
+        for (int index = 0 ; index < this.connection.getChatListModel().getSize() ; index++) {
+            final ChatTarget chatTarget = this.connection.getChatListModel().getElementAt(index);
             printWriter.println(chatTarget.getClass().getSimpleName() + ":" + chatTarget.getId());
         }
 

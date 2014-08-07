@@ -77,6 +77,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
     private CustomMessageListModel customMessageListModel = new CustomMessageListModel();
     private final MessageListHTMLDocument messagesDocument;
     private Thread messageReceivingThread;
+    private long latestMessageTimestamp;
 
     private ChatPersistor chatPersistor;
 
@@ -84,7 +85,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
         this.roomId = roomId;
         this.name = name;
         this.messagesDocument = new MessageListHTMLDocument();
-        this.customMessageListModel.addListDataListener(new ChatListDataListener(this.customMessageListModel, this.messagesDocument));
+        this.customMessageListModel.addListDataListener(new ChatListDataListener(this));
     }
 
     // TODO: Remove getRoomId
@@ -353,12 +354,14 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
 
     private static final class ChatListDataListener implements ListDataListener {
 
+        private final Room room;
         private final CustomMessageListModel customMessageListModel;
         private final MessageListHTMLDocument messagesDocument;
 
-        private ChatListDataListener(final CustomMessageListModel customMessageListModel, final MessageListHTMLDocument messagesDocument) {
-            this.customMessageListModel = customMessageListModel;
-            this.messagesDocument = messagesDocument;
+        private ChatListDataListener(final Room room) {
+            this.room = room;
+            this.customMessageListModel = room.customMessageListModel;
+            this.messagesDocument = room.messagesDocument;
         }
 
         @Override
@@ -366,6 +369,11 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
             final int index = event.getIndex0();
             final CustomMessage message = this.customMessageListModel.get(index);
             this.messagesDocument.insertMessage(message, index);
+
+            // update 'latestMessageTimestamp in the ChatTarget (room)
+            if (message.getTimestamp() > this.room.latestMessageTimestamp) {
+                room.setLatestMessageTimestamp(message.getTimestamp());
+            }
         }
 
         @Override
@@ -424,6 +432,20 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
                 }
             }
         }
+    }
+
+    private void setLatestMessageTimestamp(final long latestMessageTimestamp) {
+        if (this.latestMessageTimestamp != latestMessageTimestamp) {
+            final long oldTimestamp = this.latestMessageTimestamp;
+            this.latestMessageTimestamp = latestMessageTimestamp;
+
+            firePropertyChange(LATEST_MESSAGE_TIMESTAMP_PROPERTY_NAME, oldTimestamp, latestMessageTimestamp);
+        }
+    }
+
+    @Override
+    public long getLatestMessageTimestamp() {
+        return this.latestMessageTimestamp;
     }
 
     public void cleanUp() {
