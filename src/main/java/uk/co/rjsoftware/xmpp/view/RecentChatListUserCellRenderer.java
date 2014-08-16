@@ -41,17 +41,25 @@ public class RecentChatListUserCellRenderer extends UserListCellRenderer {
     private JLabel unreadMessageCountLabel;
     private boolean componentInitialised;
 
+    public RecentChatListUserCellRenderer() {
+        this.unreadMessageCountPanel = new CirclePanel(new BorderLayout());
+        this.unreadMessageCountPanel.setOpaque(false);
+        this.unreadMessageCountPanel.setBorder(new EmptyBorder(0, 0, 0, 10));
+        this.unreadMessageCountLabel = new JLabel();
+
+        final Font font = this.unreadMessageCountLabel.getFont();
+        final Font newFont = new Font(font.getName(), Font.BOLD, font.getSize());
+        this.unreadMessageCountLabel.setFont(newFont);
+
+        this.unreadMessageCountPanel.add(this.unreadMessageCountLabel, BorderLayout.CENTER);
+    }
+
     @Override
     protected void setupMainPanel(JPanel mainPanel, JList<? extends User> list, User object, int index, boolean isSelected, boolean cellHasFocus) {
         super.setupMainPanel(mainPanel, list, object, index, isSelected, cellHasFocus);
 
         // add the unread message count panel
         if (!this.componentInitialised) {
-            this.unreadMessageCountPanel = new CirclePanel(new BorderLayout());
-            this.unreadMessageCountPanel.setOpaque(false);
-            this.unreadMessageCountPanel.setBorder(new EmptyBorder(0, 0, 0, 10));
-            this.unreadMessageCountLabel = new JLabel();
-            this.unreadMessageCountPanel.add(this.unreadMessageCountLabel, BorderLayout.CENTER);
             mainPanel.add(this.unreadMessageCountPanel, BorderLayout.LINE_END);
             this.componentInitialised = true;
         }
@@ -60,7 +68,7 @@ public class RecentChatListUserCellRenderer extends UserListCellRenderer {
             this.unreadMessageCountLabel.setForeground(list.getSelectionForeground());
         }
         else {
-            this.unreadMessageCountLabel.setForeground(list.getForeground());
+            this.unreadMessageCountLabel.setForeground(CirclePanel.DARK_ORANGE);
         }
 
         if (object.getUnreadMessageCount() == 0) {

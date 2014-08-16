@@ -30,7 +30,6 @@
 package uk.co.rjsoftware.xmpp.view;
 
 import uk.co.rjsoftware.xmpp.model.Room;
-import uk.co.rjsoftware.xmpp.model.User;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -42,17 +41,25 @@ public class RecentChatListRoomCellRenderer extends RoomListCellRenderer {
     private JLabel unreadMessageCountLabel;
     private boolean componentInitialised;
 
+    public RecentChatListRoomCellRenderer() {
+        this.unreadMessageCountPanel = new CirclePanel(new BorderLayout());
+        this.unreadMessageCountPanel.setOpaque(false);
+        this.unreadMessageCountPanel.setBorder(new EmptyBorder(0, 0, 0, 10));
+        this.unreadMessageCountLabel = new JLabel();
+
+        final Font font = this.unreadMessageCountLabel.getFont();
+        final Font newFont = new Font(font.getName(), Font.BOLD, font.getSize());
+        this.unreadMessageCountLabel.setFont(newFont);
+
+        this.unreadMessageCountPanel.add(this.unreadMessageCountLabel, BorderLayout.CENTER);
+    }
+
     @Override
     protected void setupMainPanel(JPanel mainPanel, JList<? extends Room> list, Room object, int index, boolean isSelected, boolean cellHasFocus) {
         super.setupMainPanel(mainPanel, list, object, index, isSelected, cellHasFocus);
 
         // add the unread message count panel
         if (!this.componentInitialised) {
-            this.unreadMessageCountPanel = new CirclePanel(new BorderLayout());
-            this.unreadMessageCountPanel.setOpaque(false);
-            this.unreadMessageCountPanel.setBorder(new EmptyBorder(0, 0, 0, 10));
-            this.unreadMessageCountLabel = new JLabel();
-            this.unreadMessageCountPanel.add(this.unreadMessageCountLabel, BorderLayout.CENTER);
             mainPanel.add(this.unreadMessageCountPanel, BorderLayout.LINE_END);
             this.componentInitialised = true;
         }
@@ -61,7 +68,7 @@ public class RecentChatListRoomCellRenderer extends RoomListCellRenderer {
             this.unreadMessageCountLabel.setForeground(list.getSelectionForeground());
         }
         else {
-            this.unreadMessageCountLabel.setForeground(list.getForeground());
+            this.unreadMessageCountLabel.setForeground(CirclePanel.DARK_ORANGE);
         }
 
         if (object.getUnreadMessageCount() == 0) {

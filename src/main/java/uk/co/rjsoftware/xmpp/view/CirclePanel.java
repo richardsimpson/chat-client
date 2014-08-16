@@ -34,9 +34,10 @@ import java.awt.*;
 
 public class CirclePanel extends JPanel {
 
-    private static final Color DARK_ORANGE = new Color(255, 157, 30);
     private static final int TOP_BORDER = 4;
     private static final int BOTTOM_BORDER = 4;
+
+    public static final Color DARK_ORANGE = new Color(255, 157, 30);
 
     public CirclePanel(final BorderLayout borderLayout) {
         super(borderLayout);
