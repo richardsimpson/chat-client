@@ -462,7 +462,17 @@ public class CustomConnection extends Model {
     private static class TimestampComparator implements Comparator<ChatTarget> {
         @Override
         public int compare(final ChatTarget chatTarget1, final ChatTarget chatTarget2) {
-            return (int)(chatTarget1.getLatestMessageTimestamp() - chatTarget2.getLatestMessageTimestamp());
+            final long timeDifference = chatTarget1.getLatestMessageTimestamp() - chatTarget2.getLatestMessageTimestamp();
+
+            if (timeDifference == 0) {
+                return 0;
+            }
+            if (timeDifference > 0) {
+                return 1;
+            }
+            else {
+                return -1;
+            }
         }
     }
 }
