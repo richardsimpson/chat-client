@@ -97,6 +97,10 @@ public class MessageStateChanger {
             this.mainForm = mainForm;
         }
 
+        // TODO: Wait 1 second to invoke the state changer, so that we only end up processing the state once.
+        // Currently, this is being processed multiple times, because a single change to the scroll bar is causing multiple
+        // change events
+
         @Override
         public void stateChanged(final ChangeEvent event) {
             final StateChanger stateChanger = new StateChanger(this.pendingElementsToChange, this.scrollableComponent, this.mainForm, event);
@@ -295,7 +299,7 @@ public class MessageStateChanger {
                                         1, divAttributes, false);
 
                                 // set the element to be 'read' in the model
-                                this.currentChatTarget.getCustomMessageListModel().get(elementIdsToChange.get(index)).setRead(true);
+                                this.currentChatTarget.setMessageRead(elementIdsToChange.get(index));
                             }
                         }
 

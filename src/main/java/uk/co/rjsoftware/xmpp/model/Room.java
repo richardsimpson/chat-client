@@ -78,6 +78,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
     private final MessageListHTMLDocument messagesDocument;
     private Thread messageReceivingThread;
     private long latestMessageTimestamp;
+    private int unreadMessageCount;
 
     private ChatPersistor chatPersistor;
 
@@ -372,7 +373,11 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
 
             // update 'latestMessageTimestamp in the ChatTarget (room)
             if (message.getTimestamp() > this.room.latestMessageTimestamp) {
-                room.setLatestMessageTimestamp(message.getTimestamp());
+                this.room.setLatestMessageTimestamp(message.getTimestamp());
+            }
+
+            if (!message.isRead()) {
+                this.room.setUnreadMessageCount(this.room.getUnreadMessageCount()+1);
             }
         }
 
@@ -446,6 +451,30 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
     @Override
     public long getLatestMessageTimestamp() {
         return this.latestMessageTimestamp;
+    }
+
+    private void setUnreadMessageCount(final int unreadMessageCount) {
+        if (this.unreadMessageCount != unreadMessageCount) {
+            final long oldUnreadMessageCount = this.unreadMessageCount;
+            this.unreadMessageCount = unreadMessageCount;
+
+            firePropertyChange(UNREAD_MESSAGE_COUNT_PROPERTY_NAME, oldUnreadMessageCount, unreadMessageCount);
+        }
+    }
+
+    @Override
+    public int getUnreadMessageCount() {
+        return this.unreadMessageCount;
+    }
+
+    @Override
+    public void setMessageRead(final Integer messageIndex) {
+        CustomMessage message = this.customMessageListModel.get(messageIndex);
+
+        if (!message.isRead()) {
+            message.setRead(true);
+            setUnreadMessageCount(this.unreadMessageCount-1);
+        }
     }
 
     public void cleanUp() {

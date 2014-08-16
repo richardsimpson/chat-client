@@ -39,6 +39,7 @@ public interface ChatTarget {
     String TITLE_PROPERTY_NAME = "title";
     String NAME_PROPERTY_NAME = "name";
     String LATEST_MESSAGE_TIMESTAMP_PROPERTY_NAME = "latestMessageTimestamp";
+    String UNREAD_MESSAGE_COUNT_PROPERTY_NAME = "unreadMessageCount";
 
     void join(final CustomConnection customConnection);
 
@@ -66,4 +67,7 @@ public interface ChatTarget {
 
     long getLatestMessageTimestamp();
 
+    int getUnreadMessageCount();
+
+    void setMessageRead(Integer messageIndex);
 }

@@ -61,6 +61,7 @@ public class User extends Model implements Comparable<User>, ChatTarget {
     private final MessageListHTMLDocument messagesDocument;
     private CustomConnection customConnection;
     private long latestMessageTimestamp;
+    private int unreadMessageCount;
 
     private ChatPersistor chatPersistor;
 
@@ -281,7 +282,11 @@ public class User extends Model implements Comparable<User>, ChatTarget {
 
             // update 'latestMessageTimestamp in the ChatTarget (room)
             if (message.getTimestamp() > this.user.latestMessageTimestamp) {
-                user.setLatestMessageTimestamp(message.getTimestamp());
+                this.user.setLatestMessageTimestamp(message.getTimestamp());
+            }
+
+            if (!message.isRead()) {
+                this.user.setUnreadMessageCount(this.user.getUnreadMessageCount() + 1);
             }
         }
 
@@ -324,6 +329,33 @@ public class User extends Model implements Comparable<User>, ChatTarget {
     @Override
     public long getLatestMessageTimestamp() {
         return this.latestMessageTimestamp;
+    }
+
+    private void setUnreadMessageCount(final int unreadMessageCount) {
+//        why is this being called twice??  Is the MessageStateChanger being called
+//        twice when a message is added?
+
+        if (this.unreadMessageCount != unreadMessageCount) {
+            final long oldUnreadMessageCount = this.unreadMessageCount;
+            this.unreadMessageCount = unreadMessageCount;
+
+            firePropertyChange(UNREAD_MESSAGE_COUNT_PROPERTY_NAME, oldUnreadMessageCount, unreadMessageCount);
+        }
+    }
+
+    @Override
+    public int getUnreadMessageCount() {
+        return this.unreadMessageCount;
+    }
+
+    @Override
+    public void setMessageRead(final Integer messageIndex) {
+        CustomMessage message = this.customMessageListModel.get(messageIndex);
+
+        if (!message.isRead()) {
+            message.setRead(true);
+            setUnreadMessageCount(this.unreadMessageCount-1);
+        }
     }
 
     @Override

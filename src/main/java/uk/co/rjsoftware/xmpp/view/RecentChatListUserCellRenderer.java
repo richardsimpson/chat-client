@@ -29,28 +29,46 @@
  */
 package uk.co.rjsoftware.xmpp.view;
 
-import uk.co.rjsoftware.xmpp.model.ChatTarget;
-import uk.co.rjsoftware.xmpp.model.Room;
 import uk.co.rjsoftware.xmpp.model.User;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
-public class RecentChatListCellRenderer implements ListCellRenderer<ChatTarget> {
+public class RecentChatListUserCellRenderer extends UserListCellRenderer {
 
-    private RecentChatListUserCellRenderer userListCellRenderer = new RecentChatListUserCellRenderer();
-    private RoomListCellRenderer roomListCellRenderer = new RoomListCellRenderer();
+    private JPanel unreadMessageCountPanel;
+    private JLabel unreadMessageCountLabel;
+    private boolean componentInitialised;
 
     @Override
-    public Component getListCellRendererComponent(JList<? extends ChatTarget> list, ChatTarget chatTarget, int index, boolean isSelected, boolean cellHasFocus) {
-        if (chatTarget instanceof User) {
-            return userListCellRenderer.getListCellRendererComponent((JList<? extends User>)list, (User)chatTarget, index, isSelected, cellHasFocus);
+    protected void setupMainPanel(JPanel mainPanel, JList<? extends User> list, User object, int index, boolean isSelected, boolean cellHasFocus) {
+        super.setupMainPanel(mainPanel, list, object, index, isSelected, cellHasFocus);
+
+        // add the unread message count panel
+        if (!this.componentInitialised) {
+            this.unreadMessageCountPanel = new JPanel(new BorderLayout());
+            this.unreadMessageCountPanel.setOpaque(false);
+            this.unreadMessageCountPanel.setBorder(new EmptyBorder(0, 0, 0, 10));
+            this.unreadMessageCountLabel = new JLabel();
+            this.unreadMessageCountPanel.add(this.unreadMessageCountLabel, BorderLayout.CENTER);
+            mainPanel.add(this.unreadMessageCountPanel, BorderLayout.LINE_END);
+            this.componentInitialised = true;
         }
-        else if (chatTarget instanceof Room) {
-            return roomListCellRenderer.getListCellRendererComponent((JList<? extends Room>)list, (Room)chatTarget, index, isSelected, cellHasFocus);
+
+        if (isSelected) {
+            this.unreadMessageCountLabel.setForeground(list.getSelectionForeground());
         }
         else {
-            throw new RuntimeException("unexpected ChatTarget class: " + chatTarget.getClass().getCanonicalName());
+            this.unreadMessageCountLabel.setForeground(list.getForeground());
+        }
+
+        if (object.getUnreadMessageCount() == 0) {
+            this.unreadMessageCountLabel.setText("");
+        }
+        else {
+            this.unreadMessageCountLabel.setText(Integer.toString(object.getUnreadMessageCount()));
         }
     }
+
 }

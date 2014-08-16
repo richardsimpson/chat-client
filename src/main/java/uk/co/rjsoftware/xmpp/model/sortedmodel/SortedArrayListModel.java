@@ -94,9 +94,19 @@ public class SortedArrayListModel<E> extends AbstractListModel<E> {
         return insertionPoint;
     }
 
-    private void unsortedContentsChanged(ListDataEvent e) {
+    private void unsortedContentsChanged(ListDataEvent event) {
+        ArrayList<SortedListEntry> originalSortedModel = new ArrayList<SortedListEntry>(this.sortedModel);
+
         Collections.sort(sortedModel);
-        fireContentsChanged(this, 0, sortedModel.size()-1);
+
+        if (originalSortedModel.equals(this.sortedModel)) {
+            // list order hasn't changed.  Only fire an event for the item(s) that we were notified about
+            fireContentsChanged(this, event.getIndex0(), event.getIndex1());
+        }
+        else {
+            // list order has changed - fire an event saying that all elements have changed.
+            fireContentsChanged(this, 0, sortedModel.size()-1);
+        }
     }
 
     private void unsortedIntervalAdded(ListDataEvent e) {

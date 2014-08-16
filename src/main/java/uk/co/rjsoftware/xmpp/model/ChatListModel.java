@@ -46,6 +46,7 @@ public class ChatListModel extends AbstractListModel<ChatTarget> implements Prop
 
     public void add(final ChatTarget chat) {
         chat.addPropertyChangeListener(ChatTarget.LATEST_MESSAGE_TIMESTAMP_PROPERTY_NAME, this);
+        chat.addPropertyChangeListener(ChatTarget.UNREAD_MESSAGE_COUNT_PROPERTY_NAME, this);
         this.chats.add(chat);
         fireIntervalAdded(this, this.chats.size() - 1, this.chats.size() - 1);
     }
@@ -55,6 +56,7 @@ public class ChatListModel extends AbstractListModel<ChatTarget> implements Prop
         if (index != -1) {
             this.chats.remove(index);
             chat.removePropertyChangeListener(ChatTarget.LATEST_MESSAGE_TIMESTAMP_PROPERTY_NAME, this);
+            chat.removePropertyChangeListener(ChatTarget.UNREAD_MESSAGE_COUNT_PROPERTY_NAME, this);
             fireIntervalRemoved(this, index, index);
         }
     }
