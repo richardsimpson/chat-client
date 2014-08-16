@@ -68,7 +68,7 @@ public class RecentChatListUserCellRenderer extends UserListCellRenderer {
             this.unreadMessageCountLabel.setForeground(list.getSelectionForeground());
         }
         else {
-            this.unreadMessageCountLabel.setForeground(CirclePanel.DARK_ORANGE);
+            this.unreadMessageCountLabel.setForeground(Colours.DARK_ORANGE);
         }
 
         if (object.getUnreadMessageCount() == 0) {

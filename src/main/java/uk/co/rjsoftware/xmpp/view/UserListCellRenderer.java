@@ -53,7 +53,7 @@ public class UserListCellRenderer extends GenericListCellRenderer<User> {
     @Override
     protected void setupStatusLabel(JLabel statusLabel, JList<? extends User> list, User user, int index, boolean isSelected, boolean cellHasFocus) {
         super.setupStatusLabel(statusLabel, list, user, index, isSelected, cellHasFocus);
-        statusLabel.setIcon(user.getHighestStatus().getImageIcon());
+        statusLabel.setIcon(user.getStatusIcon());
     }
 
 }

@@ -31,6 +31,7 @@ package uk.co.rjsoftware.xmpp.model;
 
 import uk.co.rjsoftware.xmpp.client.CustomConnection;
 
+import javax.swing.*;
 import javax.swing.text.StyledDocument;
 import java.beans.PropertyChangeListener;
 
@@ -48,6 +49,8 @@ public interface ChatTarget {
     String getName();
 
     String getTitle();
+
+    ImageIcon getStatusIcon();
 
     CustomMessageListModel getCustomMessageListModel();
 

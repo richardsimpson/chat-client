@@ -148,6 +148,11 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
     }
 
     @Override
+    public ImageIcon getStatusIcon() {
+        return this.privacy.getImageIcon();
+    }
+
+    @Override
     public int compareTo(final Room room) {
         return this.name.toUpperCase(Locale.getDefault()).compareTo(room.name.toUpperCase(Locale.getDefault()));
     }

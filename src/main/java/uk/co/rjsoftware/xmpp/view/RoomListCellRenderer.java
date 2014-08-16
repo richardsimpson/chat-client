@@ -48,6 +48,6 @@ public class RoomListCellRenderer extends GenericListCellRenderer<Room> {
     @Override
     protected void setupStatusLabel(JLabel statusLabel, JList<? extends Room> list, Room room, int index, boolean isSelected, boolean cellHasFocus) {
         super.setupStatusLabel(statusLabel, list, room, index, isSelected, cellHasFocus);
-        statusLabel.setIcon(room.getPrivacy().getImageIcon());
+        statusLabel.setIcon(room.getStatusIcon());
     }
 }

@@ -29,33 +29,11 @@
  */
 package uk.co.rjsoftware.xmpp.view;
 
-import javax.swing.*;
 import java.awt.*;
 
-public class CirclePanel extends JPanel {
+public final class Colours {
 
-    private static final int TOP_BORDER = 4;
-    private static final int BOTTOM_BORDER = 4;
+    public static final Color DARK_ORANGE = new Color(255, 157, 30);
 
-    public CirclePanel(final BorderLayout borderLayout) {
-        super(borderLayout);
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-
-        g.setColor(Colours.DARK_ORANGE);
-
-        final Insets insets = getBorder().getBorderInsets(this);
-
-        final int x = insets.left;
-        final int y = insets.top + TOP_BORDER;
-        final int width = g.getClipBounds().width - insets.left - insets.right;
-        final int height = g.getClipBounds().height - insets.top - insets.bottom - TOP_BORDER - BOTTOM_BORDER;
-        final int arcWidth = height - (height/4);
-        final int arcHeight = arcWidth;
-        g.drawRoundRect(x, y, width, height, arcWidth, arcHeight);
-    }
+    private Colours() {};
 }
-

@@ -38,6 +38,7 @@ import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Message;
 import uk.co.rjsoftware.xmpp.view.MessageListHTMLDocument;
 
+import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.text.StyledDocument;
@@ -154,6 +155,11 @@ public class User extends Model implements Comparable<User>, ChatTarget {
     @Override
     public String toString() {
         return this.name;
+    }
+
+    @Override
+    public ImageIcon getStatusIcon() {
+        return getHighestStatus().getImageIcon();
     }
 
     @Override
