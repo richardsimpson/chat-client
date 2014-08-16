@@ -34,6 +34,10 @@ import java.awt.*;
 
 public class CirclePanel extends JPanel {
 
+    private static final Color DARK_ORANGE = new Color(255, 157, 30);
+    private static final int TOP_BORDER = 4;
+    private static final int BOTTOM_BORDER = 4;
+
     public CirclePanel(final BorderLayout borderLayout) {
         super(borderLayout);
     }
@@ -42,16 +46,16 @@ public class CirclePanel extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        g.setColor(new Color(255, 157, 30));  //Dark Orange
+        g.setColor(DARK_ORANGE);
 
         final Insets insets = getBorder().getBorderInsets(this);
 
         final int x = insets.left;
-        final int y = insets.top + 4;
+        final int y = insets.top + TOP_BORDER;
         final int width = g.getClipBounds().width - insets.left - insets.right;
-        final int height = g.getClipBounds().height - insets.top - insets.bottom - 8;
-        final int arcWidth = height - (height/4); //(width-x) / 2;
-        final int arcHeight = arcWidth; //arcWidth;
+        final int height = g.getClipBounds().height - insets.top - insets.bottom - TOP_BORDER - BOTTOM_BORDER;
+        final int arcWidth = height - (height/4);
+        final int arcHeight = arcWidth;
         g.drawRoundRect(x, y, width, height, arcWidth, arcHeight);
     }
 }

@@ -64,7 +64,8 @@ public class RecentChatListUserCellRenderer extends UserListCellRenderer {
         }
 
         if (object.getUnreadMessageCount() == 0) {
-            this.unreadMessageCountLabel.setText("");
+            mainPanel.remove(this.unreadMessageCountPanel);
+            this.componentInitialised = false;
         }
         else {
             this.unreadMessageCountLabel.setText(" " + Integer.toString(object.getUnreadMessageCount()) + " ");
