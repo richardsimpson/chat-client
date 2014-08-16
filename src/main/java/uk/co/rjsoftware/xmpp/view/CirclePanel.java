@@ -29,46 +29,30 @@
  */
 package uk.co.rjsoftware.xmpp.view;
 
-import uk.co.rjsoftware.xmpp.model.User;
-
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
-public class RecentChatListUserCellRenderer extends UserListCellRenderer {
+public class CirclePanel extends JPanel {
 
-    private JPanel unreadMessageCountPanel;
-    private JLabel unreadMessageCountLabel;
-    private boolean componentInitialised;
-
-    @Override
-    protected void setupMainPanel(JPanel mainPanel, JList<? extends User> list, User object, int index, boolean isSelected, boolean cellHasFocus) {
-        super.setupMainPanel(mainPanel, list, object, index, isSelected, cellHasFocus);
-
-        // add the unread message count panel
-        if (!this.componentInitialised) {
-            this.unreadMessageCountPanel = new CirclePanel(new BorderLayout());
-            this.unreadMessageCountPanel.setOpaque(false);
-            this.unreadMessageCountPanel.setBorder(new EmptyBorder(0, 0, 0, 10));
-            this.unreadMessageCountLabel = new JLabel();
-            this.unreadMessageCountPanel.add(this.unreadMessageCountLabel, BorderLayout.CENTER);
-            mainPanel.add(this.unreadMessageCountPanel, BorderLayout.LINE_END);
-            this.componentInitialised = true;
-        }
-
-        if (isSelected) {
-            this.unreadMessageCountLabel.setForeground(list.getSelectionForeground());
-        }
-        else {
-            this.unreadMessageCountLabel.setForeground(list.getForeground());
-        }
-
-        if (object.getUnreadMessageCount() == 0) {
-            this.unreadMessageCountLabel.setText("");
-        }
-        else {
-            this.unreadMessageCountLabel.setText(" " + Integer.toString(object.getUnreadMessageCount()) + " ");
-        }
+    public CirclePanel(final BorderLayout borderLayout) {
+        super(borderLayout);
     }
 
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+
+        g.setColor(new Color(255, 157, 30));  //Dark Orange
+
+        final Insets insets = getBorder().getBorderInsets(this);
+
+        final int x = insets.left;
+        final int y = insets.top + 4;
+        final int width = g.getClipBounds().width - insets.left - insets.right;
+        final int height = g.getClipBounds().height - insets.top - insets.bottom - 8;
+        final int arcWidth = height - (height/4); //(width-x) / 2;
+        final int arcHeight = arcWidth; //arcWidth;
+        g.drawRoundRect(x, y, width, height, arcWidth, arcHeight);
+    }
 }
+
