@@ -150,7 +150,14 @@
             <property name="tokens" value="DOT"/>
             <property name="allowLineBreaks" value="true"/>
         </module>
-        <module name="OperatorWrap"/>
+        <module name="OperatorWrap">
+            <property name="option" value="eol"/>
+            <property name="tokens" value="PLUS"/>
+        </module>
+        <module name="OperatorWrap">
+            <property name="option" value="nl"/>
+            <property name="tokens" value="BAND, BOR, BSR, BXOR, COLON, DIV, EQUAL, GE, GT, LAND, LE, LITERAL_INSTANCEOF, LOR, LT, MINUS, MOD, NOT_EQUAL, QUESTION, SL, SR, STAR"/>
+        </module>
         <module name="ParenPad"/>
         <module name="TypecastParenPad"/>
         <module name="WhitespaceAfter">

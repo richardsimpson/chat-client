@@ -450,8 +450,8 @@ public class MainForm extends JFrame {
             public void actionPerformed(ActionEvent event) {
                 // Display delete room dialog
                 final Object[] options = {"Delete", "Cancel"};
-                final int selectedOption = JOptionPane.showOptionDialog(MainForm.this, "Are you sure you want to delete the room '"
-                        + connection.getCurrentChatTarget().getName() + "'?",
+                final int selectedOption = JOptionPane.showOptionDialog(MainForm.this, "Are you sure you want to delete the room '" +
+                        connection.getCurrentChatTarget().getName() + "'?",
                         "Delete Room", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null,
                         options, options[1]);
                 if (0 == selectedOption) {

@@ -80,12 +80,12 @@ public class MessageListHTMLDocument extends HTMLDocument {
         clear();
 
         Font font = new JLabel().getFont();
-        String bodyRule = "body { font-family: " + font.getFamily() + "; "
-                + "font-size: " + font.getSize() + "pt; }";
+        String bodyRule = "body { font-family: " + font.getFamily() + "; " +
+                "font-size: " + font.getSize() + "pt; }";
         String senderRule = ".sender {white-space: nowrap; color: " + DODGER_BLUE + ";}";
         String unreadSenderRule = ".unreadSender {white-space: nowrap; color: orange;}";
-        String dateHeaderRule = ".dateHeader {font-weight:bold; padding-top: 4px; padding-bottom: 4px; margin-top: 5px; margin-left: 100px; border-style:solid; "
-                + "border-width:0px; border-bottom-width:1px; border-top-width:1px; border-color:" + DODGER_BLUE + "; }";
+        String dateHeaderRule = ".dateHeader {font-weight:bold; padding-top: 4px; padding-bottom: 4px; margin-top: 5px; margin-left: 100px; border-style:solid; " +
+                "border-width:0px; border-bottom-width:1px; border-top-width:1px; border-color:" + DODGER_BLUE + "; }";
 
         getStyleSheet().addRule(bodyRule);
         getStyleSheet().addRule(senderRule);
@@ -145,10 +145,10 @@ public class MessageListHTMLDocument extends HTMLDocument {
             }
 
             insertBeforeEnd(getElement("t" + this.currentTableId),
-                    "<tr>"
-                            + "<td id='" + messageNumber + "' width='125' class='" + senderClassName + "' align='right' valign='top'>" + message.getSender() + "</td>"
-                            + "<td valign='top'>" + messageBody + "</td>"
-                            + "<td width='42' valign='top'>" + formatter.format(date) + "</td></tr>");
+                    "<tr>" +
+                            "<td id='" + messageNumber + "' width='125' class='" + senderClassName + "' align='right' valign='top'>" + message.getSender() + "</td>" +
+                            "<td valign='top'>" + messageBody + "</td>" +
+                            "<td width='42' valign='top'>" + formatter.format(date) + "</td></tr>");
         } catch (BadLocationException exception) {
             throw new RuntimeException(exception);
         } catch (IOException exception) {
@@ -168,8 +168,8 @@ public class MessageListHTMLDocument extends HTMLDocument {
             else {
                 this.currentTableId++;
                 insertAfterEnd(element,
-                        "<div class='dateHeader'>" + this.dateFormatter.format(messageDate.getTime())  + "</div>"
-                        + "<table id='t" + this.currentTableId + "' style='width:100%'></table>");
+                        "<div class='dateHeader'>" + this.dateFormatter.format(messageDate.getTime())  + "</div>" +
+                                "<table id='t" + this.currentTableId + "' style='width:100%'></table>");
             }
         } catch (BadLocationException exception) {
             throw new RuntimeException(exception);
