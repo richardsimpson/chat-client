@@ -99,7 +99,6 @@ public final class Main {
             exceptionForm.setVisible(true);
         }
     }
-    // TODO: Bug Fix: If logout, then close the login form, the app doesn't terminate.  It does if close login form without logging in.
 
     private void createAndShowLoginForm() {
         this.loginForm = new LoginForm();
@@ -126,7 +125,6 @@ public final class Main {
 
         final CustomConnection connection = new CustomConnection(username, password, this.maxRoomCount);
 
-        // TODO: Check if this is the correct way to 'close' a JFrame
         this.loginForm.setVisible(false);
 
         final MainForm mainForm = new MainForm("YACC", connection, this.yaccProperties, this.hipChatEmoticons);

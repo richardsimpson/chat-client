@@ -78,8 +78,6 @@ public class MessageStateChanger {
         this.messageChangeListener.stateChanged(event);
     }
 
-    // TODO: Messages are not marked as read unless the window resizes or the scroll bar value changes.  So new chats don't get marked as unread.
-
     private static final class MessageChangeListener implements ChangeListener {
 
         // is pendingElementsToChange really required?
