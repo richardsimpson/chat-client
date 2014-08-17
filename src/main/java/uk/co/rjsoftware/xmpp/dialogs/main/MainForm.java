@@ -40,6 +40,7 @@ import uk.co.rjsoftware.xmpp.dialogs.DialogUtils;
 import uk.co.rjsoftware.xmpp.dialogs.createroom.CreateRoomForm;
 import uk.co.rjsoftware.xmpp.dialogs.createroom.NewRoomListener;
 import uk.co.rjsoftware.xmpp.dialogs.inviteusers.InviteUsersForm;
+import uk.co.rjsoftware.xmpp.dialogs.notification.NotificationHelper;
 import uk.co.rjsoftware.xmpp.dialogs.settings.SettingsForm;
 import uk.co.rjsoftware.xmpp.model.ChatTarget;
 import uk.co.rjsoftware.xmpp.model.CustomMessageListModel;
@@ -283,13 +284,17 @@ public class MainForm extends JFrame {
             @Override
             public void windowGainedFocus(WindowEvent e) {
                 System.out.println("Main Windows has Gained Focus");
+                // enable the setting of messages to 'read', and disable the notification popups
                 stateChanger.enable();
+                NotificationHelper.disable();
             }
 
             @Override
             public void windowLostFocus(WindowEvent e) {
                 System.out.println("Main Windows has Lost Focus");
+                // disable the setting of messages to 'read', and enable the notification popups
                 stateChanger.disable();
+                NotificationHelper.enable();
             }
         });
 

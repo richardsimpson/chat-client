@@ -42,6 +42,7 @@ import org.jivesoftware.smack.packet.PacketExtension;
 import org.jivesoftware.smackx.muc.DiscussionHistory;
 import org.jivesoftware.smackx.muc.MultiUserChat;
 import org.jivesoftware.smackx.packet.DelayInfo;
+import uk.co.rjsoftware.xmpp.dialogs.notification.NotificationHelper;
 import uk.co.rjsoftware.xmpp.view.MessageListHTMLDocument;
 
 import javax.swing.*;
@@ -105,7 +106,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
     }
 
     public void setName(final String name) {
-        if (this.name != name) {
+        if (!name.equals(this.name)) {
             final String oldNameValue = this.name;
             this.name = name;
             firePropertyChange(ChatTarget.NAME_PROPERTY_NAME, oldNameValue, name);
@@ -117,7 +118,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
     }
 
     private void doSetSubject(final String subject) {
-        if (this.subject != subject) {
+        if (!subject.equals(this.subject)) {
             final String oldSubjectValue = this.subject;
             final String oldTitleValue = oldSubjectValue;
 
@@ -328,6 +329,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
                 if (messagePayload.getCustomMessage() != null) {
                     if (isNewMessage(messagePayload.getCustomMessage())) {
                         this.customMessageListModel.add(messagePayload.getCustomMessage());
+                        NotificationHelper.addMessage(this.room, messagePayload.getCustomMessage());
                     }
                 }
                 else if (messagePayload.getSubject() != null) {
@@ -540,7 +542,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
     }
 
     public void setOwnerId(String ownerId) {
-        if (this.ownerId != ownerId) {
+        if (!ownerId.equals(this.ownerId)) {
             final String oldValue = this.ownerId;
             this.ownerId = ownerId;
             this.occupantsModel.setOwnerId(ownerId);

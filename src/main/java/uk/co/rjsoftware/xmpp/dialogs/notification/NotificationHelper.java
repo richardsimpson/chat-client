@@ -41,10 +41,23 @@ public final class NotificationHelper {
     private static NotificationForm notificationForm;
     private static int currentMessageCount;
     private static NotificationCloseTimer currentTimer;
+    private static boolean enabled;
 
     private NotificationHelper() {}
 
+    public static void enable() {
+        enabled = true;
+    }
+
+    public static void disable() {
+        enabled = false;
+    }
+
     public static synchronized void addMessage(final ChatTarget chatTarget, final CustomMessage message) {
+        if (!enabled) {
+            return;
+        }
+
         // stop the old timer
         if (null != currentTimer) {
             currentTimer.stop();

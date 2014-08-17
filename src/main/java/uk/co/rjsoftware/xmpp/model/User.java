@@ -36,6 +36,7 @@ import org.jivesoftware.smack.Chat;
 import org.jivesoftware.smack.MessageListener;
 import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Message;
+import uk.co.rjsoftware.xmpp.dialogs.notification.NotificationHelper;
 import uk.co.rjsoftware.xmpp.view.MessageListHTMLDocument;
 
 import javax.swing.*;
@@ -174,7 +175,7 @@ public class User extends Model implements Comparable<User>, ChatTarget {
             this.chatPersistor.readChatHistory();
             this.customConnection = customConnection;
             this.chat = customConnection.createChat(this);
-            this.chat.addMessageListener(new UserMessageListener(this.userId, this.name, customConnection, this.customMessageListModel));
+            this.chat.addMessageListener(new UserMessageListener(this, customConnection));
         }
     }
 
@@ -184,23 +185,24 @@ public class User extends Model implements Comparable<User>, ChatTarget {
             this.chatPersistor.readChatHistory();
             this.customConnection = customConnection;
             this.chat = chat;
-            this.chat.addMessageListener(new UserMessageListener(this.userId, this.name, customConnection, this.customMessageListModel));
+            this.chat.addMessageListener(new UserMessageListener(this, customConnection));
         }
     }
 
     private static class UserMessageListener implements MessageListener {
 
+        private final User user;
         private final String otherUserId;
         private final String otherUsername;
         private final CustomConnection customConnection;
         private final CustomMessageListModel customMessageListModel;
 
-        public UserMessageListener(final String otherUserId, final String otherUsername, final CustomConnection customConnection,
-                                   final CustomMessageListModel customMessageListModel) {
-            this.otherUserId = otherUserId;
-            this.otherUsername = otherUsername;
+        public UserMessageListener(final User user, final CustomConnection customConnection) {
+            this.user = user;
+            this.otherUserId = user.userId;
+            this.otherUsername = user.name;
             this.customConnection = customConnection;
-            this.customMessageListModel = customMessageListModel;
+            this.customMessageListModel = user.customMessageListModel;
         }
 
         @Override
@@ -242,6 +244,7 @@ public class User extends Model implements Comparable<User>, ChatTarget {
                         }
                         final CustomMessage customMessage = new CustomMessage(extractTimestamp(message), username, message.getBody());
                         this.customMessageListModel.add(customMessage);
+                        NotificationHelper.addMessage(this.user, customMessage);
                     }
                 default: // do nothing
             }
