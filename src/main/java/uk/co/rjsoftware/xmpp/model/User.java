@@ -230,7 +230,7 @@ public class User extends Model implements Comparable<User>, ChatTarget {
                 case chat:
                 case groupchat:
                     if (message.getBody() != null) {
-                        // chec the sender (message.from) - e.g. 380.._nnnnnn@chat.hipchat.com..., and look it
+                        // check the sender (message.from) - e.g. 380.._nnnnnn@chat.hipchat.com..., and look it
                         // up.  It's not always going to be the other person - it could be the current user
                         // typing in another chat client.
                         String username;
