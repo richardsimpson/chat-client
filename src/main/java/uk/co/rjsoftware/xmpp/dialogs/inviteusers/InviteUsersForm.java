@@ -164,7 +164,7 @@ public class InviteUsersForm extends JDialog {
     private void sendInvites() {
         for (int index = 0 ; index < this.selectedUserListModel.getSize() ; index++) {
             final User user = this.selectedUserListModel.getElementAt(index);
-            ((Room)this.connection.getCurrentChatTarget()).invite(user.getUserId(), "");
+            ((Room)this.connection.getCurrentChatTarget()).invite(user.getId(), "");
         }
 
         dispose();

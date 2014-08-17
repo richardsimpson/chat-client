@@ -437,7 +437,7 @@ public class MainForm extends JFrame {
                     } finally {
                         MainForm.this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                     }
-                    final Room room = connection.getRoomListModel().get(((Room)connection.getCurrentChatTarget()).getRoomId());
+                    final Room room = connection.getRoomListModel().get(((Room)connection.getCurrentChatTarget()).getId());
                     if (room != null) {
                         room.setName(result);
                     }
@@ -497,7 +497,7 @@ public class MainForm extends JFrame {
                 MainForm.this.currentChatTarget = (ChatTarget)event.getNewValue();
                 if (event.getNewValue() instanceof Room) {
                     final Room currentRoom = (Room)event.getNewValue();
-                    final boolean isOwner = connection.getCurrentUser().getUserId().equals(currentRoom.getOwnerId());
+                    final boolean isOwner = connection.getCurrentUser().getId().equals(currentRoom.getOwnerId());
                     roomSettingsButton.setVisible(true);
                     renameRoomMenuItem.setEnabled(isOwner);
                     deleteRoomMenuItem.setEnabled(isOwner);

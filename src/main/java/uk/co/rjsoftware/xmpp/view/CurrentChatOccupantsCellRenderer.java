@@ -71,7 +71,7 @@ public class CurrentChatOccupantsCellRenderer extends UserListCellRenderer {
             this.ownerId = this.userListModel.getOwnerId();
         }
 
-        if ((this.ownerId != null) && (this.ownerId.equals(user.getUserId()))) {
+        if ((this.ownerId != null) && (this.ownerId.equals(user.getId()))) {
             nameLabel.setFont(boldFont);
         }
         else {

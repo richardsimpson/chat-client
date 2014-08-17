@@ -74,7 +74,7 @@ public class RoomListModel extends AbstractListModel<Room> implements PropertyCh
 
     private int indexOf(final String roomId) {
         for (int index = 0 ; index < this.rooms.size() ; index++) {
-            if (this.rooms.get(index).getRoomId().equals(roomId)) {
+            if (this.rooms.get(index).getId().equals(roomId)) {
                 return index;
             }
         }

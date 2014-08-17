@@ -57,7 +57,7 @@ public class RecentChatPersistor {
     }
 
     public void saveRecentChatList() {
-        final String filename = getChatListFilename(this.connection.getCurrentUser().getUserId());
+        final String filename = getChatListFilename(this.connection.getCurrentUser().getId());
 
         final File file = new File(filename);
         file.getParentFile().mkdirs();
@@ -79,7 +79,7 @@ public class RecentChatPersistor {
     }
 
     public void loadRecentChatList() {
-        final String filename = getChatListFilename(this.connection.getCurrentUser().getUserId());
+        final String filename = getChatListFilename(this.connection.getCurrentUser().getId());
 
         final File file = new File(filename);
         if (file.exists()) {

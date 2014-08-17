@@ -244,7 +244,7 @@ public class CustomConnection extends Model {
         @Override
         public void invitationReceived(Connection conn, String roomJid, String inviterJid, String reason, String password, Message message) {
             // filter out invites for the current user.  This can happen if the user opens up a second client (e.g. hipchat)
-            if (!StringUtils.parseBareAddress(inviterJid).equals(this.connection.currentUser.getUserId())) {
+            if (!StringUtils.parseBareAddress(inviterJid).equals(this.connection.currentUser.getId())) {
                 String roomName = "";
 
                 PacketExtension packetExtension = message.getExtension("x", "http://hipchat.com/protocol/muc#room");
@@ -305,7 +305,7 @@ public class CustomConnection extends Model {
     private YaccRoomInfo getRoomInfo(final Room room) {
         DiscoverInfo info;
         try {
-            info = ServiceDiscoveryManager.getInstanceFor(this.connection).discoverInfo(room.getRoomId());
+            info = ServiceDiscoveryManager.getInstanceFor(this.connection).discoverInfo(room.getId());
         } catch (XMPPException exception) {
             throw new RuntimeException(exception);
         }
@@ -319,7 +319,7 @@ public class CustomConnection extends Model {
      */
     public MultiUserChat joinRoom(final Room room) {
         this.internalChatListModel.add(room);
-        return new MultiUserChat(this.connection, room.getRoomId());
+        return new MultiUserChat(this.connection, room.getId());
     }
 
 //    public MultiUserChat createInstantRoom(final String name) {
@@ -343,7 +343,7 @@ public class CustomConnection extends Model {
 
     public Chat createChat(final User user) {
         this.internalChatListModel.add(user);
-        return this.connection.getChatManager().createChat(user.getUserId(), null);
+        return this.connection.getChatManager().createChat(user.getId(), null);
     }
 
     public User getCurrentUser() {

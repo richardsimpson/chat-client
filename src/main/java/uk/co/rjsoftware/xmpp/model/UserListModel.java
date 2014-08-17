@@ -89,7 +89,7 @@ public class UserListModel extends AbstractListModel<User> implements PropertyCh
 
     private int indexOf(final String userId) {
         for (int index = 0 ; index < this.users.size() ; index++) {
-            if (this.users.get(index).getUserId().equals(userId)) {
+            if (this.users.get(index).getId().equals(userId)) {
                 return index;
             }
         }

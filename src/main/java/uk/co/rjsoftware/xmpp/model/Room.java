@@ -90,11 +90,6 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
         this.customMessageListModel.addListDataListener(new ChatListDataListener(this));
     }
 
-    // TODO: Remove getRoomId
-    public String getRoomId() {
-        return this.roomId;
-    }
-
     @Override
     public String getId() {
         return this.roomId;
@@ -163,7 +158,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
         this.customConnection = customConnection;
 
         if (this.chat == null) {
-            this.chatPersistor = new ChatPersistor(customConnection.getCurrentUser().getUserId(), this.roomId, this.customMessageListModel);
+            this.chatPersistor = new ChatPersistor(customConnection.getCurrentUser().getId(), this.roomId, this.customMessageListModel);
             this.chatPersistor.readChatHistory();
             this.chat = customConnection.joinRoom(this);
 
@@ -222,7 +217,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
         final User user = customConnection.getUserListModel().get(occupant.getJid());
         if (null != user) {
             synchronized (this.occupantsModel) {
-                if (!this.occupantsModel.contains(user.getUserId())) {
+                if (!this.occupantsModel.contains(user.getId())) {
                     this.occupantsModel.add(user);
                     this.participantMap.put(participantJID, user);
                 }

@@ -75,11 +75,6 @@ public class User extends Model implements Comparable<User>, ChatTarget {
         this.customMessageListModel.addListDataListener(new ChatListDataListener(this));
     }
 
-    // TODO: Remove getUserId
-    public String getUserId() {
-        return this.userId;
-    }
-
     @Override
     public String getId() {
         return this.userId;
@@ -171,7 +166,7 @@ public class User extends Model implements Comparable<User>, ChatTarget {
     @Override
     public void join(final CustomConnection customConnection) {
         if (this.chat == null) {
-            this.chatPersistor = new ChatPersistor(customConnection.getCurrentUser().getUserId(), this.userId, this.customMessageListModel);
+            this.chatPersistor = new ChatPersistor(customConnection.getCurrentUser().getId(), this.userId, this.customMessageListModel);
             this.chatPersistor.readChatHistory();
             this.customConnection = customConnection;
             this.chat = customConnection.createChat(this);
@@ -181,7 +176,7 @@ public class User extends Model implements Comparable<User>, ChatTarget {
 
     public void joinExistingChat(final CustomConnection customConnection, final Chat chat) {
         if (this.chat == null) {
-            this.chatPersistor = new ChatPersistor(customConnection.getCurrentUser().getUserId(), this.userId, this.customMessageListModel);
+            this.chatPersistor = new ChatPersistor(customConnection.getCurrentUser().getId(), this.userId, this.customMessageListModel);
             this.chatPersistor.readChatHistory();
             this.customConnection = customConnection;
             this.chat = chat;
