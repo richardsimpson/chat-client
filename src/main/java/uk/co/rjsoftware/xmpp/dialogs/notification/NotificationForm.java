@@ -37,25 +37,35 @@ import uk.co.rjsoftware.xmpp.view.Colours;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 public class NotificationForm extends JDialog {
 
-    public NotificationForm(final ChatTarget chatTarget, final CustomMessage message) {
-        setSize(200, 75);
+    private final Font senderFont;
+    private final List<CustomMessage> messageList = new ArrayList<CustomMessage>();
+    private final List<JPanel> messagePanels = new ArrayList<JPanel>();
+
+    private JLabel summaryLabel;
+
+    private static final int INITIAL_HEIGHT = 25;
+    private static final int MESSAGE_HEIGHT = 42;
+
+    public NotificationForm() {
         setUndecorated(true);
         setLayout(new GridBagLayout());
 
         JPanel headerPanel = new JPanel();
         headerPanel.setLayout(new GridBagLayout());
         headerPanel.setBackground(Colours.DARK_ORANGE);
-        GridBagConstraints constraints = new GridBagConstraints(0, 0, 1, 1, 1.0f, 0f, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0);
+        GridBagConstraints constraints = new GridBagConstraints(0, 0, 1, 1, 1.0f, 0f, GridBagConstraints.PAGE_START, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0);
         add(headerPanel, constraints);
 
         JLabel headerLabel = new JLabel("YACC");
         headerLabel.setOpaque(false);
         final Font font = headerLabel.getFont();
-        final Font newFont = new Font(font.getName(), Font.BOLD, font.getSize());
-        headerLabel.setFont(newFont);
+        this.senderFont = new Font(font.getName(), Font.BOLD, font.getSize());
+        headerLabel.setFont(this.senderFont);
         constraints = new GridBagConstraints(0, 0, 1, 1, 1.0f, 0f, GridBagConstraints.LINE_START, GridBagConstraints.BOTH, new Insets(5, 5, 5, 5), 0, 0);
         headerPanel.add(headerLabel, constraints);
 
@@ -67,35 +77,17 @@ public class NotificationForm extends JDialog {
         });
         closeButton.setMargin(new Insets(1, 4, 1, 4));
         closeButton.setFocusable(false);
-        constraints = new GridBagConstraints(1, 0, 1, 1, 0f, 0f, GridBagConstraints.NORTH, GridBagConstraints.NONE, new Insets(2, 2, 2, 2), 0, 0);
+        constraints = new GridBagConstraints(1, 0, 1, 1, 0f, 0f, GridBagConstraints.PAGE_START, GridBagConstraints.NONE, new Insets(2, 2, 2, 2), 0, 0);
         headerPanel.add(closeButton, constraints);
 
-        String sender;
-        if (chatTarget instanceof Room) {
-            sender = chatTarget.getName() + ": " + message.getSender();
-        }
-        else {
-            sender = message.getSender();
-        }
+        setAlwaysOnTop(true);
 
-        JLabel senderLabel = new JLabel(sender);
-        senderLabel.setIcon(chatTarget.getStatusIcon());
-        senderLabel.setOpaque(false);
-        senderLabel.setFont(newFont);
-        constraints = new GridBagConstraints(0, 1, 1, 1, 1.0f, 0f, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(5, 5, 5, 5), 0, 0);
-        add(senderLabel, constraints);
-
-        JLabel messageLabel = new JLabel(message.getBody());
-        constraints = new GridBagConstraints(0, 2, 1, 1, 1.0f, 1.0f, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(0, 5, 5, 5), 0, 0);
-        add(messageLabel, constraints);
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        setSize(200, INITIAL_HEIGHT);
 
         // move to bottom right of screen.
         Dimension scrSize = Toolkit.getDefaultToolkit().getScreenSize();
         Insets toolHeight = Toolkit.getDefaultToolkit().getScreenInsets(getGraphicsConfiguration()); // height of the task bar
         setLocation(scrSize.width - getWidth(), scrSize.height - toolHeight.bottom - getHeight());
-
-        setAlwaysOnTop(true);
 
         setVisible(true);
 
@@ -113,4 +105,65 @@ public class NotificationForm extends JDialog {
 //        }.start();
     }
 
+    public void addMessage(final ChatTarget chatTarget, final CustomMessage message) {
+        this.messageList.add(message);
+        final int messageCount = this.messageList.size();
+
+        if (messageCount > 3) {
+            replaceMessagesWithSummaryMessage();
+            return;
+        }
+
+        String sender;
+        if (chatTarget instanceof Room) {
+            sender = chatTarget.getName() + ": " + message.getSender();
+        }
+        else {
+            sender = message.getSender();
+        }
+
+        JPanel messagePanel = new JPanel();
+        messagePanel.setLayout(new GridBagLayout());
+        GridBagConstraints constraints = new GridBagConstraints(0, messageCount, 1, 1, 1.0f, 0f,
+                GridBagConstraints.PAGE_START, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0);
+        add(messagePanel, constraints);
+        this.messagePanels.add(messagePanel);
+
+        JLabel senderLabel = new JLabel(sender);
+        senderLabel.setIcon(chatTarget.getStatusIcon());
+        senderLabel.setOpaque(false);
+        senderLabel.setFont(this.senderFont);
+        constraints = new GridBagConstraints(0, 0, 1, 1, 1.0f, 0f,
+                GridBagConstraints.PAGE_START, GridBagConstraints.BOTH, new Insets(5, 5, 2, 5), 0, 0);
+        messagePanel.add(senderLabel, constraints);
+
+        JLabel messageLabel = new JLabel(message.getBody());
+        constraints = new GridBagConstraints(0, 1, 1, 1, 1.0f, 1.0f, GridBagConstraints.PAGE_START, GridBagConstraints.BOTH, new Insets(0, 5, 5, 5), 0, 0);
+        messagePanel.add(messageLabel, constraints);
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+
+        setSize(200, INITIAL_HEIGHT + MESSAGE_HEIGHT * messageCount);
+
+        // move to bottom right of screen.
+        Dimension scrSize = Toolkit.getDefaultToolkit().getScreenSize();
+        Insets toolHeight = Toolkit.getDefaultToolkit().getScreenInsets(getGraphicsConfiguration()); // height of the task bar
+        setLocation(scrSize.width - getWidth(), scrSize.height - toolHeight.bottom - getHeight());
+    }
+
+    public void replaceMessagesWithSummaryMessage() {
+        if (null == this.summaryLabel) {
+            for (JPanel panel : this.messagePanels) {
+                remove(panel);
+            }
+
+            this.summaryLabel = new JLabel();
+            this.summaryLabel.setFont(this.senderFont);
+            this.summaryLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            final GridBagConstraints constraints = new GridBagConstraints(0, 1, 1, 1, 1.0f, 1.0f, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0);
+            add(this.summaryLabel, constraints);
+        }
+
+        this.summaryLabel.setText("You have " + this.messageList.size() + " new messages");
+
+    }
 }
