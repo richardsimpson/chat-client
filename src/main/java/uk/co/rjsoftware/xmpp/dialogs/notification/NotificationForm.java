@@ -29,6 +29,7 @@
  */
 package uk.co.rjsoftware.xmpp.dialogs.notification;
 
+import uk.co.rjsoftware.xmpp.dialogs.main.MainForm;
 import uk.co.rjsoftware.xmpp.model.ChatTarget;
 import uk.co.rjsoftware.xmpp.model.CustomMessage;
 import uk.co.rjsoftware.xmpp.model.Room;
@@ -37,6 +38,8 @@ import uk.co.rjsoftware.xmpp.view.Colours;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,7 +54,7 @@ public class NotificationForm extends JDialog {
     private static final int INITIAL_HEIGHT = 25;
     private static final int MESSAGE_HEIGHT = 42;
 
-    public NotificationForm() {
+    public NotificationForm(final MainForm mainForm) {
         setUndecorated(true);
         setLayout(new GridBagLayout());
 
@@ -89,18 +92,15 @@ public class NotificationForm extends JDialog {
         Insets toolHeight = Toolkit.getDefaultToolkit().getScreenInsets(getGraphicsConfiguration()); // height of the task bar
         setLocation(scrSize.width - getWidth(), scrSize.height - toolHeight.bottom - getHeight());
 
-//        // close after 5 seconds
-//        new Thread(){
-//            @Override
-//            public void run() {
-//                try {
-//                    Thread.sleep(5000);
-//                    NotificationForm.this.dispose();
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-//            };
-//        }.start();
+        // add a mouse listener to main panel, to switch focus to the app
+        this.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent event) {
+                mainForm.requestFocus();
+            }
+        });
+
+
     }
 
     public void addMessage(final ChatTarget chatTarget, final CustomMessage message) {

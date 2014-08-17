@@ -29,6 +29,7 @@
  */
 package uk.co.rjsoftware.xmpp.dialogs.notification;
 
+import uk.co.rjsoftware.xmpp.dialogs.main.MainForm;
 import uk.co.rjsoftware.xmpp.model.ChatTarget;
 import uk.co.rjsoftware.xmpp.model.CustomMessage;
 
@@ -42,10 +43,12 @@ public final class NotificationHelper {
     private static int currentMessageCount;
     private static NotificationCloseTimer currentTimer;
     private static boolean enabled;
+    private static MainForm mainForm;
 
     private NotificationHelper() {}
 
-    public static void enable() {
+    public static void enable(final MainForm currentMainForm) {
+        mainForm = currentMainForm;
         enabled = true;
     }
 
@@ -65,7 +68,7 @@ public final class NotificationHelper {
 
         // recreate the popup form if it's been destroyed
         if (null == notificationForm) {
-            notificationForm = new NotificationForm();
+            notificationForm = new NotificationForm(mainForm);
         }
 
         currentMessageCount++;

@@ -294,7 +294,7 @@ public class MainForm extends JFrame {
                 System.out.println("Main Windows has Lost Focus");
                 // disable the setting of messages to 'read', and enable the notification popups
                 stateChanger.disable();
-                NotificationHelper.enable();
+                NotificationHelper.enable(MainForm.this);
             }
         });
 
