@@ -89,8 +89,6 @@ public class NotificationForm extends JDialog {
         Insets toolHeight = Toolkit.getDefaultToolkit().getScreenInsets(getGraphicsConfiguration()); // height of the task bar
         setLocation(scrSize.width - getWidth(), scrSize.height - toolHeight.bottom - getHeight());
 
-        setVisible(true);
-
 //        // close after 5 seconds
 //        new Thread(){
 //            @Override
