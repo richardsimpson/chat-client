@@ -118,11 +118,17 @@ public class RecentChatPersistor {
         switch (lineArray[0]) {
 
             case "User" : final User user = this.userListModel.get(lineArray[1]);
-                          user.join(this.connection);
+                          // user may no longer exist - check for this here
+                          if (null != user) {
+                              user.join(this.connection);
+                          }
                           break;
 
             case "Room" : final Room room = this.roomListModel.get(lineArray[1]);
-                          room.join(this.connection);
+                          // room may no longer exist - check for this here
+                          if (null != room) {
+                              room.join(this.connection);
+                          }
                           break;
 
             default: throw new RuntimeException("Unexpected chat type: " + lineArray[0]);
