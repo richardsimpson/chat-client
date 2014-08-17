@@ -157,14 +157,14 @@ public class CreateRoomForm extends JDialog {
                 listener.onNewRoom(room);
             }
 
-            setVisible(false);
+            dispose();
         } finally {
             this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         }
     }
 
     private void cancelRoomCreation() {
-        setVisible(false);
+        dispose();
     }
 
     public void addNewRoomListener(final NewRoomListener listener) {

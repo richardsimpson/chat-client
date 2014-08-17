@@ -144,10 +144,10 @@ public class SettingsForm extends JDialog {
         this.yaccProperties.setProperty(YaccProperties.PROPERTY_NAME_HIPCHAT_API_ENDPOINT, this.endpointField.getText());
         this.yaccProperties.setProperty(YaccProperties.PROPERTY_NAME_HIPCHAT_API_AUTH_TOKEN, this.authTokenField.getText());
         this.yaccProperties.store();
-        setVisible(false);
+        dispose();
     }
 
     private void cancelButtonPressed() {
-        setVisible(false);
+        dispose();
     }
 }

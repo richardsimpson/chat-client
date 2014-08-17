@@ -167,11 +167,11 @@ public class InviteUsersForm extends JDialog {
             ((Room)this.connection.getCurrentChatTarget()).invite(user.getUserId(), "");
         }
 
-        setVisible(false);
+        dispose();
     }
 
     private void cancelInvites() {
-        setVisible(false);
+        dispose();
     }
 
 }
