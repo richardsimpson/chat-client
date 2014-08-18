@@ -30,6 +30,7 @@
 package uk.co.rjsoftware.xmpp.client;
 
 import com.jgoodies.binding.beans.Model;
+import org.jivesoftware.smack.ConnectionListener;
 import org.jivesoftware.smack.packet.DefaultPacketExtension;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.PacketExtension;
@@ -80,7 +81,8 @@ public class CustomConnection extends Model {
     public static final String CURRENT_CHAT_TARGET_MESSAGES_LIST_PROPERTY_NAME = "currentChatTargetMessagesList";
     public static final String CURRENT_CHAT_TARGET_MESSAGES_DOCUMENT_PROPERTY_NAME = "currentChatTargetMessagesDocument";
     public static final String CURRENT_CHAT_TARGET_OCCUPANTS_PROPERTY_NAME = "currentChatTargetOccupants";
-    
+    public static final String CONNECTION_STATUS_PROPERTY_NAME = "connectionStatus";
+
     private final Connection connection;
     private final Roster roster;
     private final UserListModel userListModel;
@@ -97,6 +99,7 @@ public class CustomConnection extends Model {
     private final List<YaccInvitationListener> invitationListeners = new ArrayList<YaccInvitationListener>();
 
     private final RecentChatPersistor recentChatPersistor;
+    private String connectionStatus = "";
 
     public CustomConnection(final String username, final String password, final int maxRoomCount) throws YaccException {
         this.internalChatListModel = new ChatListModel();
@@ -107,6 +110,7 @@ public class CustomConnection extends Model {
         // TODO: Put 'chat.hipchat.com' into config
         this.connection = new XMPPConnection("chat.hipchat.com");
         try {
+            this.connection.addConnectionListener(new ConnectionListenerImpl(this));
             this.connection.connect();
             // TODO: Put 'xmpp' into config
             this.connection.login(username, password, "xmpp");
@@ -260,6 +264,40 @@ public class CustomConnection extends Model {
                     listener.invitationReceived(roomJid, roomName, inviterJid, inviterName, reason, password);
                 }
             }
+        }
+    }
+
+    private static class ConnectionListenerImpl implements ConnectionListener {
+
+        private final CustomConnection connection;
+
+        public ConnectionListenerImpl(final CustomConnection connection) {
+            this.connection = connection;
+        }
+
+        @Override
+        public void connectionClosed() {
+            this.connection.setConnectionStatus("Closed.");
+        }
+
+        @Override
+        public void connectionClosedOnError(Exception e) {
+            this.connection.setConnectionStatus("Closed due to Exception: " + e.getMessage());
+        }
+
+        @Override
+        public void reconnectingIn(int seconds) {
+            this.connection.setConnectionStatus("Reconnecting in " + seconds + " seconds.");
+        }
+
+        @Override
+        public void reconnectionSuccessful() {
+            this.connection.setConnectionStatus("Reconnected.");
+        }
+
+        @Override
+        public void reconnectionFailed(Exception e) {
+            this.connection.setConnectionStatus("Reconnection failed due to exception: " + e.getMessage());
         }
     }
 
@@ -457,6 +495,19 @@ public class CustomConnection extends Model {
 
     public void addInvitationListener(final YaccInvitationListener listener) {
         this.invitationListeners.add(listener);
+    }
+
+    private void setConnectionStatus(String connectionStatus) {
+        if (!this.connectionStatus.equals(connectionStatus)) {
+            final String oldConnectionStatus = this.connectionStatus;
+            this.connectionStatus = connectionStatus;
+
+            firePropertyChange(CONNECTION_STATUS_PROPERTY_NAME, oldConnectionStatus, this.connectionStatus);
+        }
+    }
+
+    public String getConnectionStatus() {
+        return this.connectionStatus;
     }
 
     private static class TimestampComparator implements Comparator<ChatTarget> {

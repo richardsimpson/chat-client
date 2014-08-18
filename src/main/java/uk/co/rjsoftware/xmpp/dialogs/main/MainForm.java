@@ -141,6 +141,8 @@ public class MainForm extends JFrame {
 
         setupInvitationListener(chatSourceTabs, chatList);
 
+        setupConnectionStatusListener();
+
         setPreferredSize(new Dimension(1150, 512));
         pack();
 
@@ -576,6 +578,16 @@ public class MainForm extends JFrame {
                     // switch to the 'recent' tab
                     chatSourceTabs.setSelectedIndex(2);
                 }
+            }
+        });
+    }
+
+    private void setupConnectionStatusListener() {
+        final ValueModel connectionStatusModel = adapter.getValueModel(CustomConnection.CONNECTION_STATUS_PROPERTY_NAME);
+        connectionStatusModel.addValueChangeListener(new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                MainForm.this.setTitle("YACC: " + (String)evt.getNewValue());
             }
         });
     }
