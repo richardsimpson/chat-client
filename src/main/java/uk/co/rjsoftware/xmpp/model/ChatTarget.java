@@ -44,6 +44,8 @@ public interface ChatTarget {
 
     void join(final CustomConnection customConnection);
 
+    void rejoin(final CustomConnection customConnection);
+
     String getId();
 
     String getName();

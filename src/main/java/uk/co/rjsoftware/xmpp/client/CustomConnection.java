@@ -83,8 +83,8 @@ public class CustomConnection extends Model {
     public static final String CURRENT_CHAT_TARGET_OCCUPANTS_PROPERTY_NAME = "currentChatTargetOccupants";
     public static final String CONNECTION_STATUS_PROPERTY_NAME = "connectionStatus";
 
-    private final Connection connection;
-    private final Roster roster;
+    private Connection connection;
+    private Roster roster;
     private final UserListModel userListModel;
     private final RoomListModel roomListModel;
     private final ChatListModel internalChatListModel;
@@ -101,56 +101,33 @@ public class CustomConnection extends Model {
     private final RecentChatPersistor recentChatPersistor;
     private String connectionStatus = "";
 
-    public CustomConnection(final String username, final String password, final int maxRoomCount) throws YaccException {
-        this.internalChatListModel = new ChatListModel();
-        this.chatListModel = new SortedArrayListModel<ChatTarget>(internalChatListModel, SortOrder.DESCENDING,
-                new TimestampComparator());
+    private final ConnectionListener connectionListener;
+    private final ClientRosterListener clientRosterListener;
+    private final ChatManagerListenerImpl chatManagerListener;
+    private final InvitationListenerImpl invitationListener;
+    private final String username;
+    private final String password;
 
+    public CustomConnection(final String username, final String password, final int maxRoomCount) throws YaccException {
         this.maxRoomCount = maxRoomCount;
-        // TODO: Put 'chat.hipchat.com' into config
-        this.connection = new XMPPConnection("chat.hipchat.com");
-        try {
-            this.connection.addConnectionListener(new ConnectionListenerImpl(this));
-            this.connection.connect();
-            // TODO: Put 'xmpp' into config
-            this.connection.login(username, password, "xmpp");
-        } catch (XMPPException exception) {
-            if (exception.getMessage().contains("invalid-authzid")) {
-                throw new YaccException("The password or email address is invalid.");
-            }
-            else {
-                // TODO: deal with invalid credentials properly
-                throw new YaccException(exception.getMessage());
-            }
-        }
+
+        this.connectionListener = new ConnectionListenerImpl(this);
+        this.username = username;
+        this.password = password;
+
+        refreshConnection(this.connectionListener, this.username, this.password);
 
         final String[] usernameParts = username.split("_");
         this.hipChatGroup = usernameParts[0];
         this.hipChatUser = usernameParts[1];
 
-        this.roster = connection.getRoster();
-
-        // get current user id without the resource (e.g. /xmpp)
-        String currentUserId = this.connection.getUser();
-        int index = currentUserId.indexOf("/");
-        if (index > -1) {
-            currentUserId = currentUserId.substring(0, index);
-        }
-
         // setup the user model
+        refreshRosterVariable();
+        final String currentUserId = StringUtils.parseBareAddress(this.connection.getUser());
         final List<User> userList = new ArrayList<User>();
         final Collection<RosterEntry> rosterEntries = this.roster.getEntries();
         for (RosterEntry user : rosterEntries) {
             final User newUser = new User(user.getUser(), user.getName());
-
-            // update the user presence's
-            final Iterator<Presence> presences = this.roster.getPresences(user.getUser());
-            while (presences.hasNext()) {
-                final Presence presence = presences.next();
-                final CustomPresence customPresence = new CustomPresence(presence);
-                final String resource = customPresence.getResource();
-                newUser.setStatus(resource, UserStatus.fromPresence(customPresence));
-            }
 
             System.out.println("User: " + user.getUser() + ", Name: " + user.getName());
             userList.add(newUser);
@@ -168,11 +145,14 @@ public class CustomConnection extends Model {
         Collections.sort(userList);
         this.userListModel = new UserListModel(userList);
 
+        refreshPresenceData();
+
         // TODO: Create the listener BEFORE iterating through the users and getting their presence.  Without this, we may miss
         // some presence updates if the listener is registered too late.
 
         // ensure user model gets updated when changes occur
-        this.roster.addRosterListener(new ClientRosterListener(this.userListModel));
+        this.clientRosterListener = new ClientRosterListener(this.userListModel);
+        refreshRosterListener(this.clientRosterListener);
 
         // TODO: Create a SortedListModel to decorate the RoomListModel with sorting instead (see http://www.oracle.com/technetwork/articles/javase/sorted-jlist-136883.html)
         // setup the room list
@@ -196,35 +176,15 @@ public class CustomConnection extends Model {
         this.roomListModel.sort();
 
         //setup the chat listener, to listen for new incomming chats
-        this.connection.getChatManager().addChatListener(new ChatManagerListener() {
-            @Override
-            public void chatCreated(Chat chat, boolean createdLocally) {
-                if (!createdLocally) {
-                    System.out.println("New Chat: Participant: " + chat.getParticipant());
-                    final User user = CustomConnection.this.userListModel.get(chat.getParticipant());
-
-                    if (user != null) {
-                        CustomConnection.this.internalChatListModel.add(user);
-                        user.joinExistingChat(CustomConnection.this, chat);
-                        return;
-                    }
-
-                    // check for a room
-                    final Room room = CustomConnection.this.roomListModel.get(chat.getParticipant());
-
-                    if (room != null) {
-                        // don't 'join an existing chat' for rooms, so that we get the chat history.
-                        // once we start caching the chat history locally, perhaps we can optimise this
-                        // by implementing joinExistingChat on the Room class (and ChatTarget interface)
-                        // TODO: Fix: Incomming chats for rooms don't seem to include current user in the occupants list
-                        room.join(CustomConnection.this);
-                    }
-                }
-            }
-        });
+        this.internalChatListModel = new ChatListModel();
+        this.chatListModel = new SortedArrayListModel<ChatTarget>(internalChatListModel, SortOrder.DESCENDING,
+                new TimestampComparator());
+        this.chatManagerListener = new ChatManagerListenerImpl(this);
+        refreshChatListener(this.chatManagerListener);
 
         // Add an invitation listener to the connection, so can automatically join rooms we are invited to.
-        MultiUserChat.addInvitationListener(this.connection, new InvitationListenerImpl(this));
+        this.invitationListener = new InvitationListenerImpl(this);
+        refreshInvitationListener(this.invitationListener);
 
         this.recentChatPersistor = new RecentChatPersistor(this);
         this.recentChatPersistor.loadRecentChatList();
@@ -237,11 +197,66 @@ public class CustomConnection extends Model {
 //        }, null);
     }
 
-    private static class InvitationListenerImpl implements InvitationListener {
+    private void refreshConnection(final ConnectionListener connectionListener, final String username, final String password) throws YaccException {
+        // connect to the server
+        // TODO: Put 'chat.hipchat.com' into config
+        this.connection = new XMPPConnection("chat.hipchat.com");
+        try {
+            this.connection.addConnectionListener(connectionListener);
+            setConnectionStatus("Reconnecting.");
+            this.connection.connect();
+            // TODO: Put 'xmpp' into config
+            this.connection.login(username, password, "xmpp");
+        } catch (XMPPException exception) {
+            if (exception.getMessage().contains("invalid-authzid")) {
+                throw new YaccException("The password or email address is invalid.");
+            }
+            else {
+                // TODO: deal with invalid credentials properly
+                throw new YaccException(exception.getMessage());
+            }
+        }
+    }
+
+    private void refreshRosterVariable() {
+        this.roster = this.connection.getRoster();
+    }
+
+    private void refreshPresenceData() {
+        int index = 0;
+        while (index < this.userListModel.getSize()) {
+            final User user = this.userListModel.getElementAt(index);
+
+            // update the user presence's
+            final Iterator<Presence> presences = this.roster.getPresences(user.getId());
+            while (presences.hasNext()) {
+                final Presence presence = presences.next();
+                final CustomPresence customPresence = new CustomPresence(presence);
+                final String resource = customPresence.getResource();
+                user.setStatus(resource, UserStatus.fromPresence(customPresence));
+            }
+
+            index++;
+        }
+    }
+
+    private void refreshRosterListener(final ClientRosterListener clientRosterListener) {
+        this.roster.addRosterListener(clientRosterListener);
+    }
+
+    private void refreshChatListener(final ChatManagerListener chatManagerListener) {
+        this.connection.getChatManager().addChatListener(chatManagerListener);
+    }
+
+    private void refreshInvitationListener(final InvitationListener invitationListener) {
+        MultiUserChat.addInvitationListener(this.connection, invitationListener);
+    }
+
+    private static final class InvitationListenerImpl implements InvitationListener {
 
         private final CustomConnection connection;
 
-        public InvitationListenerImpl(final CustomConnection connection) {
+        private InvitationListenerImpl(final CustomConnection connection) {
             this.connection = connection;
         }
 
@@ -267,11 +282,11 @@ public class CustomConnection extends Model {
         }
     }
 
-    private static class ConnectionListenerImpl implements ConnectionListener {
+    private static final class ConnectionListenerImpl implements ConnectionListener {
 
         private final CustomConnection connection;
 
-        public ConnectionListenerImpl(final CustomConnection connection) {
+        private ConnectionListenerImpl(final CustomConnection connection) {
             this.connection = connection;
         }
 
@@ -293,11 +308,48 @@ public class CustomConnection extends Model {
         @Override
         public void reconnectionSuccessful() {
             this.connection.setConnectionStatus("Reconnected.");
+            // disconnect, then re-connect again, to ensure the smack library continues to work!
+            this.connection.disconnect();
+            this.connection.reconnect();
         }
 
         @Override
         public void reconnectionFailed(Exception e) {
             this.connection.setConnectionStatus("Reconnection failed due to exception: " + e.getMessage());
+        }
+    }
+
+    private static final class ChatManagerListenerImpl implements ChatManagerListener {
+
+        private final CustomConnection connection;
+
+        private ChatManagerListenerImpl(final CustomConnection connection) {
+            this.connection = connection;
+        }
+
+        @Override
+        public void chatCreated(Chat chat, boolean createdLocally) {
+            if (!createdLocally) {
+                System.out.println("New Chat: Participant: " + chat.getParticipant());
+                final User user = this.connection.userListModel.get(chat.getParticipant());
+
+                if (user != null) {
+                    this.connection.internalChatListModel.add(user);
+                    user.joinExistingChat(this.connection, chat);
+                    return;
+                }
+
+                // check for a room
+                final Room room = this.connection.roomListModel.get(chat.getParticipant());
+
+                if (room != null) {
+                    // don't 'join an existing chat' for rooms, so that we get the chat history.
+                    // once we start caching the chat history locally, perhaps we can optimise this
+                    // by implementing joinExistingChat on the Room class (and ChatTarget interface)
+                    // TODO: Fix: Incomming chats for rooms don't seem to include current user in the occupants list
+                    room.join(this.connection);
+                }
+            }
         }
     }
 
@@ -319,6 +371,30 @@ public class CustomConnection extends Model {
 
         this.connection.disconnect();
         System.out.println("Disconnected");
+    }
+
+    private void reconnect() {
+        this.connection.removeConnectionListener(connectionListener);
+        this.roster.removeRosterListener(clientRosterListener);
+        this.connection.getChatManager().removeChatListener(chatManagerListener);
+        MultiUserChat.removeInvitationListener(this.connection, invitationListener);
+
+        try {
+            refreshConnection(this.connectionListener, this.username, this.password);
+        } catch (YaccException exception) {
+            throw new RuntimeException(exception);
+        }
+
+        refreshRosterVariable();
+        refreshPresenceData();
+        refreshRosterListener(this.clientRosterListener);
+        refreshChatListener(this.chatManagerListener);
+        refreshInvitationListener(this.invitationListener);
+
+        for (ChatTarget chatTarget : this.internalChatListModel) {
+            chatTarget.rejoin(this);
+        }
+        setConnectionStatus("Connected.");
     }
 
     public UserListModel getUserListModel() {
@@ -356,7 +432,9 @@ public class CustomConnection extends Model {
      * Join a room that previously existed, and is known to this CustomConnection
      */
     public MultiUserChat joinRoom(final Room room) {
-        this.internalChatListModel.add(room);
+        if (!this.internalChatListModel.contains(room)) {
+            this.internalChatListModel.add(room);
+        }
         return new MultiUserChat(this.connection, room.getId());
     }
 
@@ -380,7 +458,9 @@ public class CustomConnection extends Model {
 //    }
 
     public Chat createChat(final User user) {
-        this.internalChatListModel.add(user);
+        if (!this.internalChatListModel.contains(user)) {
+            this.internalChatListModel.add(user);
+        }
         return this.connection.getChatManager().createChat(user.getId(), null);
     }
 

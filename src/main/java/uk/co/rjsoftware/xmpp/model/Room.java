@@ -33,6 +33,7 @@ import com.jgoodies.binding.beans.Model;
 import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smackx.muc.DefaultParticipantStatusListener;
 import org.jivesoftware.smackx.muc.Occupant;
+import org.jivesoftware.smackx.muc.ParticipantStatusListener;
 import org.jivesoftware.smackx.muc.SubjectUpdatedListener;
 import uk.co.rjsoftware.xmpp.client.CustomConnection;
 import org.jivesoftware.smack.SmackConfiguration;
@@ -82,12 +83,17 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
     private int unreadMessageCount;
 
     private ChatPersistor chatPersistor;
+    private final SubjectUpdatedListener subjectUpdatedListener;
+    private final ParticipantStatusListener participantStatusListener;
 
     public Room(final String roomId, final String name) {
         this.roomId = roomId;
         this.name = name;
         this.messagesDocument = new MessageListHTMLDocument();
         this.customMessageListModel.addListDataListener(new ChatListDataListener(this));
+
+        this.subjectUpdatedListener = new SubjectUpdatedListenerImpl(this);
+        this.participantStatusListener = new ParticipantStatusListenerImpl(this);
     }
 
     @Override
@@ -153,6 +159,40 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
         return this.name.toUpperCase(Locale.getDefault()).compareTo(room.name.toUpperCase(Locale.getDefault()));
     }
 
+    private void joinRoom() {
+        try {
+            final String password = "";
+            DiscussionHistory history = new DiscussionHistory();
+
+            // request history starting from just after the last message retrieved from the local history, if any
+            final long lastMessageTimestamp;
+            if (this.customMessageListModel.isEmpty()) {
+                lastMessageTimestamp = 0;
+            }
+            else {
+                final CustomMessage latestMessage = this.customMessageListModel.get(this.customMessageListModel.size()-1);
+                lastMessageTimestamp = latestMessage.getTimestamp();
+            }
+            history.setSince(new Date(lastMessageTimestamp + 1));
+
+            // note that the above doesn't seem to work in hipchat - it will reply with lots of messages before the
+            // specified date - about 75, it seems, so need to rely on the MessageReceiver to filter out old
+            // messages.
+
+            chat.join(customConnection.getCurrentUser().getName(), password, history, SmackConfiguration.getPacketReplyTimeout());
+
+            // create a separate thread that will fetch the chat history and all future messages for this room
+            this.messageReceivingThread = new Thread(new MessageReceiver(this.chat, this.customMessageListModel, this));
+            this.messageReceivingThread.start();
+        } catch (XMPPException exception) {
+            this.chat = null;
+            // Remove the messages read from the local history
+            this.customMessageListModel.clear();
+            this.messagesDocument.clear();
+            throw new RuntimeException(exception);
+        }
+    }
+
     @Override
     public void join(final CustomConnection customConnection) {
         this.customConnection = customConnection;
@@ -163,54 +203,39 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
             this.chat = customConnection.joinRoom(this);
 
             // add all the chat listeners
-            this.chat.addSubjectUpdatedListener(new SubjectUpdatedListenerImpl(this));
-            this.chat.addParticipantStatusListener(new ParticipantStatusListenerImpl(this));
+            this.chat.addSubjectUpdatedListener(this.subjectUpdatedListener);
+            this.chat.addParticipantStatusListener(this.participantStatusListener);
 
-            try {
-                final String password = "";
-                DiscussionHistory history = new DiscussionHistory();
+            joinRoom();
 
-                // request history starting from just after the last message retrieved from the local history, if any
-                final long lastMessageTimestamp;
-                if (this.customMessageListModel.isEmpty()) {
-                    lastMessageTimestamp = 0;
-                }
-                else {
-                    final CustomMessage latestMessage = this.customMessageListModel.get(this.customMessageListModel.size()-1);
-                    lastMessageTimestamp = latestMessage.getTimestamp();
-                }
-                history.setSince(new Date(lastMessageTimestamp + 1));
+            // Note: List of occupants is fine for public rooms, but for private rooms, would like to
+            // display all of the users who are allowed access, but who are not currently online.
+            final Iterator<String> occupants = this.chat.getOccupants();
+            while (occupants.hasNext()) {
+                final String participantJID = occupants.next();
+                System.out.println("Participant: " + participantJID);
+                final Occupant occupant = this.chat.getOccupant(participantJID);
+                System.out.println("User JID: " + occupant.getJid());
 
-                // note that the above doesn't seem to work in hipchat - it will reply with lots of messages before the
-                // specified date - about 75, it seems, so need to rely on the MessageReceiver to filter out old
-                // messages.
-
-                chat.join(customConnection.getCurrentUser().getName(), password, history, SmackConfiguration.getPacketReplyTimeout());
-
-                // create a separate thread that will fetch the chat history and all future messages for this room
-                this.messageReceivingThread = new Thread(new MessageReceiver(this.chat, this.customMessageListModel, this));
-                this.messageReceivingThread.start();
-
-                // Note: List of occupants is fine for public rooms, but for private rooms, would like to
-                // display all of the users who are allowed access, but who are not currently online.
-                final Iterator<String> occupants = this.chat.getOccupants();
-                while (occupants.hasNext()) {
-                    final String participantJID = occupants.next();
-                    System.out.println("Participant: " + participantJID);
-                    final Occupant occupant = this.chat.getOccupant(participantJID);
-                    System.out.println("User JID: " + occupant.getJid());
-
-                    addOccupant(participantJID, occupant);
-                }
-
-            } catch (XMPPException exception) {
-                this.chat = null;
-                // Remove the messages read from the local history
-                this.customMessageListModel.clear();
-                this.messagesDocument.clear();
-                throw new RuntimeException(exception);
+                addOccupant(participantJID, occupant);
             }
         }
+    }
+
+    @Override
+    public void rejoin(final CustomConnection customConnection) {
+        this.customConnection = customConnection;
+
+        this.chat.removeSubjectUpdatedListener(this.subjectUpdatedListener);
+        this.chat.addParticipantStatusListener(this.participantStatusListener);
+
+        this.chat = customConnection.joinRoom(this);
+
+        // add all the chat listeners
+        this.chat.addSubjectUpdatedListener(this.subjectUpdatedListener);
+        this.chat.addParticipantStatusListener(this.participantStatusListener);
+
+        joinRoom();
     }
 
     private void addOccupant(final String participantJID, final Occupant occupant) {

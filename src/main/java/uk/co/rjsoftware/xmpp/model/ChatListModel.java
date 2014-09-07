@@ -61,6 +61,10 @@ public class ChatListModel extends AbstractListModel<ChatTarget> implements Prop
         }
     }
 
+    public boolean contains(final ChatTarget chat) {
+        return this.chats.contains(chat);
+    }
+
     @Override
     public int getSize() {
         return this.chats.size();

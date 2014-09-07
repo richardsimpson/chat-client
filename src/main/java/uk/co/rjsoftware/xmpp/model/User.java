@@ -66,6 +66,7 @@ public class User extends Model implements Comparable<User>, ChatTarget {
     private int unreadMessageCount;
 
     private ChatPersistor chatPersistor;
+    private UserMessageListener userMessageListener;
 
     public User(final String userId, final String name) {
         this.userId = userId;
@@ -170,7 +171,8 @@ public class User extends Model implements Comparable<User>, ChatTarget {
             this.chatPersistor.readChatHistory();
             this.customConnection = customConnection;
             this.chat = customConnection.createChat(this);
-            this.chat.addMessageListener(new UserMessageListener(this, customConnection));
+            this.userMessageListener = new UserMessageListener(this, customConnection);
+            this.chat.addMessageListener(this.userMessageListener);
         }
     }
 
@@ -180,8 +182,20 @@ public class User extends Model implements Comparable<User>, ChatTarget {
             this.chatPersistor.readChatHistory();
             this.customConnection = customConnection;
             this.chat = chat;
-            this.chat.addMessageListener(new UserMessageListener(this, customConnection));
+            this.userMessageListener = new UserMessageListener(this, customConnection);
+            this.chat.addMessageListener(this.userMessageListener);
         }
+    }
+
+    @Override
+    public void rejoin(final CustomConnection customConnection) {
+        this.customConnection = customConnection;
+
+        this.chat.removeMessageListener(this.userMessageListener);
+
+        this.chat = customConnection.createChat(this);
+
+        this.chat.addMessageListener(this.userMessageListener);
     }
 
     private static class UserMessageListener implements MessageListener {
