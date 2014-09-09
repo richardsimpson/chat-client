@@ -56,6 +56,7 @@ public class MessageStateChanger {
 
     private final JScrollPane scrollPane;
     private final MessageChangeListener messageChangeListener;
+    private boolean enabled;
 
     public MessageStateChanger(final JScrollPane scrollPane, final MainForm mainForm) {
         this.scrollPane = scrollPane;
@@ -64,6 +65,7 @@ public class MessageStateChanger {
 
     public void enable() {
         this.scrollPane.getVerticalScrollBar().getModel().addChangeListener(this.messageChangeListener);
+        this.enabled = true;
 
         // fire off an immediate check, as the app may have just got focus
         forceReadMessageCheck();
@@ -71,11 +73,14 @@ public class MessageStateChanger {
 
     public void disable() {
         this.scrollPane.getVerticalScrollBar().getModel().removeChangeListener(this.messageChangeListener);
+        this.enabled = false;
     }
 
     public void forceReadMessageCheck() {
-        final ChangeEvent event = new ChangeEvent(this.scrollPane.getVerticalScrollBar().getModel());
-        this.messageChangeListener.stateChanged(event);
+        if (this.enabled) {
+            final ChangeEvent event = new ChangeEvent(this.scrollPane.getVerticalScrollBar().getModel());
+            this.messageChangeListener.stateChanged(event);
+        }
     }
 
     private static final class MessageChangeListener implements ChangeListener {
