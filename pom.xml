@@ -165,6 +165,12 @@
                 </execution>
             </executions>
             <configuration>
+                <archive>
+                    <index>true</index>
+                    <manifest>
+                        <mainClass>uk.co.rjsoftware.xmpp.client.Main</mainClass>
+                    </manifest>
+                </archive>
                 <descriptorRefs>
                     <descriptorRef>jar-with-dependencies</descriptorRef>
                 </descriptorRefs>
