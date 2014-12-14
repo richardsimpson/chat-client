@@ -69,7 +69,7 @@ public class HipChatEmoticons {
             EmoticonListResponse emoticonListResponse = requestEmoticons(emoticonTarget);
             addResponseToList(emoticonListResponse, EMOTICONS);
 
-            while (null != emoticonListResponse.getLinks().getNext()) {
+            while ((null != emoticonListResponse.getLinks().getNext()) && (emoticonListResponse.getItems().size() > 0)) {
                 emoticonTarget = client.target(emoticonListResponse.getLinks().getNext()).queryParam("auth_token", authToken);
 
                 emoticonListResponse = requestEmoticons(emoticonTarget);
