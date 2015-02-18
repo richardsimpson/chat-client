@@ -30,10 +30,8 @@
 package uk.co.rjsoftware.xmpp.client;
 
 import com.jgoodies.binding.beans.Model;
-import org.jivesoftware.smack.ConnectionListener;
-import org.jivesoftware.smack.packet.DefaultPacketExtension;
-import org.jivesoftware.smack.packet.Message;
-import org.jivesoftware.smack.packet.PacketExtension;
+import org.jivesoftware.smack.*;
+import org.jivesoftware.smack.packet.*;
 import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smackx.ServiceDiscoveryManager;
 import org.jivesoftware.smackx.muc.InvitationListener;
@@ -48,14 +46,6 @@ import uk.co.rjsoftware.xmpp.model.RoomListModel;
 import uk.co.rjsoftware.xmpp.model.User;
 import uk.co.rjsoftware.xmpp.model.UserListModel;
 import uk.co.rjsoftware.xmpp.model.UserStatus;
-import org.jivesoftware.smack.Chat;
-import org.jivesoftware.smack.ChatManagerListener;
-import org.jivesoftware.smack.Connection;
-import org.jivesoftware.smack.Roster;
-import org.jivesoftware.smack.RosterEntry;
-import org.jivesoftware.smack.XMPPConnection;
-import org.jivesoftware.smack.XMPPException;
-import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smackx.muc.HostedRoom;
 import org.jivesoftware.smackx.muc.MultiUserChat;
 import uk.co.rjsoftware.xmpp.model.sortedmodel.SortedArrayListModel;
@@ -189,13 +179,22 @@ public class CustomConnection extends Model {
         this.recentChatPersistor = new RecentChatPersistor(this);
         this.recentChatPersistor.loadRecentChatList();
 
-//        this.connection.addPacketListener(new PacketListener() {
-//            @Override
-//            public void processPacket(Packet packet) {
-//                System.out.println("Incomming Packet: " + packet.toString());
-//            }
-//        }, null);
+        this.connection.addPacketListener(new PacketListener() {
+            @Override
+            public void processPacket(Packet packet) {
+                System.out.println("Incomming Packet: " + packet.toString());
+            }
+        }, null);
     }
+
+    public void addPacketListener(final PacketListener listener) {
+        this.connection.addPacketListener(listener, null);
+    }
+
+    public void removePacketListener(final PacketListener listener) {
+        this.connection.removePacketListener(listener);
+    }
+
 
     private void refreshConnection(final ConnectionListener connectionListener, final String username, final String password) throws YaccException {
         // connect to the server

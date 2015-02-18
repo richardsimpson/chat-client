@@ -39,6 +39,7 @@ import uk.co.rjsoftware.xmpp.client.YaccProperties;
 import uk.co.rjsoftware.xmpp.dialogs.DialogUtils;
 import uk.co.rjsoftware.xmpp.dialogs.createroom.CreateRoomForm;
 import uk.co.rjsoftware.xmpp.dialogs.createroom.NewRoomListener;
+import uk.co.rjsoftware.xmpp.dialogs.debugging.DebuggingForm;
 import uk.co.rjsoftware.xmpp.dialogs.inviteusers.InviteUsersForm;
 import uk.co.rjsoftware.xmpp.dialogs.notification.NotificationHelper;
 import uk.co.rjsoftware.xmpp.dialogs.settings.SettingsForm;
@@ -667,6 +668,17 @@ public class MainForm extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 final SettingsForm settingsForm = new SettingsForm(yaccProperties);
                 settingsForm.setVisible(true);
+            }
+        });
+
+        final JMenuItem debuggingMenuItem = new JMenuItem("Debugging...");
+        menu.addSeparator();
+        menu.add(debuggingMenuItem);
+        debuggingMenuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                final DebuggingForm debuggingForm = new DebuggingForm(connection);
+                debuggingForm.setVisible(true);
             }
         });
 
