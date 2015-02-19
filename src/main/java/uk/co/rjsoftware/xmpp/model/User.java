@@ -30,6 +30,7 @@
 package uk.co.rjsoftware.xmpp.model;
 
 import com.jgoodies.binding.beans.Model;
+import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.util.StringUtils;
 import uk.co.rjsoftware.xmpp.client.CustomConnection;
 import org.jivesoftware.smack.Chat;
@@ -274,7 +275,7 @@ public class User extends Model implements Comparable<User>, ChatTarget {
                         this.customConnection.getCurrentUser().getName(), messageText);
                 this.customMessageListModel.add(customMessage);
 
-            } catch (XMPPException exception) {
+            } catch (XMPPException | SmackException exception) {
                 throw new RuntimeException(exception);
             }
         }

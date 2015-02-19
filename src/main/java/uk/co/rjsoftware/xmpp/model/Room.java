@@ -30,6 +30,7 @@
 package uk.co.rjsoftware.xmpp.model;
 
 import com.jgoodies.binding.beans.Model;
+import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smackx.muc.DefaultParticipantStatusListener;
 import org.jivesoftware.smackx.muc.Occupant;
@@ -42,7 +43,7 @@ import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.PacketExtension;
 import org.jivesoftware.smackx.muc.DiscussionHistory;
 import org.jivesoftware.smackx.muc.MultiUserChat;
-import org.jivesoftware.smackx.packet.DelayInfo;
+import org.jivesoftware.smackx.delay.packet.DelayInfo;
 import uk.co.rjsoftware.xmpp.dialogs.notification.NotificationHelper;
 import uk.co.rjsoftware.xmpp.view.MessageListHTMLDocument;
 
@@ -134,7 +135,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
         try {
             this.chat.changeSubject(subject);
             doSetSubject(subject);
-        } catch (XMPPException exception) {
+        } catch (XMPPException | SmackException exception) {
             throw new RuntimeException(exception);
         }
 
@@ -179,12 +180,12 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
             // specified date - about 75, it seems, so need to rely on the MessageReceiver to filter out old
             // messages.
 
-            chat.join(customConnection.getCurrentUser().getName(), password, history, SmackConfiguration.getPacketReplyTimeout());
+            chat.join(customConnection.getCurrentUser().getName(), password, history, this.customConnection.getPacketReplyTimeout());
 
             // create a separate thread that will fetch the chat history and all future messages for this room
             this.messageReceivingThread = new Thread(new MessageReceiver(this.chat, this.customMessageListModel, this));
             this.messageReceivingThread.start();
-        } catch (XMPPException exception) {
+        } catch (XMPPException | SmackException exception) {
             this.chat = null;
             // Remove the messages read from the local history
             this.customMessageListModel.clear();
@@ -210,9 +211,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
 
             // Note: List of occupants is fine for public rooms, but for private rooms, would like to
             // display all of the users who are allowed access, but who are not currently online.
-            final Iterator<String> occupants = this.chat.getOccupants();
-            while (occupants.hasNext()) {
-                final String participantJID = occupants.next();
+            for (String participantJID : this.chat.getOccupants()) {
                 System.out.println("Participant: " + participantJID);
                 final Occupant occupant = this.chat.getOccupant(participantJID);
                 System.out.println("User JID: " + occupant.getJid());
@@ -515,7 +514,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
         if (this.chat != null) {
             try {
                 this.chat.sendMessage(messageText);
-            } catch (XMPPException exception) {
+            } catch (XMPPException | SmackException exception) {
                 throw new RuntimeException(exception);
             }
         }
@@ -540,7 +539,7 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
     public void delete() {
         try {
             this.chat.destroy(null, null);
-        } catch (XMPPException exception) {
+        } catch (XMPPException | SmackException exception) {
             throw new RuntimeException(exception);
         }
     }
@@ -571,7 +570,11 @@ public class Room extends Model implements Comparable<Room>, ChatTarget {
     }
 
     public void invite(final String user, final String reason) {
-        this.chat.invite(user, reason);
+        try {
+            this.chat.invite(user, reason);
+        } catch (SmackException.NotConnectedException exception) {
+            throw new RuntimeException(exception);
+        }
     }
 
     @Override

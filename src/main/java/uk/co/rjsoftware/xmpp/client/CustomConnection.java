@@ -32,10 +32,11 @@ package uk.co.rjsoftware.xmpp.client;
 import com.jgoodies.binding.beans.Model;
 import org.jivesoftware.smack.*;
 import org.jivesoftware.smack.packet.*;
+import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.util.StringUtils;
-import org.jivesoftware.smackx.ServiceDiscoveryManager;
+import org.jivesoftware.smackx.disco.ServiceDiscoveryManager;
 import org.jivesoftware.smackx.muc.InvitationListener;
-import org.jivesoftware.smackx.packet.DiscoverInfo;
+import org.jivesoftware.smackx.disco.packet.DiscoverInfo;
 import uk.co.rjsoftware.xmpp.model.ChatTarget;
 import uk.co.rjsoftware.xmpp.model.ChatListModel;
 import uk.co.rjsoftware.xmpp.model.CustomMessageListModel;
@@ -54,6 +55,7 @@ import javax.swing.*;
 import javax.swing.text.StyledDocument;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -73,7 +75,7 @@ public class CustomConnection extends Model {
     public static final String CURRENT_CHAT_TARGET_OCCUPANTS_PROPERTY_NAME = "currentChatTargetOccupants";
     public static final String CONNECTION_STATUS_PROPERTY_NAME = "connectionStatus";
 
-    private Connection connection;
+    private XMPPTCPConnection connection;
     private Roster roster;
     private final UserListModel userListModel;
     private final RoomListModel roomListModel;
@@ -152,6 +154,8 @@ public class CustomConnection extends Model {
             rooms = MultiUserChat.getHostedRooms(connection, "conf.hipchat.com");
         } catch (XMPPException exception) {
             throw new RuntimeException(exception);
+        } catch (SmackException exception) {
+            throw new RuntimeException(exception);
         }
         int currentRoomNumber = 0;
         for (HostedRoom room : rooms) {
@@ -199,14 +203,14 @@ public class CustomConnection extends Model {
     private void refreshConnection(final ConnectionListener connectionListener, final String username, final String password) throws YaccException {
         // connect to the server
         // TODO: Put 'chat.hipchat.com' into config
-        this.connection = new XMPPConnection("chat.hipchat.com");
+        this.connection = new XMPPTCPConnection("chat.hipchat.com");
         try {
             this.connection.addConnectionListener(connectionListener);
             setConnectionStatus("Reconnecting.");
             this.connection.connect();
             // TODO: Put 'xmpp' into config
             this.connection.login(username, password, "xmpp");
-        } catch (XMPPException exception) {
+        } catch (SmackException | XMPPException | IOException exception) {
             if (exception.getMessage().contains("invalid-authzid")) {
                 throw new YaccException("The password or email address is invalid.");
             }
@@ -227,9 +231,7 @@ public class CustomConnection extends Model {
             final User user = this.userListModel.getElementAt(index);
 
             // update the user presence's
-            final Iterator<Presence> presences = this.roster.getPresences(user.getId());
-            while (presences.hasNext()) {
-                final Presence presence = presences.next();
+            for (Presence presence : this.roster.getPresences(user.getId())) {
                 final CustomPresence customPresence = new CustomPresence(presence);
                 final String resource = customPresence.getResource();
                 user.setStatus(resource, UserStatus.fromPresence(customPresence));
@@ -244,11 +246,15 @@ public class CustomConnection extends Model {
     }
 
     private void refreshChatListener(final ChatManagerListener chatManagerListener) {
-        this.connection.getChatManager().addChatListener(chatManagerListener);
+        ChatManager.getInstanceFor(this.connection).addChatListener(chatManagerListener);
     }
 
     private void refreshInvitationListener(final InvitationListener invitationListener) {
         MultiUserChat.addInvitationListener(this.connection, invitationListener);
+    }
+
+    public long getPacketReplyTimeout() {
+        return this.connection.getPacketReplyTimeout();
     }
 
     private static final class InvitationListenerImpl implements InvitationListener {
@@ -260,7 +266,7 @@ public class CustomConnection extends Model {
         }
 
         @Override
-        public void invitationReceived(Connection conn, String roomJid, String inviterJid, String reason, String password, Message message) {
+        public void invitationReceived(XMPPConnection conn, String roomJid, String inviterJid, String reason, String password, Message message) {
             // filter out invites for the current user.  This can happen if the user opens up a second client (e.g. hipchat)
             if (!StringUtils.parseBareAddress(inviterJid).equals(this.connection.currentUser.getId())) {
                 String roomName = "";
@@ -287,6 +293,16 @@ public class CustomConnection extends Model {
 
         private ConnectionListenerImpl(final CustomConnection connection) {
             this.connection = connection;
+        }
+
+        @Override
+        public void connected(XMPPConnection connection) {
+            this.connection.setConnectionStatus("Connected.");
+        }
+
+        @Override
+        public void authenticated(XMPPConnection connection) {
+            this.connection.setConnectionStatus("Authenticated.");
         }
 
         @Override
@@ -368,14 +384,18 @@ public class CustomConnection extends Model {
             }
         }
 
-        this.connection.disconnect();
+        try {
+            this.connection.disconnect();
+        } catch (SmackException exception) {
+            throw new RuntimeException(exception);
+        }
         System.out.println("Disconnected");
     }
 
     private void reconnect() {
         this.connection.removeConnectionListener(connectionListener);
         this.roster.removeRosterListener(clientRosterListener);
-        this.connection.getChatManager().removeChatListener(chatManagerListener);
+        ChatManager.getInstanceFor(this.connection).removeChatListener(chatManagerListener);
         MultiUserChat.removeInvitationListener(this.connection, invitationListener);
 
         try {
@@ -421,6 +441,10 @@ public class CustomConnection extends Model {
             info = ServiceDiscoveryManager.getInstanceFor(this.connection).discoverInfo(room.getId());
         } catch (XMPPException exception) {
             throw new RuntimeException(exception);
+        } catch (SmackException.NotConnectedException exception) {
+            throw new RuntimeException(exception);
+        } catch (SmackException.NoResponseException exception) {
+            throw new RuntimeException(exception);
         }
         return new YaccRoomInfo(info);
     }
@@ -460,7 +484,7 @@ public class CustomConnection extends Model {
         if (!this.internalChatListModel.contains(user)) {
             this.internalChatListModel.add(user);
         }
-        return this.connection.getChatManager().createChat(user.getId(), null);
+        return ChatManager.getInstanceFor(this.connection).createChat(user.getId(), null);
     }
 
     public User getCurrentUser() {
@@ -529,7 +553,11 @@ public class CustomConnection extends Model {
     public void setPresence(final UserStatus userStatus) {
         final Presence presence = new Presence(Presence.Type.available);
         presence.setMode(userStatus.getMode());
-        connection.sendPacket(presence);
+        try {
+            connection.sendPacket(presence);
+        } catch (SmackException exception) {
+            throw new RuntimeException(exception);
+        }
     }
 
     public String getHipChatGroup() {

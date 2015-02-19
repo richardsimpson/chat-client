@@ -31,7 +31,7 @@ package uk.co.rjsoftware.xmpp.client;
 
 import org.jivesoftware.smack.packet.DefaultPacketExtension;
 import org.jivesoftware.smack.packet.PacketExtension;
-import org.jivesoftware.smackx.packet.DiscoverInfo;
+import org.jivesoftware.smackx.disco.packet.DiscoverInfo;
 import uk.co.rjsoftware.xmpp.model.RoomPrivacy;
 
 public class YaccRoomInfo {
